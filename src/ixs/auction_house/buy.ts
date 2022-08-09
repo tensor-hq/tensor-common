@@ -198,6 +198,10 @@ export const makeAHBuyTx = async (
 
   const tx = new Transaction().add(depositIx, buyIx);
 
+  if (auctionHouseObj.requiresSignOff) {
+    execSaleIx.keys[9].isSigner = true;
+  }
+
   //optionally create ata for buyer
   const buyerAtaInfo = await conn.getAccountInfo(buyerTokenAccountKey);
   if (!buyerAtaInfo?.lamports || !buyerAtaInfo.data?.length) {
