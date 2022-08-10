@@ -4,6 +4,7 @@ import {
   findAuctionHouseTradeStatePda,
   findMetadataPda,
   toBigNumber,
+  WRAPPED_SOL_MINT,
 } from "@metaplex-foundation/js";
 import {
   AuctionHouse,
@@ -32,11 +33,10 @@ export const makeAHBuyTx = async (
   tokenMint: string,
   auctionHouse: string,
   buyer: string,
-  // TODO: support other currencies.
-  priceLamports: BN, //original ask
+  price: BN, //original ask
   tokenSize = 1,
   ahProgramId = PROGRAM_ID
-): Promise<Transaction> => {
+): Promise<{ tx: Transaction; auctionHouseObj: AuctionHouse }> => {
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const buyerKey = new PublicKey(buyer);
@@ -46,9 +46,15 @@ export const makeAHBuyTx = async (
     auctionHouseKey
   );
 
-  const buyPriceAdjusted = priceLamports;
-  const tokenSizeAdjusted = new BN(
-    await getQuantityWithMantissa(conn, tokenSize, mintKey)
+  const buyPriceAdjusted = await getQuantityWithMantissa(
+    conn,
+    price,
+    auctionHouseObj.treasuryMint
+  );
+  const tokenSizeAdjusted = await getQuantityWithMantissa(
+    conn,
+    tokenSize,
+    mintKey
   );
 
   const buyerTokenAccountKey = await getAssociatedTokenAddress(
@@ -213,5 +219,5 @@ export const makeAHBuyTx = async (
   tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
   tx.feePayer = buyerKey;
 
-  return tx;
+  return { tx, auctionHouseObj };
 };
