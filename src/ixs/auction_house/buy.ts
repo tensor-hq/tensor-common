@@ -33,7 +33,7 @@ export const makeAHBuyTx = async (
   tokenMint: string,
   auctionHouse: string,
   buyer: string,
-  price: BN, //original ask
+  price: BN, //original ask in native size (eg lamports for SOL)
   tokenSize = 1,
   ahProgramId = PROGRAM_ID
 ): Promise<{ tx: Transaction; auctionHouseObj: AuctionHouse }> => {
@@ -46,11 +46,6 @@ export const makeAHBuyTx = async (
     auctionHouseKey
   );
 
-  const buyPriceAdjusted = await getQuantityWithMantissa(
-    conn,
-    price,
-    auctionHouseObj.treasuryMint
-  );
   const tokenSizeAdjusted = await getQuantityWithMantissa(
     conn,
     tokenSize,
@@ -76,7 +71,7 @@ export const makeAHBuyTx = async (
     sellerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(buyPriceAdjusted),
+    toBigNumber(price),
     toBigNumber(tokenSizeAdjusted),
     sellerTokenAccountKey,
     ahProgramId
@@ -87,7 +82,7 @@ export const makeAHBuyTx = async (
     buyerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(buyPriceAdjusted),
+    toBigNumber(price),
     toBigNumber(tokenSizeAdjusted),
     sellerTokenAccountKey, //yes should be seller's the one containing the nft
     ahProgramId
@@ -127,7 +122,7 @@ export const makeAHBuyTx = async (
       wallet: buyerKey,
     },
     {
-      amount: buyPriceAdjusted,
+      amount: price,
       escrowPaymentBump,
     }
   );
@@ -147,7 +142,7 @@ export const makeAHBuyTx = async (
       wallet: buyerKey,
     },
     {
-      buyerPrice: buyPriceAdjusted,
+      buyerPrice: price,
       escrowPaymentBump,
       tokenSize: tokenSizeAdjusted,
       tradeStateBump: buyerTradeBump,
@@ -182,7 +177,7 @@ export const makeAHBuyTx = async (
       treasuryMint: auctionHouseObj.treasuryMint,
     },
     {
-      buyerPrice: buyPriceAdjusted,
+      buyerPrice: price,
       escrowPaymentBump,
       freeTradeStateBump: freeTradeBump,
       programAsSignerBump,
