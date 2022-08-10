@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - run: yarn install
+      - run: yarn tsc 
       - run: yarn test
 
   publish-gpr:
@@ -26,6 +27,8 @@ jobs:
         with:
           registry-url: https://npm.pkg.github.com/
       - run: yarn install
+      # Generate dist files.
+      - run: yarn tsc 
       - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
