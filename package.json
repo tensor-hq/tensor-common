@@ -12,7 +12,9 @@
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
-  "private": true,
+  "publishConfig": {
+    "@tensor-hq:registry": "https://npm.pkg.github.com"
+  },
   "dependencies": {
     "@metaplex-foundation/js": "^0.14.0",
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
