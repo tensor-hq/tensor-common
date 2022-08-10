@@ -1,5 +1,5 @@
 {
-  "name": "tensor-common",
+  "name": "@tensor-hq/tensor-common",
   "version": "0.1.0",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
@@ -11,7 +11,6 @@
     "postinstall": "tsc"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
-  "author": "Richard Wu <richardwu1997@gmail.com>",
   "license": "MIT",
   "private": true,
   "dependencies": {
