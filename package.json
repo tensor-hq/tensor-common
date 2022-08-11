@@ -23,6 +23,7 @@
     "@solana/spl-token": "^0.2.0",
     "@solana/web3.js": "^1.50.1",
     "bn.js": "^5.2.1",
+    "bs58": "^5.0.0",
     "typescript": "^4.7.4"
   },
   "devDependencies": {
