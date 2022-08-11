@@ -6,24 +6,18 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import { Metaplex } from '@metaplex-foundation/js';
-import { deserializeUnchecked, serialize } from 'borsh';
+import {ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID,} from '@solana/spl-token';
+import {Metaplex} from '@metaplex-foundation/js';
+import {deserializeUnchecked, serialize} from 'borsh';
 import {
   BuyListingInstructionData,
-  LISTING_AUTH_PREFIX,
   MARKET_FEES_WALLET,
   MARKET_PROGRAM_ID,
   MARKET_SCHEMA,
   SaleListing,
-  SUBSCRIPTION_PREFIX,
-  SubscriptionType,
 } from './state';
+import {getOrCreateAtaForMint} from "../shared";
+import {createListingAuthorityAccountPda, findSubscriptionAccountPda} from "./shared";
 
 export const fetchListingAcc = async (
   connection: Connection,
@@ -36,73 +30,6 @@ export const fetchListingAcc = async (
 
   return deserializeUnchecked(MARKET_SCHEMA, SaleListing, data.data);
 };
-
-// --------------------------------------- pdas
-
-export const createListingAuthorityAccountPda = async (
-  listingAccAddr: PublicKey,
-  authorityBump: number,
-): Promise<PublicKey> => {
-  return await PublicKey.createProgramAddress(
-    [
-      Buffer.from(LISTING_AUTH_PREFIX),
-      listingAccAddr.toBuffer(),
-      new Uint8Array([authorityBump]),
-    ],
-    MARKET_PROGRAM_ID,
-  );
-};
-
-export const findSubscriptionAccountPda = async (
-  wallet: PublicKey,
-): Promise<[PublicKey, number]> => {
-  const subscriptionTypeBytes = new Uint8Array(1);
-  subscriptionTypeBytes[0] = SubscriptionType.Standard;
-
-  return await PublicKey.findProgramAddress(
-    [
-      Buffer.from(SUBSCRIPTION_PREFIX),
-      wallet.toBuffer(),
-      subscriptionTypeBytes,
-    ],
-    MARKET_PROGRAM_ID,
-  );
-};
-
-// --------------------------------------- todo move to shared
-
-export const getOrCreateAtaForMint = async ({
-  connection,
-  mint,
-  owner,
-}: {
-  connection: Connection;
-  mint: PublicKey;
-  owner: PublicKey;
-}): Promise<{
-  tokenAccount: PublicKey;
-  instructions: TransactionInstruction[];
-}> => {
-  const instructions: TransactionInstruction[] = [];
-
-  const tokenAccount = await getAssociatedTokenAddress(mint, owner);
-
-  const accInfo = await connection.getAccountInfo(tokenAccount);
-
-  //create if missing
-  if (!accInfo) {
-    instructions.push(
-      createAssociatedTokenAccountInstruction(owner, tokenAccount, owner, mint),
-    );
-  }
-
-  return {
-    tokenAccount,
-    instructions,
-  };
-};
-
-// ---------------------------------------
 
 export const makeYawwwBuyTx = async (
   connection: Connection,
