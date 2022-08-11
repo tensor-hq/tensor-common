@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,8 @@
     "/dist"
   ],
   "scripts": {
-    "test": "echo 'no tests!'"
+    "test": "echo 'no tests!'",
+    "pub": "rm -rf ./dsist && yarn tsc && yarn publish"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
