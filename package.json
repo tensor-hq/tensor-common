@@ -27,7 +27,7 @@
     "typescript": "^4.7.4"
   },
   "devDependencies": {
-    "@types/big.js": "^6.1.5",
-    "@types/bn.js": "^5.1.0"
+    "@types/bn.js": "^5.1.0",
+    "prettier": "^2.7.1"
   }
 }

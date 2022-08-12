@@ -1,3 +1,9 @@
+/*
+buy
+https://explorer.solana.com/tx/5na6GnUhy1hMX4Q9mRREJkkmwbpQRiApgnpMwnQQ6ku2hP4KCzWyG3qeJiXrodu9xLrkLyF9N4dVt8APur5cGDcd
+deposit + buy + transfer + withdraw from fee + transfer + transfer + exec sale
+ */
+
 import {
   findAuctionHouseBuyerEscrowPda,
   findAuctionHouseProgramAsSignerPda,
@@ -5,37 +11,37 @@ import {
   findMetadataPda,
   Pda,
   toBigNumber,
-} from "@metaplex-foundation/js";
+} from '@metaplex-foundation/js';
 import {
   AuctionHouse,
   createExecuteSaleInstruction,
   createDepositInstruction,
   createBuyInstruction,
   PROGRAM_ID,
-} from "@metaplex-foundation/mpl-auction-house";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+} from '@metaplex-foundation/mpl-auction-house';
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import {
   createAssociatedTokenAccountInstruction,
   getAccount,
   getAssociatedTokenAddress,
-} from "@solana/spl-token";
+} from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
   SystemProgram,
   Transaction,
-} from "@solana/web3.js";
-import BN from "bn.js";
-import { getQuantityWithMantissa } from "../shared";
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import { getQuantityWithMantissa } from './shared';
 
 export const makeAHBuyTx = async (
-  conn: Connection,
+  connection: Connection,
   tokenMint: string,
   auctionHouse: string,
   buyer: string,
   price: BN, //original ask in native size (eg lamports for SOL)
   tokenSize = 1,
-  ahProgramId = PROGRAM_ID
+  ahProgramId = PROGRAM_ID,
 ): Promise<{
   tx: Transaction;
   // Include these for later inspection if needed.
@@ -47,25 +53,25 @@ export const makeAHBuyTx = async (
   const buyerKey = new PublicKey(buyer);
 
   const auctionHouseObj = await AuctionHouse.fromAccountAddress(
-    conn,
-    auctionHouseKey
+    connection,
+    auctionHouseKey,
   );
 
   const tokenSizeAdjusted = await getQuantityWithMantissa(
-    conn,
+    connection,
     tokenSize,
-    mintKey
+    mintKey,
   );
 
   const buyerTokenAccountKey = await getAssociatedTokenAddress(
     mintKey,
-    buyerKey
+    buyerKey,
   );
 
   //this is supposed to be the account holding the NFT
-  const largestTokenHolders = await conn.getTokenLargestAccounts(mintKey);
+  const largestTokenHolders = await connection.getTokenLargestAccounts(mintKey);
   const sellerTokenAccountKey = largestTokenHolders.value[0].address;
-  const sellerTokenAcc = await getAccount(conn, sellerTokenAccountKey);
+  const sellerTokenAcc = await getAccount(connection, sellerTokenAccountKey);
   const sellerKey = new PublicKey(sellerTokenAcc.owner);
 
   const programAsSigner = findAuctionHouseProgramAsSignerPda(ahProgramId);
@@ -79,7 +85,7 @@ export const makeAHBuyTx = async (
     toBigNumber(price),
     toBigNumber(tokenSizeAdjusted),
     sellerTokenAccountKey,
-    ahProgramId
+    ahProgramId,
   );
 
   const buyerTradeState = findAuctionHouseTradeStatePda(
@@ -90,7 +96,7 @@ export const makeAHBuyTx = async (
     toBigNumber(price),
     toBigNumber(tokenSizeAdjusted),
     sellerTokenAccountKey, //yes should be seller's the one containing the nft
-    ahProgramId
+    ahProgramId,
   );
   const buyerTradeBump = buyerTradeState.bump;
 
@@ -102,14 +108,14 @@ export const makeAHBuyTx = async (
     toBigNumber(0),
     toBigNumber(tokenSizeAdjusted),
     sellerTokenAccountKey,
-    ahProgramId
+    ahProgramId,
   );
   const freeTradeBump = freeTradeState.bump;
 
   const escrowPaymentAccount = findAuctionHouseBuyerEscrowPda(
     auctionHouseKey,
     buyerKey,
-    ahProgramId
+    ahProgramId,
   );
   const escrowPaymentBump = escrowPaymentAccount.bump;
 
@@ -129,7 +135,7 @@ export const makeAHBuyTx = async (
     {
       amount: price,
       escrowPaymentBump,
-    }
+    },
   );
 
   const buyIx = createBuyInstruction(
@@ -151,14 +157,14 @@ export const makeAHBuyTx = async (
       escrowPaymentBump,
       tokenSize: tokenSizeAdjusted,
       tradeStateBump: buyerTradeBump,
-    }
+    },
   );
 
   const createAtaIx = createAssociatedTokenAccountInstruction(
     buyerKey,
     buyerTokenAccountKey,
     buyerKey,
-    mintKey
+    mintKey,
   );
 
   const execSaleIx = createExecuteSaleInstruction(
@@ -187,12 +193,14 @@ export const makeAHBuyTx = async (
       freeTradeStateBump: freeTradeBump,
       programAsSignerBump,
       tokenSize: tokenSizeAdjusted,
-    }
+    },
   );
 
   //add creators for royalty payments
-
-  const metadataDecoded = await Metadata.fromAccountAddress(conn, metadata);
+  const metadataDecoded = await Metadata.fromAccountAddress(
+    connection,
+    metadata,
+  );
 
   for (let i = 0; i < metadataDecoded.data.creators!.length; i++) {
     execSaleIx.keys.push({
@@ -209,14 +217,14 @@ export const makeAHBuyTx = async (
   }
 
   //optionally create ata for buyer
-  const buyerAtaInfo = await conn.getAccountInfo(buyerTokenAccountKey);
+  const buyerAtaInfo = await connection.getAccountInfo(buyerTokenAccountKey);
   if (!buyerAtaInfo?.lamports || !buyerAtaInfo.data?.length) {
     tx.add(createAtaIx);
   }
 
   tx.add(execSaleIx);
 
-  tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   tx.feePayer = buyerKey;
 
   return { tx, auctionHouseObj, sellerTradeState };
