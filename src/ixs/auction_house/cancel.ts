@@ -12,23 +12,19 @@ cancel + withdraw from fee + transfer
 the code basically checks if owner of token === wallet, if so it calls revoke, else simply closes trade state
  */
 
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
-import {
-  getAuctionHouseBuyerEscrow,
-  getAuctionHouseTradeState,
-  getQuantityWithMantissa,
-} from './shared';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
   AuctionHouse,
   createCancelInstruction,
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+import {
+  findAuctionHouseBuyerEscrowPda,
+  findAuctionHouseTradeStatePda,
+  toBigNumber,
+} from '@metaplex-foundation/js';
 
 export const makeAHCancelBidTx = async (
   connection: Connection,
@@ -40,11 +36,6 @@ export const makeAHCancelBidTx = async (
   cancelBid = false,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
-  const price = priceLamports.div(new BN(LAMPORTS_PER_SOL)).toNumber();
-  const totalWithdraw = totalWithdrawLamports
-    ?.div(new BN(LAMPORTS_PER_SOL))
-    .toNumber();
-
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const ownerKey = new PublicKey(walletOwner);
@@ -54,47 +45,29 @@ export const makeAHCancelBidTx = async (
     auctionHouseKey,
   );
 
-  const buyPriceAdjusted = new BN(
-    await getQuantityWithMantissa(
-      connection,
-      price,
-      //@ts-ignore
-      auctionHouseObj.treasuryMint,
-    ),
-  );
-
   const tokenSizeAdjusted = new BN(
     await getQuantityWithMantissa(connection, tokenSize, mintKey),
   );
-
-  const totalWithdrawAdjusted = totalWithdraw
-    ? new BN(
-        await getQuantityWithMantissa(
-          connection,
-          totalWithdraw,
-          auctionHouseObj.treasuryMint,
-        ),
-      )
-    : undefined;
 
   //this is supposed to be the account holding the NFT
   //this will work both in the case of cancel listings & cancel bid
   const largestTokenHolders = await connection.getTokenLargestAccounts(mintKey);
   const tokenAccountKey = largestTokenHolders.value[0].address;
 
-  const [tradeState, tradeStateBump] = await getAuctionHouseTradeState(
+  const tradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
-    tokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    buyPriceAdjusted,
+    toBigNumber(priceLamports),
+    toBigNumber(tokenSizeAdjusted),
+    tokenAccountKey,
   );
 
-  const [escrowPaymentAccount, escrowPaymentBump] =
-    await getAuctionHouseBuyerEscrow(auctionHouseKey, ownerKey);
+  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
+    auctionHouseKey,
+    ownerKey,
+  );
 
   const cancelIx = createCancelInstruction(
     {
@@ -106,13 +79,13 @@ export const makeAHCancelBidTx = async (
       tradeState,
       wallet: ownerKey,
     },
-    { buyerPrice: buyPriceAdjusted, tokenSize: tokenSizeAdjusted },
+    { buyerPrice: priceLamports, tokenSize: tokenSizeAdjusted },
   );
 
   const tx = new Transaction();
 
   //only relevant for bids (withdrawing escrowed amount)
-  if (cancelBid && totalWithdrawAdjusted) {
+  if (cancelBid && totalWithdrawLamports) {
     const withdrawIx = createWithdrawInstruction(
       {
         auctionHouse: auctionHouseKey,
@@ -124,8 +97,8 @@ export const makeAHCancelBidTx = async (
         wallet: ownerKey,
       },
       {
-        amount: totalWithdrawAdjusted,
-        escrowPaymentBump,
+        amount: totalWithdrawLamports,
+        escrowPaymentBump: escrowPaymentAccount.bump,
       },
     );
 

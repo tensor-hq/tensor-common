@@ -4,18 +4,8 @@ https://solscan.io/tx/3uie9LC6j9cVt2TABcwEqKoKLp2ue3RRKAtm4twFvV74D4BhqNeYiZwooA
 sell + transfer + withdraw from fee + transfer + transfer + ata create + execute sale
  */
 
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
-import {
-  getAuctionHouseBuyerEscrow,
-  getAuctionHouseProgramAsSigner,
-  getAuctionHouseTradeState,
-  getQuantityWithMantissa,
-} from './shared';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
   AuctionHouse,
@@ -26,22 +16,24 @@ import {
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
-import { findMetadataPda } from '@metaplex-foundation/js';
+import {
+  findAuctionHouseBuyerEscrowPda,
+  findAuctionHouseProgramAsSignerPda,
+  findAuctionHouseTradeStatePda,
+  findMetadataPda,
+  toBigNumber,
+} from '@metaplex-foundation/js';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
-//todo do we want to try and close out the original sale account?
 export const makeAHAcceptBidTx = async (
   connection: Connection,
   tokenMint: string,
   seller: string,
   auctionHouse: string,
   buyer: string,
-  priceLamports: BN, //original ask
   newPriceLamports: BN, //bid to be accepted
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
-  const price = newPriceLamports.div(new BN(LAMPORTS_PER_SOL)).toNumber();
-
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const sellerKey = new PublicKey(seller);
@@ -50,15 +42,6 @@ export const makeAHAcceptBidTx = async (
   const auctionHouseObj = await AuctionHouse.fromAccountAddress(
     connection,
     auctionHouseKey,
-  );
-
-  const buyPriceAdjusted = new BN(
-    await getQuantityWithMantissa(
-      connection,
-      price,
-      //@ts-ignore
-      auctionHouseObj.treasuryMint,
-    ),
   );
 
   const tokenSizeAdjusted = new BN(
@@ -74,44 +57,42 @@ export const makeAHAcceptBidTx = async (
     buyerKey,
   );
 
-  const [programAsSigner, programAsSignerBump] =
-    await getAuctionHouseProgramAsSigner();
+  const programAsSigner = await findAuctionHouseProgramAsSignerPda();
 
-  const [sellerTradeState, sellerTradeBump] = await getAuctionHouseTradeState(
+  const sellerTradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     sellerKey,
-    sellerTokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    buyPriceAdjusted,
+    toBigNumber(newPriceLamports),
+    toBigNumber(tokenSizeAdjusted),
+    sellerTokenAccountKey,
   );
 
-  const [buyerTradeState, buyerTradeBump] = await getAuctionHouseTradeState(
+  const buyerTradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     buyerKey,
-    sellerTokenAccountKey, //yes should be seller's the one containing the nft
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    buyPriceAdjusted,
+    toBigNumber(newPriceLamports),
+    toBigNumber(tokenSizeAdjusted),
+    sellerTokenAccountKey, //yes should be seller's the one containing the nft
   );
 
-  const [freeTradeState, freeTradeBump] = await getAuctionHouseTradeState(
+  const freeTradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     sellerKey,
-    sellerTokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    new BN(0),
+    toBigNumber(0),
+    toBigNumber(tokenSizeAdjusted),
+    sellerTokenAccountKey,
   );
 
-  const [escrowPaymentAccount, escrowPaymentBump] =
-    await getAuctionHouseBuyerEscrow(auctionHouseKey, buyerKey);
+  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
+    auctionHouseKey,
+    buyerKey,
+  );
 
   const metadata = await findMetadataPda(mintKey);
 
@@ -128,11 +109,11 @@ export const makeAHAcceptBidTx = async (
       tokenAccount: sellerTokenAccountKey,
     },
     {
-      buyerPrice: buyPriceAdjusted,
-      freeTradeStateBump: freeTradeBump,
-      programAsSignerBump,
+      buyerPrice: newPriceLamports,
+      freeTradeStateBump: freeTradeState.bump,
+      programAsSignerBump: programAsSigner.bump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump: sellerTradeBump,
+      tradeStateBump: sellerTradeState.bump,
     },
   );
 
@@ -164,10 +145,10 @@ export const makeAHAcceptBidTx = async (
       treasuryMint: auctionHouseObj.treasuryMint,
     },
     {
-      buyerPrice: buyPriceAdjusted,
-      escrowPaymentBump,
-      freeTradeStateBump: freeTradeBump,
-      programAsSignerBump,
+      buyerPrice: newPriceLamports,
+      escrowPaymentBump: escrowPaymentAccount.bump,
+      freeTradeStateBump: freeTradeState.bump,
+      programAsSignerBump: programAsSigner.bump,
       tokenSize: tokenSizeAdjusted,
     },
   );

@@ -1,16 +1,11 @@
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
-import { getAuctionHouseBuyerEscrow, getQuantityWithMantissa } from './shared';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
   AuctionHouse,
   createDepositInstruction,
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+import { findAuctionHouseBuyerEscrowPda } from '@metaplex-foundation/js';
 
 export const makeAHDepositWithdrawTx = async (
   connection: Connection,
@@ -19,8 +14,6 @@ export const makeAHDepositWithdrawTx = async (
   owner: string,
   amountLamports: BN,
 ): Promise<{ tx: Transaction }> => {
-  const amount = amountLamports.div(new BN(LAMPORTS_PER_SOL)).toNumber();
-
   const auctionHouseKey = new PublicKey(auctionHouse);
   const ownerKey = new PublicKey(owner);
 
@@ -29,16 +22,10 @@ export const makeAHDepositWithdrawTx = async (
     auctionHouseKey,
   );
 
-  const amountAdjusted = new BN(
-    await getQuantityWithMantissa(
-      connection,
-      amount,
-      auctionHouseObj.treasuryMint,
-    ),
+  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
+    auctionHouseKey,
+    ownerKey,
   );
-
-  const [escrowPaymentAccount, escrowPaymentBump] =
-    await getAuctionHouseBuyerEscrow(auctionHouseKey, ownerKey);
 
   const ix =
     action === 'deposit'
@@ -54,8 +41,8 @@ export const makeAHDepositWithdrawTx = async (
             wallet: ownerKey,
           },
           {
-            amount: amountAdjusted,
-            escrowPaymentBump,
+            amount: amountLamports,
+            escrowPaymentBump: escrowPaymentAccount.bump,
           },
         )
       : createWithdrawInstruction(
@@ -69,8 +56,8 @@ export const makeAHDepositWithdrawTx = async (
             wallet: ownerKey,
           },
           {
-            amount: amountAdjusted,
-            escrowPaymentBump,
+            amount: amountLamports,
+            escrowPaymentBump: escrowPaymentAccount.bump,
           },
         );
 

@@ -6,23 +6,23 @@ deposit + buy + transfer
 
 import {
   Connection,
-  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   Transaction,
 } from '@solana/web3.js';
-import {
-  getAuctionHouseBuyerEscrow,
-  getAuctionHouseTradeState,
-  getQuantityWithMantissa,
-} from './shared';
+import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
   AuctionHouse,
   createBuyInstruction,
   createDepositInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
-import { findMetadataPda } from '@metaplex-foundation/js';
+import {
+  findAuctionHouseBuyerEscrowPda,
+  findAuctionHouseTradeStatePda,
+  findMetadataPda,
+  toBigNumber,
+} from '@metaplex-foundation/js';
 
 export const makeAHBidTx = async (
   connection: Connection,
@@ -33,11 +33,6 @@ export const makeAHBidTx = async (
   totalDepositLamports?: BN,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
-  const price = priceLamports.div(new BN(LAMPORTS_PER_SOL)).toNumber();
-  const totalDeposit = totalDepositLamports
-    ?.div(new BN(LAMPORTS_PER_SOL))
-    .toNumber();
-
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const bidderKey = new PublicKey(bidder);
@@ -47,45 +42,28 @@ export const makeAHBidTx = async (
     auctionHouseKey,
   );
 
-  const buyPriceAdjusted = new BN(
-    await getQuantityWithMantissa(
-      connection,
-      price,
-      auctionHouseObj.treasuryMint,
-    ),
-  );
-
   const tokenSizeAdjusted = new BN(
     await getQuantityWithMantissa(connection, tokenSize, mintKey),
   );
-
-  const totalDepositAdjusted = totalDeposit
-    ? new BN(
-        await getQuantityWithMantissa(
-          connection,
-          totalDeposit,
-          auctionHouseObj.treasuryMint,
-        ),
-      )
-    : undefined;
 
   //this is supposed to be the account holding the NFT
   const largestTokenHolders = await connection.getTokenLargestAccounts(mintKey);
   const tokenAccountKey = largestTokenHolders.value[0].address;
 
-  const [tradeState, tradeStateBump] = await getAuctionHouseTradeState(
+  const tradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     bidderKey,
-    tokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    buyPriceAdjusted,
+    toBigNumber(priceLamports),
+    toBigNumber(tokenSizeAdjusted),
+    tokenAccountKey,
   );
 
-  const [escrowPaymentAccount, escrowPaymentBump] =
-    await getAuctionHouseBuyerEscrow(auctionHouseKey, bidderKey);
+  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
+    auctionHouseKey,
+    bidderKey,
+  );
 
   const buyIx = createBuyInstruction(
     {
@@ -102,10 +80,10 @@ export const makeAHBidTx = async (
       wallet: bidderKey,
     },
     {
-      buyerPrice: buyPriceAdjusted,
-      escrowPaymentBump,
+      buyerPrice: priceLamports,
+      escrowPaymentBump: escrowPaymentAccount.bump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump,
+      tradeStateBump: tradeState.bump,
     },
   );
 
@@ -114,7 +92,7 @@ export const makeAHBidTx = async (
   //(!) optional deposit ix:
   //  - if not included, AH is smart enough to top up the account with minimum required during buyIx
   //  - if included in the SAME tx, the buyIx will deposit that much less (0 if min fully covered)
-  if (totalDepositAdjusted) {
+  if (totalDepositLamports) {
     const depositIx = createDepositInstruction(
       {
         auctionHouse: auctionHouseKey,
@@ -127,8 +105,8 @@ export const makeAHBidTx = async (
         wallet: bidderKey,
       },
       {
-        amount: totalDepositAdjusted,
-        escrowPaymentBump,
+        amount: totalDepositLamports,
+        escrowPaymentBump: escrowPaymentAccount.bump,
       },
     );
 

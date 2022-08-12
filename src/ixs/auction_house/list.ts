@@ -4,24 +4,20 @@ https://solscan.io/tx/4Cb7HJNiu2csheApMfjx21A2WPHqQF3Qx2aDEvkYoz8W9HGWkbeENhxUD1
 sell + transfer
  */
 
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
-import {
-  getAuctionHouseProgramAsSigner,
-  getAuctionHouseTradeState,
-  getQuantityWithMantissa,
-} from './shared';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
   AuctionHouse,
   createSellInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
-import { findMetadataPda } from '@metaplex-foundation/js';
+import {
+  findAuctionHouseProgramAsSignerPda,
+  findAuctionHouseTradeStatePda,
+  findMetadataPda,
+  toBigNumber,
+} from '@metaplex-foundation/js';
 
 export const makeAHListTx = async (
   connection: Connection,
@@ -31,8 +27,6 @@ export const makeAHListTx = async (
   priceLamports: BN,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
-  const price = priceLamports.div(new BN(LAMPORTS_PER_SOL)).toNumber();
-
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const ownerKey = new PublicKey(tokenOwner);
@@ -42,43 +36,32 @@ export const makeAHListTx = async (
     auctionHouseKey,
   );
 
-  const buyPriceAdjusted = new BN(
-    await getQuantityWithMantissa(
-      connection,
-      price,
-      auctionHouseObj.treasuryMint,
-    ),
-  );
-
   const tokenSizeAdjusted = new BN(
     await getQuantityWithMantissa(connection, tokenSize, mintKey),
   );
 
   const tokenAccountKey = await getAssociatedTokenAddress(mintKey, ownerKey);
 
-  const [programAsSigner, programAsSignerBump] =
-    await getAuctionHouseProgramAsSigner();
+  const programAsSigner = await findAuctionHouseProgramAsSignerPda();
 
-  const [tradeState, tradeBump] = await getAuctionHouseTradeState(
+  const tradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
-    tokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    buyPriceAdjusted,
+    toBigNumber(priceLamports),
+    toBigNumber(tokenSizeAdjusted),
+    tokenAccountKey,
   );
 
-  const [freeTradeState, freeTradeBump] = await getAuctionHouseTradeState(
+  const freeTradeState = await findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
-    tokenAccountKey,
-    //@ts-ignore
     auctionHouseObj.treasuryMint,
     mintKey,
-    tokenSizeAdjusted,
-    new BN(0),
+    toBigNumber(0),
+    toBigNumber(tokenSizeAdjusted),
+    tokenAccountKey,
   );
 
   const sellIx = createSellInstruction(
@@ -94,11 +77,11 @@ export const makeAHListTx = async (
       tokenAccount: tokenAccountKey,
     },
     {
-      buyerPrice: buyPriceAdjusted,
-      freeTradeStateBump: freeTradeBump,
-      programAsSignerBump,
+      buyerPrice: new BN(priceLamports),
+      freeTradeStateBump: freeTradeState.bump,
+      programAsSignerBump: programAsSigner.bump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump: tradeBump,
+      tradeStateBump: tradeState.bump,
     },
   );
 
