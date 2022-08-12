@@ -24,7 +24,7 @@ import {
 } from './state';
 import { getOrCreateAtaForMint } from '../shared';
 
-const makeYawwwDelistTx = async (
+export const makeYawwwDelistTx = async (
   connection: Connection,
   tokenMint: string,
   seller: string,

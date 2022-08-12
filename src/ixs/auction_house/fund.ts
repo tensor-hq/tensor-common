@@ -12,7 +12,7 @@ import {
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 
-const makeAHDepositWithdrawTx = async (
+export const makeAHDepositWithdrawTx = async (
   connection: Connection,
   action: 'deposit' | 'withdraw',
   auctionHouse: string,

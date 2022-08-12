@@ -30,7 +30,7 @@ import {
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 
-const makeAHCancelBidTx = async (
+export const makeAHCancelBidTx = async (
   connection: Connection,
   tokenMint: string,
   walletOwner: string, //either nft owner (for delisting) or bidder (for bid cancellation)

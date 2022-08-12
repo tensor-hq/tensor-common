@@ -24,7 +24,7 @@ import {
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import { findMetadataPda } from '@metaplex-foundation/js';
 
-const makeAHBidTx = async (
+export const makeAHBidTx = async (
   connection: Connection,
   tokenMint: string,
   bidder: string,

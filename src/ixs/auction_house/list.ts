@@ -23,7 +23,7 @@ import {
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { findMetadataPda } from '@metaplex-foundation/js';
 
-const makeAHListTx = async (
+export const makeAHListTx = async (
   connection: Connection,
   tokenMint: string,
   tokenOwner: string,

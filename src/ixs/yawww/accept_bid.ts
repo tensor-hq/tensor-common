@@ -12,7 +12,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {
-  fetchBidAcc,
+  fetchYawwwBidAcc,
   findListingAuthAccountPda,
   findSubscriptionAccountPda,
 } from './shared';
@@ -26,13 +26,13 @@ import {
 import { Metaplex } from '@metaplex-foundation/js';
 import { getOrCreateAtaForMint } from '../shared';
 
-const makeYawwwAcceptBidTx = async (
+export const makeYawwwAcceptBidTx = async (
   connection: Connection,
   seller: string,
   bid: string,
 ): Promise<{ tx: Transaction }> => {
   const bidAccountAddr = new PublicKey(bid);
-  const bidAcc = await fetchBidAcc(connection, bidAccountAddr);
+  const bidAcc = await fetchYawwwBidAcc(connection, bidAccountAddr);
   const ownerAccount = new PublicKey(seller);
 
   const tx = new Transaction({

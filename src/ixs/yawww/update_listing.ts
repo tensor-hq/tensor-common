@@ -15,7 +15,7 @@ import {
 import { findListingAuthAccountPda } from './shared';
 import { serialize } from 'borsh';
 
-const makeYawwwUpdateListingTx = async (
+export const makeYawwwUpdateListingTx = async (
   connection: Connection,
   seller: string,
   listing: string,

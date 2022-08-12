@@ -30,7 +30,7 @@ import { findMetadataPda } from '@metaplex-foundation/js';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 
 //todo do we want to try and close out the original sale account?
-const makeAHAcceptBidTx = async (
+export const makeAHAcceptBidTx = async (
   connection: Connection,
   tokenMint: string,
   seller: string,

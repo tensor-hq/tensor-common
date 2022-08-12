@@ -21,7 +21,7 @@ import {
 import { getOrCreateAtaForMint } from '../shared';
 import {
   createListingAuthorityAccountPda,
-  fetchListingAcc,
+  fetchYawwwListingAcc,
   findSubscriptionAccountPda,
 } from './shared';
 
@@ -38,7 +38,7 @@ export const makeYawwwBuyTx = async (
     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
   });
 
-  const listingAcc = await fetchListingAcc(connection, listingAccAddr);
+  const listingAcc = await fetchYawwwListingAcc(connection, listingAccAddr);
 
   const { tokenAccount: targetTokenAccount, instructions: tokenInstr } =
     await getOrCreateAtaForMint({

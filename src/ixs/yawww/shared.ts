@@ -14,7 +14,7 @@ import {
 } from './state';
 import { isNil } from 'lodash';
 
-export const fetchListingAcc = async (
+export const fetchYawwwListingAcc = async (
   connection: Connection,
   listingAccAddr: PublicKey,
 ): Promise<SaleListing> => {
@@ -26,7 +26,7 @@ export const fetchListingAcc = async (
   return deserializeUnchecked(MARKET_SCHEMA, SaleListing, data.data);
 };
 
-export const fetchBidAcc = async (
+export const fetchYawwwBidAcc = async (
   connection: Connection,
   bidAccAddr: PublicKey,
 ): Promise<BidWithListing> => {
@@ -39,12 +39,12 @@ export const fetchBidAcc = async (
     SaleListingBid,
     data.data,
   );
-  const listingAcc = await fetchListingAcc(connection, bidAcc.listing);
+  const listingAcc = await fetchYawwwListingAcc(connection, bidAcc.listing);
 
   return { ...bidAcc, listingAcc, bidAccAddr };
 };
 
-export const findBidAcc = async (
+export const findYawwwBidAcc = async (
   connection: Connection,
   type: 'latest' | 'new',
   listingAccAddr: PublicKey,

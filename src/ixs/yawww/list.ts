@@ -20,7 +20,7 @@ import {
 } from './state';
 import BN from 'bn.js';
 
-const makeYawwwListTx = async (
+export const makeYawwwListTx = async (
   connection: Connection,
   tokenMint: string,
   seller: string,

@@ -14,7 +14,7 @@ import {
   MarketInstructionNumber,
 } from './state';
 
-const makeYawwwCancelBidTx = async (
+export const makeYawwwCancelBidTx = async (
   connection: Connection,
   buyer: string,
   bid: string,

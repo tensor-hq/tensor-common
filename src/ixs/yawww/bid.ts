@@ -7,7 +7,7 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { findBidAcc } from './shared';
+import { findYawwwBidAcc } from './shared';
 import {
   BidOnListingInstructionData,
   MARKET_PROGRAM_ID,
@@ -15,7 +15,7 @@ import {
 } from './state';
 import BN from 'bn.js';
 
-const makeYawwwBidTx = async (
+export const makeYawwwBidTx = async (
   connection: Connection,
   buyer: string,
   listing: string,
@@ -29,7 +29,7 @@ const makeYawwwBidTx = async (
     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
   });
 
-  const { bidAccAddr, bidAccBump, bidId } = await findBidAcc(
+  const { bidAccAddr, bidAccBump, bidId } = await findYawwwBidAcc(
     connection,
     'new',
     listingAccAddr,
