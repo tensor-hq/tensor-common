@@ -1,4 +1,5 @@
 import {
+  Commitment,
   ConfirmOptions,
   Connection,
   Context,
@@ -8,6 +9,7 @@ import {
   Signer,
   Transaction,
   TransactionError,
+  TransactionInstruction,
   TransactionSignature,
 } from '@solana/web3.js';
 import assert from 'assert';
@@ -282,24 +284,32 @@ export const buildTx = async ({
   connection,
   existingTx,
   feePayer,
+  instructions,
   additionalSigners,
-  opts = DEFAULT_CONFIRM_OPTS,
+  commitment = 'confirmed',
 }: {
   connection: Connection;
   feePayer?: PublicKey;
   existingTx?: Transaction;
+  instructions?: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
-  opts: ConfirmOptions;
+  commitment?: Commitment;
 }): Promise<Transaction> => {
   const tx = existingTx ?? new Transaction();
+
+  if (instructions?.length) {
+    tx.add(...instructions);
+  }
 
   if (!feePayer && !tx.feePayer) {
     throw new Error('must have fee payer');
   }
+  if (feePayer) {
+    tx.feePayer = feePayer;
+  }
 
-  tx.feePayer = feePayer;
   tx.recentBlockhash = (
-    await connection.getLatestBlockhash(opts.preflightCommitment)
+    await connection.getLatestBlockhash(commitment)
   ).blockhash;
 
   if (additionalSigners) {
