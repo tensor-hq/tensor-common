@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "test": "echo 'no tests!'",
-    "pub": "rm -rf ./dsist && yarn tsc && yarn publish --patch"
+    "pub": "rm -rf ./dsist && yarn tsc && yarn publish --patch",
+    "push": "git push --follow-tags",
+    "pubpush": "yarn pub && yarn push"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
