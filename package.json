@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "test": "echo 'no tests!'",
-    "pub": "rm -rf ./dsist && yarn tsc && yarn publish"
+    "pub": "rm -rf ./dsist && yarn tsc && yarn publish --patch"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
