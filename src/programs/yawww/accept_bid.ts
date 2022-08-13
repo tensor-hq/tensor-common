@@ -24,7 +24,7 @@ import {
   MarketInstructionNumber,
 } from './state';
 import { Metaplex } from '@metaplex-foundation/js';
-import { getOrCreateAtaForMint } from '../shared';
+import { getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwAcceptBidTx = async (
   connection: Connection,

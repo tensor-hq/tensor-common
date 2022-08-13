@@ -77,7 +77,7 @@ export const makeAHListTx = async (
       tokenAccount: tokenAccountKey,
     },
     {
-      buyerPrice: new BN(priceLamports),
+      buyerPrice: priceLamports,
       freeTradeStateBump: freeTradeState.bump,
       programAsSignerBump: programAsSigner.bump,
       tokenSize: tokenSizeAdjusted,

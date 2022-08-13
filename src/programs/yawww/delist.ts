@@ -22,7 +22,7 @@ import {
   MARKET_SCHEMA,
   MarketInstructionNumber,
 } from './state';
-import { getOrCreateAtaForMint } from '../shared';
+import { getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwDelistTx = async (
   connection: Connection,

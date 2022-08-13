@@ -18,12 +18,12 @@ import {
   MARKET_PROGRAM_ID,
   MARKET_SCHEMA,
 } from './state';
-import { getOrCreateAtaForMint } from '../shared';
 import {
   createListingAuthorityAccountPda,
   fetchYawwwListingAcc,
   findSubscriptionAccountPda,
 } from './shared';
+import { getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwBuyTx = async (
   connection: Connection,

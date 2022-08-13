@@ -1,8 +1,8 @@
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import {
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 
 export const getOrCreateAtaForMint = async ({
   connection,
