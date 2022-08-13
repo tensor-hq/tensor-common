@@ -278,13 +278,25 @@ export class RetryTxSender {
 }
 
 //(!) use this fn to create all txs, it ensures correct confirm opts are used
-export const makeTx = async (
-  connection: Connection,
-  tx: Transaction,
-  feePayer: PublicKey,
-  additionalSigners?: Array<Signer>,
+export const buildTx = async ({
+  connection,
+  existingTx,
+  feePayer,
+  additionalSigners,
   opts = DEFAULT_CONFIRM_OPTS,
-): Promise<Transaction> => {
+}: {
+  connection: Connection;
+  feePayer?: PublicKey;
+  existingTx?: Transaction;
+  additionalSigners?: Array<Signer>;
+  opts: ConfirmOptions;
+}): Promise<Transaction> => {
+  const tx = existingTx ?? new Transaction();
+
+  if (!feePayer && !tx.feePayer) {
+    throw new Error('must have fee payer');
+  }
+
   tx.feePayer = feePayer;
   tx.recentBlockhash = (
     await connection.getLatestBlockhash(opts.preflightCommitment)
