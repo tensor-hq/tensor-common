@@ -12,7 +12,6 @@ import {
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
-import { logger } from '../logger';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
@@ -32,6 +31,12 @@ type ResolveReference = {
   resolve?: () => void;
 };
 
+type Logger = {
+  info: (msg: string) => void;
+  warn: (msg: string) => void;
+  error: (msg: string) => void;
+};
+
 export class RetryTxSender {
   private done = false;
   private resolveReference: ResolveReference = {
@@ -44,6 +49,8 @@ export class RetryTxSender {
   constructor(
     readonly connection: Connection,
     readonly additionalConnections = new Array<Connection>(),
+    //pass an optional logger object (can be console, can be winston) if you want verbose logs
+    readonly logger?: Logger,
     readonly opts = DEFAULT_CONFIRM_OPTS,
     readonly timeout = DEFAULT_TIMEOUT_MS,
     readonly retrySleep = DEFAULT_RETRY_MS,
@@ -58,18 +65,20 @@ export class RetryTxSender {
         rawTransaction,
         this.opts,
       );
-      console.log(`Begin processing: ${this.txSig}`);
-      console.log(`🚀 [${this.txSig.substr(0, 5)}] tx sent to MAIN connection`);
+      this.logger?.info(`Begin processing: ${this.txSig}`);
+      this.logger?.info(
+        `🚀 [${this.txSig.substr(0, 5)}] tx sent to MAIN connection`,
+      );
       this._sendToAdditionalConnections(rawTransaction);
     } catch (e) {
-      console.error(e);
+      this.logger?.error(`${JSON.stringify(e)}`);
       throw e;
     }
 
     //asynchronously keep retrying until done or timeout
     (async () => {
       while (!this.done && this._getTimestamp() - startTime < this.timeout) {
-        console.log(
+        this.logger?.info(
           `🔁 [${this.txSig?.substr(
             0,
             5,
@@ -80,7 +89,7 @@ export class RetryTxSender {
           this.connection
             .sendRawTransaction(rawTransaction, this.opts)
             .catch((e) => {
-              console.error(e);
+              this.logger?.error(`${JSON.stringify(e)}`);
               this._stopWaiting();
             });
           this._sendToAdditionalConnections(rawTransaction);
@@ -93,7 +102,7 @@ export class RetryTxSender {
 
   async tryConfirm(): Promise<ConfirmedTx> {
     if (this.confirmedTx) {
-      console.log('✅ Tx already confirmed');
+      this.logger?.info('✅ Tx already confirmed');
       return this.confirmedTx;
     }
 
@@ -110,7 +119,7 @@ export class RetryTxSender {
       };
       return this.confirmedTx;
     } catch (e) {
-      console.error(e);
+      this.logger?.error(`${JSON.stringify(e)}`);
       throw e;
     } finally {
       this._stopWaiting();
@@ -120,7 +129,7 @@ export class RetryTxSender {
   private async _confirmTransaction(
     txSig: TransactionSignature,
   ): Promise<RpcResponseAndContext<SignatureResult>> {
-    console.log(`⏳ [${txSig.substr(0, 5)}] begin trying to confirm tx`);
+    this.logger?.info(`⏳ [${txSig.substr(0, 5)}] begin trying to confirm tx`);
 
     let decodedSignature;
     try {
@@ -154,7 +163,7 @@ export class RetryTxSender {
             subscriptionCommitment,
           );
         } catch (err) {
-          console.error(
+          this.logger?.error(
             `[${txSig.substr(0, 5)}] error setting up onSig WS: ${err}`,
           );
           reject(err);
@@ -180,19 +189,19 @@ export class RetryTxSender {
         0,
         5,
       )}] NOT confirmed in ${duration.toFixed(2)}sec`;
-      console.error(errMsg);
+      this.logger?.error(errMsg);
       throw new Error(errMsg);
     }
 
     if ((<RpcResponseAndContext<SignatureResult>>response).value.err) {
-      console.error(
+      this.logger?.warn(
         `⚠️ [${txSig.substr(
           0,
           5,
         )}] confirmed AS FAILED TX in ${duration.toFixed(2)}sec`,
       );
     } else {
-      console.log(
+      this.logger?.info(
         `✅ [${txSig.substr(0, 5)}] confirmed in ${duration.toFixed(2)}sec`,
       );
     }
@@ -226,7 +235,7 @@ export class RetryTxSender {
     let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise: Promise<null> = new Promise((resolve) => {
       timeoutId = setTimeout(() => {
-        console.warn(`[${txSig}] timeout waiting for sig`);
+        this.logger?.warn(`[${txSig}] timeout waiting for sig`);
         resolve(null);
       }, timeoutMs);
     });
@@ -242,14 +251,13 @@ export class RetryTxSender {
   private _sendToAdditionalConnections(rawTx: Buffer): void {
     this.additionalConnections.map((connection) => {
       connection.sendRawTransaction(rawTx, this.opts).catch((e) => {
-        console.error(
+        this.logger?.error(
           // @ts-ignore
-          `error sending tx to additional connection ${connection._rpcEndpoint}`,
+          `error sending tx to additional connection ${connection._rpcEndpoint}: ${e}`,
         );
-        console.error(e);
       });
     });
-    console.log(
+    this.logger?.info(
       `💥 [${this.txSig?.substr(0, 5)}] tx sent to ${
         this.additionalConnections.length
       } ADDITIONAL connections`,
@@ -291,13 +299,4 @@ export const makeTx = async (
   }
 
   return tx;
-};
-
-export const testFn1 = () => {
-  console.log('i am test');
-};
-
-export const testFn2 = () => {
-  console.log('i am test');
-  logger.info('i am test from logger');
 };
