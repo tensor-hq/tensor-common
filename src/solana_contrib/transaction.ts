@@ -19,6 +19,8 @@ import { settleAllWithTimeout } from '../util';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
+  //even if we're skipping preflight, this should be set to the same level as committment above
+  //as per https://jstarry.notion.site/Transaction-confirmation-d5b8f4e09b9c4a70a1f263f82307d7ce
   preflightCommitment: 'confirmed',
   skipPreflight: true,
 };
