@@ -4,7 +4,13 @@ https://solscan.io/tx/4Cb7HJNiu2csheApMfjx21A2WPHqQF3Qx2aDEvkYoz8W9HGWkbeENhxUD1
 sell + transfer
  */
 
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
@@ -18,15 +24,20 @@ import {
   findMetadataPda,
   toBigNumber,
 } from '@metaplex-foundation/js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHListTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   tokenOwner: string,
   auctionHouse: string,
   priceLamports: BN,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const ownerKey = new PublicKey(tokenOwner);
@@ -85,9 +96,14 @@ export const makeAHListTx = async (
     },
   );
 
-  const tx = new Transaction().add(sellIx);
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = ownerKey;
+  instructions.push(sellIx);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: ownerKey,
+    }),
+  };
 };

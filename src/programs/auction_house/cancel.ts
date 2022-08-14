@@ -12,7 +12,13 @@ cancel + withdraw from fee + transfer
 the code basically checks if owner of token === wallet, if so it calls revoke, else simply closes trade state
  */
 
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
@@ -25,9 +31,10 @@ import {
   findAuctionHouseTradeStatePda,
   toBigNumber,
 } from '@metaplex-foundation/js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHCancelBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   walletOwner: string, //either nft owner (for delisting) or bidder (for bid cancellation)
   auctionHouse: string,
@@ -36,6 +43,10 @@ export const makeAHCancelBidTx = async (
   cancelBid = false,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const ownerKey = new PublicKey(walletOwner);
@@ -82,8 +93,6 @@ export const makeAHCancelBidTx = async (
     { buyerPrice: priceLamports, tokenSize: tokenSizeAdjusted },
   );
 
-  const tx = new Transaction();
-
   //only relevant for bids (withdrawing escrowed amount)
   if (cancelBid && totalWithdrawLamports) {
     const withdrawIx = createWithdrawInstruction(
@@ -102,13 +111,17 @@ export const makeAHCancelBidTx = async (
       },
     );
 
-    tx.add(withdrawIx);
+    instructions.push(withdrawIx);
   }
 
-  tx.add(cancelIx);
+  instructions.push(cancelIx);
 
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = ownerKey;
-
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: ownerKey,
+    }),
+  };
 };

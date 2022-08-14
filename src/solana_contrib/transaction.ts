@@ -1,4 +1,5 @@
 import {
+  BlockhashWithExpiryBlockHeight,
   Commitment,
   ConfirmOptions,
   Connection,
@@ -14,6 +15,7 @@ import {
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
+import { settleAllWithTimeout } from '../util';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
@@ -279,38 +281,57 @@ export class RetryTxSender {
   }
 }
 
-//(!) use this fn to create all txs, it ensures correct confirm opts are used
+//(!) this should be the only function across our code used to build txs
+// reason: we want to control how blockchash is constructed to minimize tx failures
 export const buildTx = async ({
-  connection,
-  existingTx,
+  connections,
   feePayer,
   instructions,
   additionalSigners,
   commitment = 'confirmed',
+  blockhashRetries = 3,
+  blockhashTimeoutMs = 2000,
 }: {
-  connection: Connection;
-  feePayer?: PublicKey;
-  existingTx?: Transaction;
-  instructions?: TransactionInstruction[];
+  //(!) ideally this should be the same RPC node that will then try to send/confirm the tx
+  connections: Array<Connection>;
+  feePayer: PublicKey;
+  instructions: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
   commitment?: Commitment;
+  blockhashRetries?: number;
+  blockhashTimeoutMs?: number;
 }): Promise<Transaction> => {
-  const tx = existingTx ?? new Transaction();
+  const tx = new Transaction();
 
-  if (instructions?.length) {
-    tx.add(...instructions);
+  if (!instructions.length) {
+    throw new Error('must pass at least one instruction');
+  }
+  tx.add(...instructions);
+
+  tx.feePayer = feePayer;
+
+  let retries = 0;
+  let blockhashes: RpcResponseAndContext<BlockhashWithExpiryBlockHeight>[] = [];
+
+  while (blockhashes.length < 1 && retries < blockhashRetries) {
+    //poll blockhashes from multiple providers, then take the one from RPC with latest slot
+    //as per advice here https://jstarry.notion.site/Transaction-confirmation-d5b8f4e09b9c4a70a1f263f82307d7ce
+    blockhashes = await settleAllWithTimeout(
+      connections.map((c) => c.getLatestBlockhashAndContext(commitment)),
+      blockhashTimeoutMs,
+    );
+    retries++;
   }
 
-  if (!feePayer && !tx.feePayer) {
-    throw new Error('must have fee payer');
-  }
-  if (feePayer) {
-    tx.feePayer = feePayer;
+  if (!blockhashes.length) {
+    throw new Error(
+      `failed to fetch blockhash from ${connections.length} providers`,
+    );
   }
 
-  tx.recentBlockhash = (
-    await connection.getLatestBlockhash(commitment)
-  ).blockhash;
+  tx.recentBlockhash = blockhashes.sort(
+    (a, b) => b.context.slot - a.context.slot,
+  )[0].value.blockhash;
 
   if (additionalSigners) {
     additionalSigners

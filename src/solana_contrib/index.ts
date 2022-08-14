@@ -1,2 +1,2 @@
 export * from './spl_token';
-export * from './tx';
+export * from './transaction';

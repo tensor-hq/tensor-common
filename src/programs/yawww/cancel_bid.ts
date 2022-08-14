@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -13,19 +14,19 @@ import {
   MARKET_SCHEMA,
   MarketInstructionNumber,
 } from './state';
+import { buildTx } from '../../solana_contrib';
 
 export const makeYawwwCancelBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   buyer: string,
   bid: string,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const buyerAccount = new PublicKey(buyer);
   const bidAccAddr = new PublicKey(bid);
-
-  const tx = new Transaction({
-    feePayer: buyerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   // (!) whis would be used to fetch / cancel the "next" bid, but we pass it in directly instead
   // const listing = await fetchListingAcc(saleListingAccount);
@@ -75,7 +76,7 @@ export const makeYawwwCancelBidTx = async (
   /// Optional - if bid made in tokens
   // if (currencyMint) {
   //   const buyerCurrencyTokenAccount = await getTokenAccount({
-  //     connection: connection,
+  //     connections: Array<Connection>,
   //     owner: buyerWallet,
   //     mint: currencyMint,
   //   })
@@ -133,7 +134,14 @@ export const makeYawwwCancelBidTx = async (
     data,
   });
 
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: buyerAccount,
+    }),
+  };
 };

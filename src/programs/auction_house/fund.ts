@@ -1,4 +1,10 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import BN from 'bn.js';
 import {
   AuctionHouse,
@@ -6,14 +12,19 @@ import {
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import { findAuctionHouseBuyerEscrowPda } from '@metaplex-foundation/js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHDepositWithdrawTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   action: 'deposit' | 'withdraw',
   auctionHouse: string,
   owner: string,
   amountLamports: BN,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const ownerKey = new PublicKey(owner);
 
@@ -61,9 +72,14 @@ export const makeAHDepositWithdrawTx = async (
           },
         );
 
-  const tx = new Transaction().add(ix);
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = ownerKey;
+  instructions.push(ix);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: ownerKey,
+    }),
+  };
 };

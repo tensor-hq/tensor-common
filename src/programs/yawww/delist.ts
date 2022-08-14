@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -22,22 +23,21 @@ import {
   MARKET_SCHEMA,
   MarketInstructionNumber,
 } from './state';
-import { getOrCreateAtaForMint } from '../../solana_contrib';
+import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwDelistTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   seller: string,
   listing: string,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const sellerAccount = new PublicKey(seller);
   const mintAccount = new PublicKey(tokenMint);
   const listingAccAddr = new PublicKey(listing);
-
-  const tx = new Transaction({
-    feePayer: sellerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const { tokenAccount: targetTokenAccount, instructions: tokenInstr } =
     await getOrCreateAtaForMint({
@@ -126,11 +126,16 @@ export const makeYawwwDelistTx = async (
   });
 
   if (tokenInstr.length) {
-    tx.add(...tokenInstr);
+    instructions.push(...tokenInstr);
   }
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
   return {
-    tx,
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: sellerAccount,
+    }),
   };
 };

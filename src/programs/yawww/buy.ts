@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -23,20 +24,19 @@ import {
   fetchYawwwListingAcc,
   findSubscriptionAccountPda,
 } from './shared';
-import { getOrCreateAtaForMint } from '../../solana_contrib';
+import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwBuyTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   buyer: string,
   listing: string,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const listingAccAddr = new PublicKey(listing);
   const buyerAccount = new PublicKey(buyer);
-
-  const tx = new Transaction({
-    feePayer: buyerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const listingAcc = await fetchYawwwListingAcc(connection, listingAccAddr);
 
@@ -182,9 +182,16 @@ export const makeYawwwBuyTx = async (
   });
 
   if (tokenInstr.length) {
-    tx.add(...tokenInstr);
+    instructions.push(...tokenInstr);
   }
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: buyerAccount,
+    }),
+  };
 };

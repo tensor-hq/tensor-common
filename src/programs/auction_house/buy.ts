@@ -14,9 +14,9 @@ import {
 } from '@metaplex-foundation/js';
 import {
   AuctionHouse,
-  createExecuteSaleInstruction,
-  createDepositInstruction,
   createBuyInstruction,
+  createDepositInstruction,
+  createExecuteSaleInstruction,
   PROGRAM_ID,
 } from '@metaplex-foundation/mpl-auction-house';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
@@ -27,15 +27,18 @@ import {
 } from '@solana/spl-token';
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import { getQuantityWithMantissa } from './shared';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHBuyTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   auctionHouse: string,
   buyer: string,
@@ -48,6 +51,10 @@ export const makeAHBuyTx = async (
   auctionHouseObj: AuctionHouse;
   sellerTradeState: Pda;
 }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const buyerKey = new PublicKey(buyer);
@@ -208,7 +215,7 @@ export const makeAHBuyTx = async (
     });
   }
 
-  const tx = new Transaction().add(depositIx, buyIx);
+  instructions.push(depositIx, buyIx);
 
   if (auctionHouseObj.requiresSignOff) {
     execSaleIx.keys[9].isSigner = true;
@@ -217,13 +224,19 @@ export const makeAHBuyTx = async (
   //optionally create ata for buyer
   const buyerAtaInfo = await connection.getAccountInfo(buyerTokenAccountKey);
   if (!buyerAtaInfo?.lamports || !buyerAtaInfo.data?.length) {
-    tx.add(createAtaIx);
+    instructions.push(createAtaIx);
   }
 
-  tx.add(execSaleIx);
+  instructions.push(execSaleIx);
 
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = buyerKey;
-
-  return { tx, auctionHouseObj, sellerTradeState };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: buyerKey,
+    }),
+    auctionHouseObj,
+    sellerTradeState,
+  };
 };

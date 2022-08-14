@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -24,21 +25,20 @@ import {
   MarketInstructionNumber,
 } from './state';
 import { Metaplex } from '@metaplex-foundation/js';
-import { getOrCreateAtaForMint } from '../../solana_contrib';
+import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 
 export const makeYawwwAcceptBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   seller: string,
   bid: string,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const bidAccountAddr = new PublicKey(bid);
   const bidAcc = await fetchYawwwBidAcc(connection, bidAccountAddr);
   const ownerAccount = new PublicKey(seller);
-
-  const tx = new Transaction({
-    feePayer: ownerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const { tokenAccount: buyerTokenAccount, instructions: tokenInstr } =
     await getOrCreateAtaForMint({
@@ -187,9 +187,16 @@ export const makeYawwwAcceptBidTx = async (
   });
 
   if (tokenInstr.length) {
-    tx.add(...tokenInstr);
+    instructions.push(...tokenInstr);
   }
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: ownerAccount,
+    }),
+  };
 };

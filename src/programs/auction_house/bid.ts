@@ -6,9 +6,11 @@ deposit + buy + transfer
 
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
@@ -23,9 +25,10 @@ import {
   findMetadataPda,
   toBigNumber,
 } from '@metaplex-foundation/js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   bidder: string,
   auctionHouse: string,
@@ -33,6 +36,10 @@ export const makeAHBidTx = async (
   totalDepositLamports?: BN,
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const bidderKey = new PublicKey(bidder);
@@ -87,8 +94,6 @@ export const makeAHBidTx = async (
     },
   );
 
-  const tx = new Transaction();
-
   //(!) optional deposit ix:
   //  - if not included, AH is smart enough to top up the account with minimum required during buyIx
   //  - if included in the SAME tx, the buyIx will deposit that much less (0 if min fully covered)
@@ -110,12 +115,17 @@ export const makeAHBidTx = async (
       },
     );
 
-    tx.add(depositIx);
+    instructions.push(depositIx);
   }
 
-  tx.add(buyIx);
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = bidderKey;
+  instructions.push(buyIx);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: bidderKey,
+    }),
+  };
 };

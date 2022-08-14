@@ -4,7 +4,13 @@ https://solscan.io/tx/3uie9LC6j9cVt2TABcwEqKoKLp2ue3RRKAtm4twFvV74D4BhqNeYiZwooA
 sell + transfer + withdraw from fee + transfer + transfer + ata create + execute sale
  */
 
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { getQuantityWithMantissa } from './shared';
 import BN from 'bn.js';
 import {
@@ -24,9 +30,10 @@ import {
   toBigNumber,
 } from '@metaplex-foundation/js';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+import { buildTx } from '../../solana_contrib';
 
 export const makeAHAcceptBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   seller: string,
   auctionHouse: string,
@@ -34,6 +41,10 @@ export const makeAHAcceptBidTx = async (
   newPriceLamports: BN, //bid to be accepted
   tokenSize = 1,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const auctionHouseKey = new PublicKey(auctionHouse);
   const mintKey = new PublicKey(tokenMint);
   const sellerKey = new PublicKey(seller);
@@ -167,18 +178,22 @@ export const makeAHAcceptBidTx = async (
     });
   }
 
-  const tx = new Transaction().add(sellIx);
+  instructions.push(sellIx);
 
   //optionally create ata for buyer
   const buyerAtaInfo = await connection.getAccountInfo(buyerTokenAccountKey);
   if (!buyerAtaInfo?.lamports || !buyerAtaInfo.data?.length) {
-    tx.add(createAtaIx);
+    instructions.push(createAtaIx);
   }
 
-  tx.add(execSaleIx);
+  instructions.push(execSaleIx);
 
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = sellerKey;
-
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: sellerKey,
+    }),
+  };
 };

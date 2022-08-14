@@ -1,5 +1,6 @@
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -14,20 +15,20 @@ import {
   MARKET_SCHEMA,
 } from './state';
 import BN from 'bn.js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeYawwwBidTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   buyer: string,
   listing: string,
   priceLamports: BN,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const listingAccAddr = new PublicKey(listing);
   const buyerAccount = new PublicKey(buyer);
-
-  const tx = new Transaction({
-    feePayer: buyerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const { bidAccAddr, bidAccBump, bidId } = await findYawwwBidAcc(
     connection,
@@ -132,7 +133,14 @@ export const makeYawwwBidTx = async (
     data,
   });
 
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
-  return { tx };
+  return {
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: buyerAccount,
+    }),
+  };
 };

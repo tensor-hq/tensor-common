@@ -3,7 +3,6 @@ import {
   Keypair,
   PublicKey,
   SystemProgram,
-  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
@@ -19,9 +18,10 @@ import {
   MAX_ITEM_LISTING_ACCOUNT_SIZE,
 } from './state';
 import BN from 'bn.js';
+import { buildTx } from '../../solana_contrib';
 
 export const makeYawwwListTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   tokenMint: string,
   seller: string,
   priceLamports: BN,
@@ -29,6 +29,10 @@ export const makeYawwwListTx = async (
   optionalShare?: number,
   optionalFeeReceiver?: string,
 ) => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const sellerAccount = new PublicKey(seller);
   const optionalFeeReceiverAccount = optionalFeeReceiver
     ? new PublicKey(optionalFeeReceiver)
@@ -36,11 +40,6 @@ export const makeYawwwListTx = async (
   const mintAccount = new PublicKey(tokenMint);
 
   const listingAcc = new Keypair();
-
-  const tx = new Transaction({
-    feePayer: sellerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const listingAccountRentExempt =
     await connection.getMinimumBalanceForRentExemption(
@@ -54,7 +53,7 @@ export const makeYawwwListTx = async (
     newAccountPubkey: listingAcc.publicKey,
     programId: MARKET_PROGRAM_ID,
   });
-  tx.add(createListingAccountInstruction);
+  instructions.push(createListingAccountInstruction);
 
   // Uninitialized PDA escrow token account to hold listed item
   const [listingTokenAccount, listingTokenAccountBump] =
@@ -136,11 +135,15 @@ export const makeYawwwListTx = async (
     data,
   });
 
-  tx.add(transactionInstruction);
-  //(!) signign must happen right at the end, after all ixs have been added
-  tx.sign(listingAcc);
+  instructions.push(transactionInstruction);
+  additionalSigners.push(listingAcc);
 
   return {
-    tx,
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: sellerAccount,
+    }),
   };
 };

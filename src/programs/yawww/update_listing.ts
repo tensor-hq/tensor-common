@@ -1,6 +1,7 @@
 import BN from 'bn.js';
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -14,22 +15,22 @@ import {
 } from './state';
 import { findListingAuthAccountPda } from './shared';
 import { serialize } from 'borsh';
+import { buildTx } from '../../solana_contrib';
 
 export const makeYawwwUpdateListingTx = async (
-  connection: Connection,
+  connections: Array<Connection>,
   seller: string,
   listing: string,
   priceLamports: BN,
   creatorShare?: number,
   optionalShare?: number,
 ): Promise<{ tx: Transaction }> => {
+  const connection = connections[0];
+  const instructions: TransactionInstruction[] = [];
+  const additionalSigners: Keypair[] = [];
+
   const sellerAccount = new PublicKey(seller);
   const listingAccAddr = new PublicKey(listing);
-
-  const tx = new Transaction({
-    feePayer: sellerAccount,
-    recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-  });
 
   const [listingAuthorityAccount] = await findListingAuthAccountPda(
     listingAccAddr,
@@ -81,9 +82,14 @@ export const makeYawwwUpdateListingTx = async (
     data,
   });
 
-  tx.add(transactionInstruction);
+  instructions.push(transactionInstruction);
 
   return {
-    tx,
+    tx: await buildTx({
+      connections,
+      instructions,
+      additionalSigners,
+      feePayer: sellerAccount,
+    }),
   };
 };
