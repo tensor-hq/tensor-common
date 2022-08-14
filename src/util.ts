@@ -23,3 +23,11 @@ export const settleAllWithTimeout = async <T>(
 
   return values;
 };
+
+export const waitMS = async (ms: number) => {
+  await new Promise((response) =>
+    setTimeout(() => {
+      response(0);
+    }, ms),
+  );
+};

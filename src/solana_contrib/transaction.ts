@@ -1,5 +1,6 @@
 import {
   BlockhashWithExpiryBlockHeight,
+  BlockResponse,
   Commitment,
   ConfirmOptions,
   Connection,
@@ -15,7 +16,7 @@ import {
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
-import { settleAllWithTimeout } from '../util';
+import { settleAllWithTimeout, waitMS } from '../util';
 import { TxWithHeight } from './types';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
@@ -42,6 +43,7 @@ type Logger = {
   info: (msg: string) => void;
   warn: (msg: string) => void;
   error: (msg: string) => void;
+  debug: (msg: string) => void;
 };
 
 export class RetryTxSender {
@@ -107,7 +109,7 @@ export class RetryTxSender {
     return this.txSig;
   }
 
-  async tryConfirm(): Promise<ConfirmedTx> {
+  async tryConfirm(lastValidBlockHeight?: number): Promise<ConfirmedTx> {
     if (this.confirmedTx) {
       this.logger?.info('✅ Tx already confirmed');
       return this.confirmedTx;
@@ -118,11 +120,14 @@ export class RetryTxSender {
     }
 
     try {
-      const result = await this._confirmTransaction(this.txSig);
+      const result = await this._confirmTransaction(
+        this.txSig,
+        lastValidBlockHeight,
+      );
       this.confirmedTx = {
         txSig: this.txSig,
         slot: result.context.slot,
-        err: result.value,
+        err: result.value.err,
       };
       return this.confirmedTx;
     } catch (e) {
@@ -135,6 +140,7 @@ export class RetryTxSender {
 
   private async _confirmTransaction(
     txSig: TransactionSignature,
+    lastValidBlockHeight?: number,
   ): Promise<RpcResponseAndContext<SignatureResult>> {
     this.logger?.info(`⏳ [${txSig.substr(0, 5)}] begin trying to confirm tx`);
 
@@ -181,7 +187,12 @@ export class RetryTxSender {
     });
 
     try {
-      await this._promiseTimeout(txSig, promises, this.timeout);
+      await this._racePromises(
+        txSig,
+        promises,
+        this.timeout,
+        lastValidBlockHeight,
+      );
     } finally {
       for (const [i, subscriptionId] of subscriptionIds.entries()) {
         if (subscriptionId) {
@@ -234,10 +245,42 @@ export class RetryTxSender {
     });
   }
 
-  private _promiseTimeout<T>(
+  //this will trigger faster than a timeout promise in the following situations:
+  // 1)we've set too long of a timeout, typically > 90s
+  // 2)the blockhash we got is outdated and eg is actually only valid for 10s, when timeout is 60s
+  // 3)the validator is confirming blocks faster than 400ms, eg 200ms (possible, confirmed with Jacob) -> 151 slots will fly by faster
+  private async _outdatedBlockHeightPromise(
+    lastValidBlockHeight: number,
+  ): Promise<null> {
+    let currentHeight = await getLatestBlockHeight({
+      connections: [this.connection, ...this.additionalConnections],
+    });
+    while (!this.done && currentHeight < lastValidBlockHeight) {
+      this.logger?.debug(
+        `current height is ${
+          lastValidBlockHeight - currentHeight
+        } below lastValidBlockHeight, continuing`,
+      );
+      await waitMS(this.retrySleep);
+      currentHeight = await getLatestBlockHeight({
+        connections: [this.connection, ...this.additionalConnections],
+      });
+    }
+    if (currentHeight > lastValidBlockHeight) {
+      this.logger?.error(
+        `❌ [${this.txSig?.substr(0, 5)}] current height ${
+          currentHeight - lastValidBlockHeight
+        } blocks > lastValidBlockHeight, aborting`,
+      );
+    }
+    return null;
+  }
+
+  private _racePromises<T>(
     txSig: TransactionSignature,
     promises: Promise<T>[],
     timeoutMs: number,
+    lastValidBlockHeight?: number,
   ): Promise<T | null> {
     let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise: Promise<null> = new Promise((resolve) => {
@@ -247,12 +290,17 @@ export class RetryTxSender {
       }, timeoutMs);
     });
 
-    return Promise.race([...promises, timeoutPromise]).then(
-      (result: T | null) => {
-        clearTimeout(timeoutId);
-        return result;
-      },
-    );
+    const promisesToRace = [...promises, timeoutPromise];
+    if (lastValidBlockHeight) {
+      promisesToRace.push(
+        this._outdatedBlockHeightPromise(lastValidBlockHeight),
+      );
+    }
+
+    return Promise.race(promisesToRace).then((result: T | null) => {
+      clearTimeout(timeoutId);
+      return result;
+    });
   }
 
   private _sendToAdditionalConnections(rawTx: Buffer): void {
@@ -348,4 +396,37 @@ export const buildTx = async ({
   }
 
   return { tx, lastValidBlockHeight };
+};
+
+export const getLatestBlockHeight = async ({
+  connections,
+  commitment = 'confirmed',
+  maxRetries = 3,
+  timeoutMs = 2000,
+}: {
+  connections: Connection[];
+  commitment?: Commitment;
+  maxRetries?: number;
+  timeoutMs?: number;
+}) => {
+  let retries = 0;
+  let heights: number[] = [];
+
+  while (heights.length < 1 && retries < maxRetries) {
+    //poll heights from multiple providers, then take the one from RPC with latest slot
+    //as per advice here https://jstarry.notion.site/Transaction-confirmation-d5b8f4e09b9c4a70a1f263f82307d7ce
+    heights = await settleAllWithTimeout(
+      connections.map((c) => c.getBlockHeight(commitment)),
+      timeoutMs,
+    );
+    retries++;
+  }
+
+  if (!heights.length) {
+    throw new Error(
+      `failed to fetch height from ${connections.length} providers`,
+    );
+  }
+
+  return Math.max(...heights);
 };
