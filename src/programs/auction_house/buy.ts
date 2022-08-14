@@ -36,6 +36,7 @@ import {
 import BN from 'bn.js';
 import { getQuantityWithMantissa } from './shared';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeAHBuyTx = async (
   connections: Array<Connection>,
@@ -45,12 +46,13 @@ export const makeAHBuyTx = async (
   priceLamports: BN,
   tokenSize = 1,
   ahProgramId = PROGRAM_ID,
-): Promise<{
-  tx: Transaction;
-  // Include these for later inspection if needed.
-  auctionHouseObj: AuctionHouse;
-  sellerTradeState: Pda;
-}> => {
+): Promise<
+  TxWithHeight & {
+    // Include these for later inspection if needed.
+    auctionHouseObj: AuctionHouse;
+    sellerTradeState: Pda;
+  }
+> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -230,12 +232,12 @@ export const makeAHBuyTx = async (
   instructions.push(execSaleIx);
 
   return {
-    tx: await buildTx({
+    ...(await buildTx({
       connections,
       instructions,
       additionalSigners,
       feePayer: buyerKey,
-    }),
+    })),
     auctionHouseObj,
     sellerTradeState,
   };

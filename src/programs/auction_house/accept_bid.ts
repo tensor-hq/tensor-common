@@ -31,6 +31,7 @@ import {
 } from '@metaplex-foundation/js';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeAHAcceptBidTx = async (
   connections: Array<Connection>,
@@ -40,7 +41,7 @@ export const makeAHAcceptBidTx = async (
   buyer: string,
   newPriceLamports: BN, //bid to be accepted
   tokenSize = 1,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -188,12 +189,10 @@ export const makeAHAcceptBidTx = async (
 
   instructions.push(execSaleIx);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: sellerKey,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: sellerKey,
+  });
 };

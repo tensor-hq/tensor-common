@@ -15,12 +15,13 @@ import {
   MarketInstructionNumber,
 } from './state';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwCancelBidTx = async (
   connections: Array<Connection>,
   buyer: string,
   bid: string,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -136,12 +137,10 @@ export const makeYawwwCancelBidTx = async (
 
   instructions.push(transactionInstruction);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: buyerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: buyerAccount,
+  });
 };

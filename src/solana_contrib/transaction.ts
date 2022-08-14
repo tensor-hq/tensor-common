@@ -16,6 +16,7 @@ import {
 import assert from 'assert';
 import bs58 from 'bs58';
 import { settleAllWithTimeout } from '../util';
+import { TxWithHeight } from './types';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
@@ -302,7 +303,7 @@ export const buildTx = async ({
   commitment?: Commitment;
   blockhashRetries?: number;
   blockhashTimeoutMs?: number;
-}): Promise<Transaction> => {
+}): Promise<TxWithHeight> => {
   const tx = new Transaction();
 
   if (!instructions.length) {
@@ -334,8 +335,9 @@ export const buildTx = async ({
   const latestBlockhash = blockhashes.sort(
     (a, b) => b.context.slot - a.context.slot,
   )[0].value;
+
   tx.recentBlockhash = latestBlockhash.blockhash;
-  tx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
 
   if (additionalSigners) {
     additionalSigners
@@ -345,5 +347,5 @@ export const buildTx = async ({
       });
   }
 
-  return tx;
+  return { tx, lastValidBlockHeight };
 };

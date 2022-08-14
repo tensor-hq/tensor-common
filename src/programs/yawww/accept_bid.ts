@@ -26,12 +26,13 @@ import {
 } from './state';
 import { Metaplex } from '@metaplex-foundation/js';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwAcceptBidTx = async (
   connections: Array<Connection>,
   seller: string,
   bid: string,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -191,12 +192,10 @@ export const makeYawwwAcceptBidTx = async (
   }
   instructions.push(transactionInstruction);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: ownerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: ownerAccount,
+  });
 };

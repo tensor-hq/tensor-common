@@ -16,6 +16,7 @@ import {
 import { findListingAuthAccountPda } from './shared';
 import { serialize } from 'borsh';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwUpdateListingTx = async (
   connections: Array<Connection>,
@@ -24,7 +25,7 @@ export const makeYawwwUpdateListingTx = async (
   priceLamports: BN,
   creatorShare?: number,
   optionalShare?: number,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -84,12 +85,10 @@ export const makeYawwwUpdateListingTx = async (
 
   instructions.push(transactionInstruction);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: sellerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: sellerAccount,
+  });
 };

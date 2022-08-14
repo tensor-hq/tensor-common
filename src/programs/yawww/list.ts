@@ -19,6 +19,7 @@ import {
 } from './state';
 import BN from 'bn.js';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwListTx = async (
   connections: Array<Connection>,
@@ -28,7 +29,7 @@ export const makeYawwwListTx = async (
   creatorShare?: number,
   optionalShare?: number,
   optionalFeeReceiver?: string,
-) => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -138,12 +139,10 @@ export const makeYawwwListTx = async (
   instructions.push(transactionInstruction);
   additionalSigners.push(listingAcc);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: sellerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: sellerAccount,
+  });
 };

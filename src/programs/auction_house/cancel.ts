@@ -32,6 +32,7 @@ import {
   toBigNumber,
 } from '@metaplex-foundation/js';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeAHCancelBidTx = async (
   connections: Array<Connection>,
@@ -42,7 +43,7 @@ export const makeAHCancelBidTx = async (
   totalWithdrawLamports?: BN,
   cancelBid = false,
   tokenSize = 1,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -116,12 +117,10 @@ export const makeAHCancelBidTx = async (
 
   instructions.push(cancelIx);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: ownerKey,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: ownerKey,
+  });
 };

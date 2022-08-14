@@ -13,6 +13,7 @@ import {
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import { findAuctionHouseBuyerEscrowPda } from '@metaplex-foundation/js';
 import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeAHDepositWithdrawTx = async (
   connections: Array<Connection>,
@@ -20,7 +21,7 @@ export const makeAHDepositWithdrawTx = async (
   auctionHouse: string,
   owner: string,
   amountLamports: BN,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -74,12 +75,10 @@ export const makeAHDepositWithdrawTx = async (
 
   instructions.push(ix);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: ownerKey,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: ownerKey,
+  });
 };

@@ -25,12 +25,13 @@ import {
   findSubscriptionAccountPda,
 } from './shared';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwBuyTx = async (
   connections: Array<Connection>,
   buyer: string,
   listing: string,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -186,12 +187,10 @@ export const makeYawwwBuyTx = async (
   }
   instructions.push(transactionInstruction);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: buyerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: buyerAccount,
+  });
 };

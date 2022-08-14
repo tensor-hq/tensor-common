@@ -24,13 +24,14 @@ import {
   MarketInstructionNumber,
 } from './state';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwDelistTx = async (
   connections: Array<Connection>,
   tokenMint: string,
   seller: string,
   listing: string,
-): Promise<{ tx: Transaction }> => {
+): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
   const additionalSigners: Keypair[] = [];
@@ -130,12 +131,10 @@ export const makeYawwwDelistTx = async (
   }
   instructions.push(transactionInstruction);
 
-  return {
-    tx: await buildTx({
-      connections,
-      instructions,
-      additionalSigners,
-      feePayer: sellerAccount,
-    }),
-  };
+  return buildTx({
+    connections,
+    instructions,
+    additionalSigners,
+    feePayer: sellerAccount,
+  });
 };
