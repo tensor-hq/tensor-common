@@ -331,9 +331,11 @@ export const buildTx = async ({
     );
   }
 
-  tx.recentBlockhash = blockhashes.sort(
+  const latestBlockhash = blockhashes.sort(
     (a, b) => b.context.slot - a.context.slot,
-  )[0].value.blockhash;
+  )[0].value;
+  tx.recentBlockhash = latestBlockhash.blockhash;
+  tx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
 
   if (additionalSigners) {
     additionalSigners
