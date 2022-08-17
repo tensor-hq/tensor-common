@@ -400,8 +400,8 @@ export const listOSActiveOrdersOrListings = async (
     `${OS_BASE_PATH}/api/v2/orders/solana/auction-house/${type}`,
     {
       headers: {
-        'x-api-key': apiKey,
         'content-type': 'application/x-www-form-urlencoded',
+        ...(apiKey === undefined ? {} : { 'x-api-key': apiKey }),
       },
       params: {
         asset_contract_address: OS_ASSET_CONTRACT_ADDRESS,
