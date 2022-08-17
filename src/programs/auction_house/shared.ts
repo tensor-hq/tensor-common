@@ -10,6 +10,13 @@ export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
 );
 
+export const AUCTION_HOUSE_KEYS = {
+  OpenSea: '3o9d13qUvEuuauhFrVom1vuCzgNsJifeaBYDPquaT73Y',
+  Solanart: 'GWErq8nJf5JQtohg5k7RTkiZmoCxvGBJqbMSfkrxYFFy',
+  CoralCube: '29xtkHHFLUHXiLoxTzbC7U8kekTwN3mVQSkfXnB1sQ6e',
+  Fractal: 'BAmKB58MgkeYF2VueVBfASL5q8Qf6VKp4nA4cRuVUVft',
+};
+
 export const getQuantityWithMantissa = async (
   conn: Connection,
   quantity: BN | number,
