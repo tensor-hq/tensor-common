@@ -404,12 +404,13 @@ export const requestOSOfferOrListingTx = async (
   type: 'offer' | 'listing',
   {
     tokenMint,
-    seller,
+    maker,
     priceLamports,
     apiKey,
   }: {
     tokenMint: string;
-    seller: string;
+    // Bidder if 'offer'; seller if 'listing'
+    maker: string;
     priceLamports: BN;
     apiKey: string;
   },
@@ -420,7 +421,7 @@ export const requestOSOfferOrListingTx = async (
     method: 'POST',
     url: `${OS_BASE_PATH}/api/v2/nfts/solana/${tokenMint}/${type}-action`,
     data: {
-      maker_address: seller,
+      maker_address: maker,
       price_lamports: priceLamports.toNumber(),
       order_type: 'basic',
     },
@@ -440,6 +441,7 @@ export const requestOSFulfillmentTx = async ({
   apiKey,
 }: {
   relayId: string;
+  // The lister basically who is fulfilling a bid.
   taker: string;
   apiKey: string;
 }): Promise<OSReceivedOrderData> => {
