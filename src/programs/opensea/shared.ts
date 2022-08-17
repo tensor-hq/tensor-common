@@ -377,9 +377,21 @@ export const listOSActiveOrdersOrListings = async (
   {
     tokenMint,
     apiKey,
+    maker,
+    listedAfter: listed_after,
+    listedBefore: listed_before,
+    orderBy: order_by,
+    orderDir: order_direction,
   }: {
     tokenMint: string;
     apiKey: string;
+    maker?: string;
+    // Unix SECONDS.
+    listedAfter?: number;
+    listedBefore?: number;
+    // eth_price (sic)
+    orderBy?: 'created_date' | 'eth_price';
+    orderDir?: 'asc' | 'desc';
   },
 ) => {
   console.debug(`Getting OS ${type}...`);
@@ -393,10 +405,16 @@ export const listOSActiveOrdersOrListings = async (
       params: {
         asset_contract_address: OS_ASSET_CONTRACT_ADDRESS,
         token_ids: tokenMint,
+        maker,
+        listed_after,
+        listed_before,
+        order_by,
+        order_direction,
       },
     },
   );
 
+  // NB: data also has previous/next cursors... which may be of use later.
   return data.orders as OSOrder[];
 };
 
