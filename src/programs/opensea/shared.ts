@@ -395,7 +395,6 @@ export const listOSActiveOrdersOrListings = async (
     orderDir?: 'asc' | 'desc';
   },
 ) => {
-  console.debug(`Getting OS ${type}...`);
   const { data } = await axios.get(
     `${OS_BASE_PATH}/api/v2/orders/solana/auction-house/${type}`,
     {
