@@ -8,7 +8,6 @@ import {
   Connection,
   Keypair,
   PublicKey,
-  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { getQuantityWithMantissa } from './shared';
