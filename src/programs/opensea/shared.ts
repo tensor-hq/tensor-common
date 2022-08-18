@@ -433,8 +433,6 @@ export const requestOSOfferOrListingTx = async (
     apiKey: string;
   },
 ): Promise<OSReceivedOrderData> => {
-  console.debug(`Requesting OS ${type} tx...`);
-
   const { data } = await axios({
     method: 'POST',
     url: `${OS_BASE_PATH}/api/v2/nfts/solana/${tokenMint}/${type}-action`,
@@ -463,8 +461,6 @@ export const requestOSFulfillmentTx = async ({
   taker: string;
   apiKey: string;
 }): Promise<OSReceivedOrderData> => {
-  console.debug('Requesting OS fulfillment tx...');
-
   const { data } = await axios({
     method: 'POST',
     url: `${OS_BASE_PATH}/api/v2/orders/${relayId}/fulfillment-action`,
