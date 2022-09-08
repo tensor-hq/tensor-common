@@ -19,10 +19,15 @@ export const makeMEBuyTx = async ({
 }): Promise<METxSigned> => {
   const price = priceLamports.div(LAMPORTS_PER_SOL).toNumber();
 
-  const tokenAccount = await getAssociatedTokenAddress(
-    new PublicKey(tokenMint),
-    new PublicKey(seller),
-  );
+  const [tokenAccount, sellerReferral] = await Promise.all([
+    getAssociatedTokenAddress(new PublicKey(tokenMint), new PublicKey(seller)),
+    await axios
+      .get<{ sellerReferral?: string; price: number }[]>(
+        `${ME_URL}/v2/tokens/${tokenMint}/listings`,
+      )
+      .then((res) => res.data.find((l) => l.price === price)?.sellerReferral)
+      .catch((_err) => undefined),
+  ]);
 
   const { data } = await axios({
     url: `${ME_URL}/v2/instructions/buy_now`,
@@ -34,6 +39,7 @@ export const makeMEBuyTx = async ({
       tokenMint,
       tokenATA: tokenAccount.toBase58(),
       price,
+      sellerReferral,
       sellerExpiry: '-1',
     },
     headers: makeMEHeaders(apiKey),
