@@ -22,12 +22,18 @@ export const makeMEBuyTx = async ({
   const [tokenAccount, sellerReferral] = await Promise.all([
     getAssociatedTokenAddress(new PublicKey(tokenMint), new PublicKey(seller)),
     await axios
-      .get<{ sellerReferral?: string; price: number }[]>(
+      .get<{ sellerReferral?: string; seller: string }[]>(
         `${ME_URL}/v2/tokens/${tokenMint}/listings`,
       )
-      .then((res) => res.data.find((l) => l.price === price)?.sellerReferral)
+      .then(
+        (res) =>
+          // If cannot find by seller, fallback to first listing (probably correct).
+          (res.data.find((l) => l.seller === seller) ?? res.data.at(0))
+            ?.sellerReferral,
+      )
       .catch((_err) => undefined),
   ]);
+  console.debug(`found referral ${sellerReferral}`);
 
   const { data } = await axios({
     url: `${ME_URL}/v2/instructions/buy_now`,
