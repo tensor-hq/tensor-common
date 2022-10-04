@@ -43,7 +43,7 @@ export const makeYawwwBuyTx = async (
 
   const listingAcc = await fetchYawwwListingAcc(connection, listingAccAddr);
 
-  if (priceLamports.eq(listingAcc.price)) {
+  if (!priceLamports.eq(listingAcc.price)) {
     throw new Error(
       `expected price ${priceLamports.toNumber()} != listing price ${listingAcc.price.toNumber()}`,
     );
