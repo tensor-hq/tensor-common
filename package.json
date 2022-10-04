@@ -33,6 +33,7 @@
   "devDependencies": {
     "@types/big.js": "^6.1.5",
     "@types/bn.js": "^5.1.0",
-    "prettier": "^2.7.1"
+    "prettier": "^2.7.1",
+    "ts-node": "^10.9.1"
   }
 }

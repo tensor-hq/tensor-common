@@ -26,11 +26,13 @@ import {
 } from './shared';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
+import BN from 'bn.js';
 
 export const makeYawwwBuyTx = async (
   connections: Array<Connection>,
   buyer: string,
   listing: string,
+  priceLamports: BN,
 ): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
@@ -40,6 +42,12 @@ export const makeYawwwBuyTx = async (
   const buyerAccount = new PublicKey(buyer);
 
   const listingAcc = await fetchYawwwListingAcc(connection, listingAccAddr);
+
+  if (priceLamports.eq(listingAcc.price)) {
+    throw new Error(
+      `expected price ${priceLamports.toNumber()} != listing price ${listingAcc.price.toNumber()}`,
+    );
+  }
 
   const { tokenAccount: targetTokenAccount, instructions: tokenInstr } =
     await getOrCreateAtaForMint({
