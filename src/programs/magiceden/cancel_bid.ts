@@ -39,6 +39,7 @@ export const makeMECancelBidTx = async ({
       auctionHouseAddress: ME_AH_ADDRESS,
       tokenMint,
       price,
+      buyerReferral,
       sellerExpiry: '-1',
     },
     headers: makeMEHeaders(apiKey),
