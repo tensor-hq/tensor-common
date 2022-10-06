@@ -16,6 +16,21 @@ export const makeMECancelBidTx = async ({
 }): Promise<METxSigned> => {
   const price = priceLamports.div(LAMPORTS_PER_SOL).toNumber();
 
+  let buyerReferral: string | undefined = undefined;
+  let offset = 0;
+  while (true) {
+    const { data } = await axios.get<
+      { buyerReferral?: string; tokenMint: string }[]
+    >(`${ME_URL}/v2/wallets/${buyer}/offers_made?offset=${offset}&limit=500`);
+    if (data.length === 0) break;
+    offset += data.length;
+    const temp = data.find((b) => b.tokenMint === tokenMint);
+    if (temp?.buyerReferral) {
+      buyerReferral = temp.buyerReferral;
+      break;
+    }
+  }
+
   const { data } = await axios({
     url: `${ME_URL}/v2/instructions/buy_cancel`,
     method: 'GET',
