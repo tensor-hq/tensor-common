@@ -384,8 +384,7 @@ export const listOSActiveOrdersOrListings = async (
     orderDir: order_direction,
   }: {
     tokenMint: string;
-    // Not required (so far...).
-    apiKey?: string;
+    apiKey: string;
     maker?: string;
     // Unix SECONDS.
     listedAfter?: number;
