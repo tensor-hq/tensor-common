@@ -29,7 +29,10 @@ export const computeHswapTakerPrice = ({
         ? BondingCurveType.Linear
         : BondingCurveType.Exponential,
     counter:
-      config.mathCounter + (takerSide === 'buy' ? 1 : -1) * extraNFTsSelected,
+      config.mathCounter +
+      // Gotta add 1 to counter for sells lol.
+      (takerSide === 'buy' ? 0 : 1) +
+      (takerSide === 'buy' ? 1 : -1) * extraNFTsSelected,
   });
   return new Big(price)
     .mul(1 + ((takerSide === 'buy' ? 1 : -1) * config.feeBps) / 100_00)
