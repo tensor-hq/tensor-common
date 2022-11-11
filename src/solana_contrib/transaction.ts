@@ -16,7 +16,7 @@ import {
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
-import { settleAllWithTimeout, waitMS } from '../util';
+import { settleAllWithTimeout, waitMS } from '../utils';
 import { TxWithHeight } from './types';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
