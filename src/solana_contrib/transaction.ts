@@ -1,4 +1,5 @@
 import {
+  AddressLookupTableAccount,
   BlockhashWithExpiryBlockHeight,
   BlockResponse,
   Commitment,
@@ -12,12 +13,14 @@ import {
   Transaction,
   TransactionError,
   TransactionInstruction,
+  TransactionMessage,
   TransactionSignature,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
 import { settleAllWithTimeout, waitMS } from '../utils';
-import { TxWithHeight } from './types';
+import { TxV0WithHeight, TxWithHeight } from './types';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
@@ -65,7 +68,9 @@ export class RetryTxSender {
     readonly retrySleep = DEFAULT_RETRY_MS,
   ) {}
 
-  async send(tx: Transaction): Promise<TransactionSignature> {
+  async send(
+    tx: Transaction | VersionedTransaction,
+  ): Promise<TransactionSignature> {
     const rawTransaction = tx.serialize();
     const startTime = this._getTimestamp();
 
@@ -303,7 +308,7 @@ export class RetryTxSender {
     });
   }
 
-  private _sendToAdditionalConnections(rawTx: Buffer): void {
+  private _sendToAdditionalConnections(rawTx: Uint8Array): void {
     this.additionalConnections.map((connection) => {
       connection.sendRawTransaction(rawTx, this.opts).catch((e) => {
         this.logger?.error(
@@ -352,15 +357,91 @@ export const buildTx = async ({
   blockhashRetries?: number;
   blockhashTimeoutMs?: number;
 }): Promise<TxWithHeight> => {
-  const tx = new Transaction();
-
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
   }
-  tx.add(...instructions);
 
+  const tx = new Transaction();
+  tx.add(...instructions);
   tx.feePayer = feePayer;
 
+  const latestBlockhash = await getLatestBlockhashMultConns({
+    connections,
+    commitment,
+    blockhashRetries,
+    blockhashTimeoutMs,
+  });
+  tx.recentBlockhash = latestBlockhash.blockhash;
+  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+
+  if (additionalSigners) {
+    additionalSigners
+      .filter((s): s is Signer => s !== undefined)
+      .forEach((kp) => {
+        tx.partialSign(kp);
+      });
+  }
+
+  return { tx, lastValidBlockHeight };
+};
+
+export const buildTxV0 = async ({
+  connections,
+  feePayer,
+  instructions,
+  additionalSigners,
+  commitment = 'confirmed',
+  blockhashRetries = 3,
+  blockhashTimeoutMs = 2000,
+  addressLookupTableAccs,
+}: {
+  //(!) ideally this should be the same RPC node that will then try to send/confirm the tx
+  connections: Array<Connection>;
+  feePayer: PublicKey;
+  instructions: TransactionInstruction[];
+  additionalSigners?: Array<Signer>;
+  commitment?: Commitment;
+  blockhashRetries?: number;
+  blockhashTimeoutMs?: number;
+  addressLookupTableAccs: AddressLookupTableAccount[];
+}): Promise<TxV0WithHeight> => {
+  if (!instructions.length) {
+    throw new Error('must pass at least one instruction');
+  }
+
+  const latestBlockhash = await getLatestBlockhashMultConns({
+    connections,
+    commitment,
+    blockhashRetries,
+    blockhashTimeoutMs,
+  });
+  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+
+  const msg = new TransactionMessage({
+    payerKey: feePayer,
+    recentBlockhash: latestBlockhash.blockhash,
+    instructions,
+  }).compileToV0Message(addressLookupTableAccs);
+  const tx = new VersionedTransaction(msg);
+
+  if (additionalSigners) {
+    tx.sign(additionalSigners.filter((s): s is Signer => s !== undefined));
+  }
+
+  return { tx, lastValidBlockHeight };
+};
+
+export const getLatestBlockhashMultConns = async ({
+  connections,
+  commitment = 'confirmed',
+  blockhashRetries = 3,
+  blockhashTimeoutMs = 2000,
+}: {
+  connections: Array<Connection>;
+  commitment?: Commitment;
+  blockhashRetries?: number;
+  blockhashTimeoutMs?: number;
+}): Promise<BlockhashWithExpiryBlockHeight> => {
   let retries = 0;
   let blockhashes: RpcResponseAndContext<BlockhashWithExpiryBlockHeight>[] = [];
 
@@ -380,22 +461,7 @@ export const buildTx = async ({
     );
   }
 
-  const latestBlockhash = blockhashes.sort(
-    (a, b) => b.context.slot - a.context.slot,
-  )[0].value;
-
-  tx.recentBlockhash = latestBlockhash.blockhash;
-  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
-
-  if (additionalSigners) {
-    additionalSigners
-      .filter((s): s is Signer => s !== undefined)
-      .forEach((kp) => {
-        tx.partialSign(kp);
-      });
-  }
-
-  return { tx, lastValidBlockHeight };
+  return blockhashes.sort((a, b) => b.context.slot - a.context.slot)[0].value;
 };
 
 export const getLatestBlockHeight = async ({
