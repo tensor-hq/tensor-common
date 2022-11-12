@@ -1,6 +1,5 @@
 import {
   Connection,
-  Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
@@ -13,7 +12,7 @@ export async function createAppraisal(
   connection: Connection,
   poolMint: PublicKey,
   nftMint: PublicKey,
-  initializer: Keypair,
+  initializer: PublicKey,
 ): Promise<Transaction | undefined> {
   const [extAcc] = await findExternalAccPda(poolMint);
   const [poolAcc] = await findPoolAccPda(poolMint);
@@ -28,7 +27,7 @@ export async function createAppraisal(
     method: 'POST',
     body: JSON.stringify({
       appraiser: '3RDTwtVmMcH9zvzqj8mZi9GH8apqWpRZyXB9DWL7QqrP',
-      initializer: initializer.publicKey.toString(),
+      initializer: initializer.toString(),
       index_mint: poolMint.toString(),
       index: poolAcc.toString(),
       external_account: extAcc.toString(),
