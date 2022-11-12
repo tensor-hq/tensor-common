@@ -7,17 +7,19 @@ import {
   Transaction,
 } from '@solana/web3.js';
 import { BRIDGESPLIT_API } from './constants';
+import { findAppraisalAccPda, findExternalAccPda, findPoolAccPda } from './pda';
 
 export async function createAppraisal(
   connection: Connection,
   poolMint: PublicKey,
-  externalAccount: PublicKey,
   nftMint: PublicKey,
-  poolAccount: PublicKey,
-  appraisalAccount: PublicKey,
   initializer: Keypair,
 ): Promise<Transaction | undefined> {
-  const appAccExists = await connection.getAccountInfo(appraisalAccount);
+  const [extAcc] = await findExternalAccPda(poolMint);
+  const [poolAcc] = await findPoolAccPda(poolMint);
+  const [appraiserAcc] = await findAppraisalAccPda(poolMint, nftMint);
+
+  const appAccExists = await connection.getAccountInfo(appraiserAcc);
   if (!!appAccExists) {
     return;
   }
@@ -28,10 +30,10 @@ export async function createAppraisal(
       appraiser: '3RDTwtVmMcH9zvzqj8mZi9GH8apqWpRZyXB9DWL7QqrP',
       initializer: initializer.publicKey.toString(),
       index_mint: poolMint.toString(),
-      index: poolAccount.toString(),
-      external_account: externalAccount.toString(),
+      index: poolAcc.toString(),
+      external_account: extAcc.toString(),
       asset_mint: nftMint.toString(),
-      appraisal: appraisalAccount.toString(),
+      appraisal: appraiserAcc.toString(),
       system: SystemProgram.programId.toString(),
       clock: SYSVAR_CLOCK_PUBKEY.toString(),
     }),
