@@ -497,15 +497,16 @@ export const getLatestBlockHeight = async ({
   return Math.max(...heights);
 };
 
+//Do NOT use Uint8Array as output, this would cause all kinds of serialization problems in graphql
 export const serializeAnyVersionTx = (
   tx: Transaction | VersionedTransaction,
   verifySignatures = false,
-): Uint8Array => {
+): number[] => {
   if (tx instanceof Transaction) {
-    return Uint8Array.from(tx.serialize({ verifySignatures }).toJSON().data);
+    return tx.serialize({ verifySignatures }).toJSON().data;
   } else if (tx instanceof VersionedTransaction) {
     //verify signatures = always false
-    return tx.serialize();
+    return Array.from(tx.serialize());
   } else {
     throw new Error('unknown tx type');
   }
