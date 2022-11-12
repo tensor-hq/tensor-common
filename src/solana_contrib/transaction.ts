@@ -496,3 +496,17 @@ export const getLatestBlockHeight = async ({
 
   return Math.max(...heights);
 };
+
+export const serializeAnyVersionTx = (
+  tx: Transaction | VersionedTransaction,
+  verifySignatures = false,
+): Uint8Array => {
+  if (tx instanceof Transaction) {
+    return Uint8Array.from(tx.serialize({ verifySignatures }).toJSON().data);
+  } else if (tx instanceof VersionedTransaction) {
+    //verify signatures = always false
+    return tx.serialize();
+  } else {
+    throw new Error('unknown tx type');
+  }
+};
