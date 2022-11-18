@@ -71,10 +71,12 @@ export const matchesTraitFilter = (
   traitsFilter: { traitType: string; values: string[] }[],
   attributes: Attribute[] | null | undefined,
 ) => {
-  return traitsFilter.some(({ traitType, values }) => {
+  //AND for traits themselves
+  return traitsFilter.every(({ traitType, values }) => {
     const matches = attributes?.filter((attr) => attr.trait_type === traitType);
     if (!matches?.length) return values.includes(NONE_VALUE);
 
+    //OR for values within the same trait
     const matched = matches.some((m: Attribute) =>
       values.includes(normalizeTraitValue(m.value)),
     );
