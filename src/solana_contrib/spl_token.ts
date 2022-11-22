@@ -34,3 +34,15 @@ export const getOrCreateAtaForMint = async ({
     instructions,
   };
 };
+
+// Returns the token account currently holding the NFT.
+export const getNftTokenAcc = async (
+  conn: Connection,
+  mint: PublicKey,
+): Promise<PublicKey | null> => {
+  const nftTokenAcc = (await conn.getTokenLargestAccounts(mint)).value.find(
+    (acc) => acc.uiAmount === 1,
+  );
+  if (!nftTokenAcc) return null;
+  return new PublicKey(nftTokenAcc.address);
+};
