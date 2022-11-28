@@ -17,7 +17,7 @@ export const getRarityRank = (
   }
 };
 
-const nullLikeWords = [
+export const nullLikeTraitValues = [
   'none',
   'null',
   'nill',
@@ -48,7 +48,7 @@ const nullLikeWords = [
 const NONE_VALUE = 'None';
 
 export const normalizeTraitValue = (value: string) => {
-  if (nullLikeWords.includes(`${value}`.toLowerCase())) {
+  if (nullLikeTraitValues.includes(`${value}`.toLowerCase())) {
     return NONE_VALUE;
   }
   return value;
@@ -60,7 +60,7 @@ export const countNonNullAttributes = (attributes: Attribute[]): number => {
       return false;
     }
 
-    if (nullLikeWords.includes(normalizeTraitValue(a.value))) {
+    if (nullLikeTraitValues.includes(normalizeTraitValue(a.value))) {
       return false;
     }
     return true;
