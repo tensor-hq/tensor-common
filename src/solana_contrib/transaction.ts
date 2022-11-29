@@ -1,7 +1,6 @@
 import {
   AddressLookupTableAccount,
   BlockhashWithExpiryBlockHeight,
-  BlockResponse,
   Commitment,
   ConfirmOptions,
   Connection,
@@ -81,7 +80,7 @@ export class RetryTxSender {
       );
       this.logger?.info(`Begin processing: ${this.txSig}`);
       this.logger?.info(
-        `🚀 [${this.txSig.substr(0, 5)}] tx sent to MAIN connection`,
+        `🚀 [${this.txSig.substring(0, 5)}] tx sent to MAIN connection`,
       );
       this._sendToAdditionalConnections(rawTransaction);
     } catch (e) {
@@ -93,7 +92,7 @@ export class RetryTxSender {
     (async () => {
       while (!this.done && this._getTimestamp() - startTime < this.timeout) {
         this.logger?.info(
-          `🔁 [${this.txSig?.substr(
+          `🔁 [${this.txSig?.substring(
             0,
             5,
           )}] begin new retry loop (sleeping for ${DEFAULT_RETRY_MS / 1000}s)`,
@@ -147,7 +146,9 @@ export class RetryTxSender {
     txSig: TransactionSignature,
     lastValidBlockHeight?: number,
   ): Promise<RpcResponseAndContext<SignatureResult>> {
-    this.logger?.info(`⏳ [${txSig.substr(0, 5)}] begin trying to confirm tx`);
+    this.logger?.info(
+      `⏳ [${txSig.substring(0, 5)}] begin trying to confirm tx`,
+    );
 
     let decodedSignature;
     try {
@@ -182,7 +183,7 @@ export class RetryTxSender {
           );
         } catch (err) {
           this.logger?.error(
-            `[${txSig.substr(0, 5)}] error setting up onSig WS: ${err}`,
+            `[${txSig.substring(0, 5)}] error setting up onSig WS: ${err}`,
           );
           reject(err);
         }
@@ -208,7 +209,7 @@ export class RetryTxSender {
 
     const duration = (Date.now() - this.start) / 1000;
     if (response === null) {
-      const errMsg = `❌ [${txSig.substr(
+      const errMsg = `❌ [${txSig.substring(
         0,
         5,
       )}] NOT confirmed in ${duration.toFixed(2)}sec`;
@@ -218,14 +219,14 @@ export class RetryTxSender {
 
     if ((<RpcResponseAndContext<SignatureResult>>response).value.err) {
       this.logger?.warn(
-        `⚠️ [${txSig.substr(
+        `⚠️ [${txSig.substring(
           0,
           5,
         )}] confirmed AS FAILED TX in ${duration.toFixed(2)}sec`,
       );
     } else {
       this.logger?.info(
-        `✅ [${txSig.substr(0, 5)}] confirmed in ${duration.toFixed(2)}sec`,
+        `✅ [${txSig.substring(0, 5)}] confirmed in ${duration.toFixed(2)}sec`,
       );
     }
 
@@ -273,7 +274,7 @@ export class RetryTxSender {
     }
     if (currentHeight > lastValidBlockHeight) {
       this.logger?.error(
-        `❌ [${this.txSig?.substr(0, 5)}] current height ${
+        `❌ [${this.txSig?.substring(0, 5)}] current height ${
           currentHeight - lastValidBlockHeight
         } blocks > lastValidBlockHeight, aborting`,
       );
@@ -318,7 +319,7 @@ export class RetryTxSender {
       });
     });
     this.logger?.info(
-      `💥 [${this.txSig?.substr(0, 5)}] tx sent to ${
+      `💥 [${this.txSig?.substring(0, 5)}] tx sent to ${
         this.additionalConnections.length
       } ADDITIONAL connections`,
     );
@@ -327,8 +328,7 @@ export class RetryTxSender {
   addAdditionalConnection(newConnection: Connection): void {
     const alreadyUsingConnection =
       this.additionalConnections.filter((connection) => {
-        // @ts-ignore
-        return connection._rpcEndpoint === newConnection.rpcEndpoint;
+        return connection.rpcEndpoint === newConnection.rpcEndpoint;
       }).length > 0;
 
     if (!alreadyUsingConnection) {
