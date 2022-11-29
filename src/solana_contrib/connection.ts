@@ -1,6 +1,5 @@
 import { Connection } from '@solana/web3.js';
-
-class TimeoutError extends Error {}
+import { rejectAfterDelay, TimeoutError } from '../utils';
 
 /// This will failover from connection 0..N-1 if an ECONNREFUSED/503/timeout error is encountered.
 export const makeFailoverConnection = (
@@ -15,28 +14,12 @@ export const makeFailoverConnection = (
       return async function () {
         for (const [idx, conn] of conns.entries()) {
           try {
+            //@ts-ignore
+            const promise = conn[prop].apply(conn, arguments);
             const res = await (timeoutMS
               ? // Promise with timeout rejection.
-                new Promise(async (resolve, reject) => {
-                  const tout = setTimeout(() => {
-                    reject(
-                      new TimeoutError(`timeout of ${timeoutMS}ms exceeded`),
-                    );
-                  }, timeoutMS);
-
-                  try {
-                    //@ts-ignore
-                    const res = await conn[prop].apply(conn, arguments);
-                    clearTimeout(tout);
-                    resolve(res);
-                  } catch (e) {
-                    clearTimeout(tout);
-                    reject(e);
-                  }
-                })
-              : // No timeout.
-                //@ts-ignore
-                conn[prop].apply(conn, arguments));
+                Promise.race([promise, rejectAfterDelay(timeoutMS)])
+              : promise);
             return res;
           } catch (err: any) {
             console.warn(`conn ${idx} error:`, err);

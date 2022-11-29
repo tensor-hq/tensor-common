@@ -1,6 +1,8 @@
+export class TimeoutError extends Error {}
+
 export const rejectAfterDelay = (ms: number) =>
   new Promise((_, reject) => {
-    setTimeout(reject, ms, new Error('timeout'));
+    setTimeout(reject, ms, new TimeoutError(`timeout of ${ms}ms exceeded`));
   });
 
 export const settleAllWithTimeout = async <T>(
