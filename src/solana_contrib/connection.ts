@@ -82,7 +82,7 @@ export const FAILOVER_ASYNC_METHODS = [
   'sendEncodedTransaction',
 ] as const;
 
-type AsyncMethod = typeof FAILOVER_ASYNC_METHODS[number];
+export type ConnAsyncMethod = typeof FAILOVER_ASYNC_METHODS[number];
 
 /// This will failover from connection 0..N-1 if an ECONNREFUSED/503/timeout error is encountered.
 export const makeFailoverConnection = (
@@ -90,7 +90,7 @@ export const makeFailoverConnection = (
   options?: {
     timeoutMS?: number;
     failoverAsyncMethods?: string[];
-    rpcBlacklistMethods?: { [rpcUrl in string]?: AsyncMethod[] };
+    rpcBlacklistMethods?: { [rpcUrl in string]?: ConnAsyncMethod[] };
   },
 ): Connection => {
   if (!conns.length)
@@ -102,7 +102,7 @@ export const makeFailoverConnection = (
 
   const handler: ProxyHandler<Connection> = {
     get: (target, prop, receiver) => {
-      const curMethod = prop.toString() as AsyncMethod;
+      const curMethod = prop.toString() as ConnAsyncMethod;
       if (!methods.includes(curMethod)) {
         return Reflect.get(target, prop, receiver);
       }
