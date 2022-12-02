@@ -80,28 +80,42 @@ export const FAILOVER_ASYNC_METHODS = [
   'sendTransaction',
   'sendRawTransaction',
   'sendEncodedTransaction',
-];
+] as const;
+
+type AsyncMethod = typeof FAILOVER_ASYNC_METHODS[number];
 
 /// This will failover from connection 0..N-1 if an ECONNREFUSED/503/timeout error is encountered.
 export const makeFailoverConnection = (
   conns: Connection[],
-  options?: { timeoutMS?: number; failoverAsyncMethods?: string[] },
+  options?: {
+    timeoutMS?: number;
+    failoverAsyncMethods?: string[];
+    rpcBlacklistMethods?: { [rpcUrl in string]?: AsyncMethod[] };
+  },
 ): Connection => {
   if (!conns.length)
     throw new Error('require at least 1 connection for failover');
 
   const timeoutMS = options?.timeoutMS;
   const methods = options?.failoverAsyncMethods ?? FAILOVER_ASYNC_METHODS;
+  const blacklist = options?.rpcBlacklistMethods;
 
   const handler: ProxyHandler<Connection> = {
     get: (target, prop, receiver) => {
-      if (!methods.includes(prop.toString())) {
+      const curMethod = prop.toString() as AsyncMethod;
+      if (!methods.includes(curMethod)) {
         return Reflect.get(target, prop, receiver);
       }
 
       // NB: can't be arrow function.
       return async function () {
         for (const [idx, conn] of conns.entries()) {
+          const badMethods = blacklist?.[conn.rpcEndpoint];
+          if (badMethods && badMethods.includes(curMethod)) {
+            console.warn(`conn ${idx} blacklisted ${curMethod}, skipping`);
+            continue;
+          }
+
           try {
             //@ts-ignore
             const promise = conn[prop].apply(conn, arguments);
