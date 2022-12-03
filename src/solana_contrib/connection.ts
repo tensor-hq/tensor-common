@@ -84,6 +84,19 @@ export const FAILOVER_ASYNC_METHODS = [
 
 export type ConnAsyncMethod = typeof FAILOVER_ASYNC_METHODS[number];
 
+// See https://docs.alchemy.com/reference/solana-api-quickstart
+export const ALCHEMY_BLACKLIST: ConnAsyncMethod[] = ['getTokenLargestAccounts'];
+
+export const makeFailoverBlacklist = (conns: Connection[]) => {
+  return Object.fromEntries(
+    conns.reduce<[string, ConnAsyncMethod[]][]>((memo, conn) => {
+      if (!conn.rpcEndpoint.includes('alchemy')) return memo;
+
+      return [...memo, [conn.rpcEndpoint, ALCHEMY_BLACKLIST]];
+    }, []),
+  );
+};
+
 /// This will failover from connection 0..N-1 if an ECONNREFUSED/503/timeout error is encountered.
 export const makeFailoverConnection = (
   conns: Connection[],
