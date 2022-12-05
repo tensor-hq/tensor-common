@@ -45,11 +45,11 @@ export const nullLikeTraitValues = [
   'na',
   'n.a.',
 ];
-const NONE_VALUE = 'None';
+export const NONE_TRAIT_VALUE = 'None';
 
 export const normalizeTraitValue = (value: string) => {
   if (nullLikeTraitValues.includes(`${value}`.toLowerCase())) {
-    return NONE_VALUE;
+    return NONE_TRAIT_VALUE;
   }
   return value;
 };
@@ -74,7 +74,7 @@ export const matchesTraitFilter = (
   //AND for traits themselves
   return traitsFilter.every(({ traitType, values }) => {
     const matches = attributes?.filter((attr) => attr.trait_type === traitType);
-    if (!matches?.length) return values.includes(NONE_VALUE);
+    if (!matches?.length) return values.includes(NONE_TRAIT_VALUE);
 
     //OR for values within the same trait
     const matched = matches.some((m: Attribute) =>
