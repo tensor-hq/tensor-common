@@ -122,3 +122,5 @@ export const ELIXIR_PROGRAM_IDS = {
   compose: COMPOSE_PID,
   lookups: PROGRAMS_LOOKUP_TABLE,
 };
+
+export const BASE_TOKENS_PER_NFT = 100000;
