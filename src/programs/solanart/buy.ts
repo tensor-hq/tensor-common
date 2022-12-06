@@ -119,14 +119,14 @@ export const makeSolanartBuyTx = async (
       isSigner: false,
       isWritable: false,
     },
-    /// 10. [] Badgers Stake Account
-    { pubkey: badgerAcc, isSigner: false, isWritable: true },
-    /// 11. [writable] mint pubkey
+    /// 10. [writable] mint pubkey
     {
       pubkey: mintAcc,
       isSigner: false,
       isWritable: true,
     },
+    /// 11. [] Badgers Stake Account
+    { pubkey: badgerAcc, isSigner: false, isWritable: true },
 
     /// 12. [] Badgers Stake program ID
     {
