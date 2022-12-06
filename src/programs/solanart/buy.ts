@@ -88,46 +88,53 @@ export const makeSolanartBuyTx = async (
       isSigner: false,
       isWritable: true,
     },
-    /// 5. [writable] Royalties data account for the sale
+    /// 5. [writable] mint pubkey
+    {
+      pubkey: mintAcc,
+      isSigner: false,
+      isWritable: true,
+    },
+
+    /// 6. [writable] Royalties data account for the sale
     {
       pubkey: royaltiesAcc,
       isSigner: false,
       isWritable: true,
     },
 
-    /// 6. [] token program
+    /// 7. [] token program
     {
       pubkey: TOKEN_PROGRAM_ID,
       isSigner: false,
       isWritable: false,
     },
-    /// 7. [] solanart fee address
+    /// 8. [] solanart fee address
     {
       pubkey: SOLANART_FEE_ACCT,
       isSigner: false,
       isWritable: true,
     },
-    /// 8. [] PDA, owner of temp token account
+    /// 9. [] PDA, owner of temp token account
     {
       pubkey: SOLANART_ESCROW_OWNER_ACCT,
       isSigner: false,
       isWritable: false,
     },
-    /// 9. [] metadata account
+    /// 10. [] metadata account
     {
       pubkey: nft.metadataAddress,
       isSigner: false,
       isWritable: false,
     },
-    /// 10. [] Badgers Stake Account
+    /// 11. [] Badgers Stake Account
     { pubkey: badgerAcc, isSigner: false, isWritable: true },
-    /// 11. [] Badgers Stake program ID
+    /// 12. [] Badgers Stake program ID
     {
       pubkey: BADGER_PROGRAM_ID,
       isSigner: false,
       isWritable: false,
     },
-    /// 12. [] system Program
+    /// 13. [] system Program
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
   ];
 
