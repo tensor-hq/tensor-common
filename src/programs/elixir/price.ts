@@ -17,7 +17,7 @@ export const computeElixirTakerPrice = ({
     quoteLiquidity: Big;
   };
   extraNFTsSelected: number;
-}): Big => {
+}): Big | null => {
   //we always add 1 nft, so that if extraselected = 0, we get price for 1
   const buyNfts = takerSide === 'buy' ? extraNFTsSelected + 1 : 0;
   const sellNfts = takerSide === 'sell' ? extraNFTsSelected + 1 : 0;
@@ -29,9 +29,8 @@ export const computeElixirTakerPrice = ({
   );
 
   if (newPoolBaseTokens.lte(0)) {
-    // throw new Error('trying to buy too many NFTs, not enough liquidity');
     // this should never happen given we have nftSaleCap, but to avoid FE breaking returning 0 rather than error
-    return new Big(0);
+    return null;
   }
 
   const newPoolQuoteTokens = k.div(newPoolBaseTokens);
@@ -43,4 +42,18 @@ export const computeElixirTakerPrice = ({
   return takerSide === 'sell'
     ? priceWithoutFee.div(1 - TOTAL_FEE / 10000)
     : priceWithoutFee.mul(1 - TOTAL_FEE / 10000);
+};
+
+/// Max # of nfts you can buy from the elixir pool.
+export const computeElixirSaleCap = ({
+  baseLiquidity,
+}: {
+  baseLiquidity: Big;
+}) => {
+  // Subtract 1 to ensure we don't go to 0 (impossible)
+  return baseLiquidity
+    .minus(1)
+    .div(BASE_TOKENS_PER_NFT)
+    .round(0, Big.roundDown)
+    .toNumber();
 };
