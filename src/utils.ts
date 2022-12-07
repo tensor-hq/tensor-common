@@ -26,13 +26,28 @@ export const settleAllWithTimeout = async <T>(
   return values;
 };
 
-export const waitMS = async (ms: number) => {
-  await new Promise((response) =>
-    setTimeout(() => {
-      response(0);
-    }, ms),
-  );
-};
-
 export const isNullLike = <T>(v: T | null | undefined): v is null | undefined =>
   v === null || v === undefined;
+
+/// Unflattens an object with keys:
+/// {abc: 1, 'foo.abc': 2, 'bar.abc': 2}
+/// into:
+/// {abc: 1, foo: {abc: 2}, bar: {abc: 2}}
+export const unflattenFields = (record: Record<string, any>) => {
+  const ret: Record<string, any> = {};
+  Object.entries(record).forEach(([k, v]) => {
+    const toks = k.split('.');
+    let ref = ret;
+    toks.forEach((tok, idx) => {
+      // At leaf token: assign value.
+      if (idx === toks.length - 1) {
+        ref[tok] = v;
+        return;
+      }
+      // Non-leaf token: create nested object.
+      ref[tok] ??= {};
+      ref = ref[tok];
+    });
+  });
+  return ret;
+};
