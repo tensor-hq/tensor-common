@@ -39,7 +39,7 @@ export const computeElixirTakerPrice = ({
     .abs()
     .div(extraNFTsSelected + 1);
 
-  return takerSide === 'sell'
+  return takerSide === 'buy'
     ? priceWithoutFee.div(1 - TOTAL_FEE / 10000)
     : priceWithoutFee.mul(1 - TOTAL_FEE / 10000);
 };
