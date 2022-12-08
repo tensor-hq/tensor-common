@@ -1,3 +1,5 @@
+// ======================== Rarities.
+
 export enum RaritySystem {
   HRTT = 'HRTT',
   Stat = 'Stat',
@@ -18,6 +20,20 @@ export type Attribute = {
   trait_type: string;
   value: string;
 };
+
+// ======================== Traits info.
+
+export type CollectionTraitsMeta = Record<
+  string,
+  Record<string, { n: number; img: string | null }>
+>;
+
+export type CollectionTraitsActive = Record<
+  string,
+  Record<string, { n: number; p: number }>
+>;
+
+// ======================== Sorting.
 
 export enum ActiveListingsSortBy {
   PriceAsc = 'PriceAsc',
