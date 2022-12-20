@@ -12,14 +12,14 @@ export const computeElixirTakerPrice = ({
   config,
   extraNFTsSelected,
 }: {
-  takerSide: 'buy' | 'sell';
+  takerSide: 'Buy' | 'Sell';
   config: {
     buyPrices: Big[] | null;
     sellPrices: Big[] | null;
   };
   extraNFTsSelected: number;
 }): Big | null => {
-  if (takerSide === 'buy') {
+  if (takerSide === 'Buy') {
     if (isNullLike(config.buyPrices)) return null;
     return config.buyPrices[extraNFTsSelected];
   } else {
