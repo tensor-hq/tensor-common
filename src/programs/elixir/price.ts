@@ -21,10 +21,10 @@ export const computeElixirTakerPrice = ({
 }): Big | null => {
   if (takerSide === 'Buy') {
     if (isNullLike(config.buyPrices)) return null;
-    return config.buyPrices[extraNFTsSelected];
+    return config.buyPrices.at(extraNFTsSelected) ?? null;
   } else {
     if (isNullLike(config.sellPrices)) return null;
-    return config.sellPrices[extraNFTsSelected];
+    return config.sellPrices.at(extraNFTsSelected) ?? null;
   }
 };
 
@@ -33,7 +33,7 @@ export const computeElixirTakerPriceRaydium = ({
   config: { baseLiquidity, quoteLiquidity },
   extraNFTsSelected,
 }: {
-  takerSide: 'buy' | 'sell';
+  takerSide: 'Buy' | 'Sell';
   config: {
     baseLiquidity: Big;
     quoteLiquidity: Big;
@@ -41,8 +41,8 @@ export const computeElixirTakerPriceRaydium = ({
   extraNFTsSelected: number;
 }): Big | null => {
   //we always add 1 nft, so that if extraselected = 0, we get price for 1
-  const buyNfts = takerSide === 'buy' ? extraNFTsSelected + 1 : 0;
-  const sellNfts = takerSide === 'sell' ? extraNFTsSelected + 1 : 0;
+  const buyNfts = takerSide === 'Buy' ? extraNFTsSelected + 1 : 0;
+  const sellNfts = takerSide === 'Sell' ? extraNFTsSelected + 1 : 0;
 
   const k = baseLiquidity.mul(quoteLiquidity);
 
@@ -61,7 +61,7 @@ export const computeElixirTakerPriceRaydium = ({
     .abs()
     .div(extraNFTsSelected + 1);
 
-  return takerSide === 'buy'
+  return takerSide === 'Buy'
     ? priceWithoutFee.div(1 - TOTAL_FEE / 10000)
     : priceWithoutFee.mul(1 - TOTAL_FEE / 10000);
 };

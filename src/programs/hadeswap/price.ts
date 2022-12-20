@@ -10,7 +10,7 @@ export const computeHswapTakerPrice = ({
   config,
   extraNFTsSelected,
 }: {
-  takerSide: 'buy' | 'sell';
+  takerSide: 'Buy' | 'Sell';
   config: {
     mathCounter: number;
     baseSpotPrice: number;
@@ -21,7 +21,7 @@ export const computeHswapTakerPrice = ({
   extraNFTsSelected: number;
 }): Big => {
   const price = calculateNextSpotPrice({
-    orderType: takerSide === 'buy' ? OrderType.Buy : OrderType.Sell,
+    orderType: takerSide === 'Buy' ? OrderType.Buy : OrderType.Sell,
     spotPrice: config.baseSpotPrice,
     delta: config.delta,
     bondingCurveType:
@@ -31,10 +31,10 @@ export const computeHswapTakerPrice = ({
     counter:
       config.mathCounter +
       // Gotta add 1 to counter for sells lol.
-      (takerSide === 'buy' ? 0 : 1) +
-      (takerSide === 'buy' ? 1 : -1) * extraNFTsSelected,
+      (takerSide === 'Buy' ? 0 : 1) +
+      (takerSide === 'Buy' ? 1 : -1) * extraNFTsSelected,
   });
   return new Big(price)
-    .mul(1 + ((takerSide === 'buy' ? 1 : -1) * config.feeBps) / 100_00)
+    .mul(1 + ((takerSide === 'Buy' ? 1 : -1) * config.feeBps) / 100_00)
     .round();
 };

@@ -168,7 +168,7 @@ export class RetryTxSender {
     let response: RpcResponseAndContext<SignatureResult> | null = null;
     const promises = connections.map((connection, i) => {
       let subscriptionId;
-      const confirmPromise = new Promise((resolve, reject) => {
+      const confirmPromise = new Promise((resolve) => {
         try {
           subscriptionId = connection.onSignature(
             txSig,
@@ -186,7 +186,8 @@ export class RetryTxSender {
           this.logger?.error(
             `[${txSig.substring(0, 5)}] error setting up onSig WS: ${err}`,
           );
-          reject(err);
+          // Don't want this to cause everything else to fail during race.
+          resolve(null);
         }
       });
       subscriptionIds.push(subscriptionId);
