@@ -1,5 +1,6 @@
 import Big from 'big.js';
 import { BASE_TOKENS_PER_NFT } from './constants';
+import { isNullLike } from '../../utils';
 
 const ELIXIR_FEE_BPS = 250;
 const RAYDIUM_FEE_BPS = 25;
@@ -7,6 +8,27 @@ const RAYDIUM_FEE_BPS = 25;
 const TOTAL_FEE = ELIXIR_FEE_BPS + RAYDIUM_FEE_BPS + 25;
 
 export const computeElixirTakerPrice = ({
+  takerSide,
+  config,
+  extraNFTsSelected,
+}: {
+  takerSide: 'buy' | 'sell';
+  config: {
+    buyPrices: Big[] | null;
+    sellPrices: Big[] | null;
+  };
+  extraNFTsSelected: number;
+}): Big | null => {
+  if (takerSide === 'buy') {
+    if (isNullLike(config.buyPrices)) return null;
+    return config.buyPrices[extraNFTsSelected];
+  } else {
+    if (isNullLike(config.sellPrices)) return null;
+    return config.sellPrices[extraNFTsSelected];
+  }
+};
+
+export const computeElixirTakerPriceRaydium = ({
   takerSide,
   config: { baseLiquidity, quoteLiquidity },
   extraNFTsSelected,
@@ -45,7 +67,7 @@ export const computeElixirTakerPrice = ({
 };
 
 /// Max # of nfts you can buy from the elixir pool.
-export const computeElixirSaleCap = ({
+export const computeElixirSaleCapRaydium = ({
   baseLiquidity,
 }: {
   baseLiquidity: Big;
