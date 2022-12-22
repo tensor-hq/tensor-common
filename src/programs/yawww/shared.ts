@@ -57,7 +57,7 @@ export const findYawwwBidAcc = async (
   listingAcc?: SaleListing;
   bidId: number;
 }> => {
-  // There can be 255 offers per wallet. Loop findProgramAddress (0...255) if exist continue
+  // There can be 255 offers per wallet. Loop findProgramAddressSync (0...255) if exist continue
   let bidAccAddr: PublicKey;
   let bidAccBump: number;
   let bidId = 0;
@@ -142,11 +142,11 @@ export const findYawwwBidAcc = async (
 
 // --------------------------------------- pdas
 
-export const createListingAuthorityAccountPda = async (
+export const createListingAuthorityAccountPda = (
   listingAccAddr: PublicKey,
   authorityBump: number,
-): Promise<PublicKey> => {
-  return await PublicKey.createProgramAddress(
+) => {
+  return PublicKey.createProgramAddressSync(
     [
       Buffer.from(LISTING_AUTH_PREFIX),
       listingAccAddr.toBuffer(),
@@ -156,13 +156,11 @@ export const createListingAuthorityAccountPda = async (
   );
 };
 
-export const findSubscriptionAccountPda = async (
-  wallet: PublicKey,
-): Promise<[PublicKey, number]> => {
+export const findSubscriptionAccountPda = (wallet: PublicKey) => {
   const subscriptionTypeBytes = new Uint8Array(1);
   subscriptionTypeBytes[0] = SubscriptionType.Standard;
 
-  return await PublicKey.findProgramAddress(
+  return PublicKey.findProgramAddressSync(
     [
       Buffer.from(SUBSCRIPTION_PREFIX),
       wallet.toBuffer(),
@@ -172,33 +170,29 @@ export const findSubscriptionAccountPda = async (
   );
 };
 
-export const findListingTokenAccountPda = async (
-  listingAccAddr: PublicKey,
-): Promise<[PublicKey, number]> => {
-  return await PublicKey.findProgramAddress(
+export const findListingTokenAccountPda = (listingAccAddr: PublicKey) => {
+  return PublicKey.findProgramAddressSync(
     [Buffer.from(LISTING_ITEM_PREFIX), listingAccAddr.toBuffer()],
     MARKET_PROGRAM_ID,
   );
 };
 
-export const findListingAuthAccountPda = async (
-  listingAccAddr: PublicKey,
-): Promise<[PublicKey, number]> => {
-  return await PublicKey.findProgramAddress(
+export const findListingAuthAccountPda = (listingAccAddr: PublicKey) => {
+  return PublicKey.findProgramAddressSync(
     [Buffer.from(LISTING_AUTH_PREFIX), listingAccAddr.toBuffer()],
     MARKET_PROGRAM_ID,
   );
 };
 
-export const findBidAccountPda = async (
+export const findBidAccountPda = (
   listingAccAddr: PublicKey,
   buyerWallet: PublicKey,
   bidId: number,
-): Promise<[PublicKey, number]> => {
+) => {
   const offerIdBytes = new Uint8Array(1);
   offerIdBytes[0] = bidId;
 
-  return await PublicKey.findProgramAddress(
+  return PublicKey.findProgramAddressSync(
     [
       Buffer.from(BID_PREFIX),
       listingAccAddr.toBuffer(),

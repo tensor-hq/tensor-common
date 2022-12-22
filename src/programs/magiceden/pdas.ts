@@ -2,10 +2,8 @@ import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import { ME_AH_ADDRESS, ME_PROGRAM } from './shared';
 
-export const generateMEDepositPda = (
-  owner: string,
-): Promise<[PublicKey, number]> => {
-  return PublicKey.findProgramAddress(
+export const generateMEDepositPda = (owner: string) => {
+  return PublicKey.findProgramAddressSync(
     [
       Buffer.from('m2'),
       new PublicKey(ME_AH_ADDRESS).toBytes(),
@@ -15,11 +13,8 @@ export const generateMEDepositPda = (
   );
 };
 
-export const generateMEBidPda = (
-  owner: string,
-  mint: string,
-): Promise<[PublicKey, number]> => {
-  return PublicKey.findProgramAddress(
+export const generateMEBidPda = (owner: string, mint: string) => {
+  return PublicKey.findProgramAddressSync(
     [
       Buffer.from('m2'),
       new PublicKey(owner).toBytes(),
@@ -30,16 +25,13 @@ export const generateMEBidPda = (
   );
 };
 
-export const generateMEListingPda = async (
-  owner: string,
-  mint: string,
-): Promise<[PublicKey, number]> => {
+export const generateMEListingPda = async (owner: string, mint: string) => {
   const tokenAcc = await getAssociatedTokenAddress(
     new PublicKey(mint),
     new PublicKey(owner),
   );
 
-  return PublicKey.findProgramAddress(
+  return PublicKey.findProgramAddressSync(
     [
       Buffer.from('m2'),
       new PublicKey(owner).toBytes(),
