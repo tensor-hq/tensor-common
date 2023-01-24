@@ -20,6 +20,7 @@
 node_modules/
 npm-debug.*
 dist/
+.yarn/
 
 # IDEs
 .idea/
