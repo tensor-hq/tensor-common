@@ -11,35 +11,35 @@ export const getActiveListingRank = (
   ranks: RarityRanks,
 ): number | null => {
   switch (sortBy) {
-    case ActiveListingsSortBy.RankHRTTAsc:
-    case ActiveListingsSortBy.RankHRTTDesc:
-      return getRarityRank(RaritySystem.HRTT, ranks);
+    case ActiveListingsSortBy.RankHrttAsc:
+    case ActiveListingsSortBy.RankHrttDesc:
+      return getRarityRank(RaritySystem.Hrtt, ranks);
     case ActiveListingsSortBy.RankStatAsc:
     case ActiveListingsSortBy.RankStatDesc:
       return getRarityRank(RaritySystem.Stat, ranks);
     case ActiveListingsSortBy.RankTeamAsc:
     case ActiveListingsSortBy.RankTeamDesc:
       return getRarityRank(RaritySystem.Team, ranks);
-    case ActiveListingsSortBy.RankTNAsc:
-    case ActiveListingsSortBy.RankTNDesc:
-      return getRarityRank(RaritySystem.TN, ranks);
+    case ActiveListingsSortBy.RankTnAsc:
+    case ActiveListingsSortBy.RankTnDesc:
+      return getRarityRank(RaritySystem.Tn, ranks);
   }
 };
 
 const getSortSign = (sortBy: ActiveListingsSortBy): 1 | -1 => {
   switch (sortBy) {
     case ActiveListingsSortBy.PriceAsc:
-    case ActiveListingsSortBy.RankHRTTAsc:
+    case ActiveListingsSortBy.RankHrttAsc:
     case ActiveListingsSortBy.RankStatAsc:
     case ActiveListingsSortBy.RankTeamAsc:
-    case ActiveListingsSortBy.RankTNAsc:
+    case ActiveListingsSortBy.RankTnAsc:
       return 1;
     case ActiveListingsSortBy.PriceDesc:
     case ActiveListingsSortBy.ListedDesc:
-    case ActiveListingsSortBy.RankHRTTDesc:
+    case ActiveListingsSortBy.RankHrttDesc:
     case ActiveListingsSortBy.RankStatDesc:
     case ActiveListingsSortBy.RankTeamDesc:
-    case ActiveListingsSortBy.RankTNDesc:
+    case ActiveListingsSortBy.RankTnDesc:
       return -1;
   }
 };

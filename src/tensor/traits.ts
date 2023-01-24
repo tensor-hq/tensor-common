@@ -6,13 +6,13 @@ export const getRarityRank = (
   ranks: RarityRanks,
 ): number | null => {
   switch (system) {
-    case RaritySystem.HRTT:
+    case RaritySystem.Hrtt:
       return ranks.rarityRankHR ?? ranks.rarityRankTT ?? null;
     case RaritySystem.Stat:
       return ranks.rarityRankStat ?? ranks.rarityRankTTStat ?? null;
     case RaritySystem.Team:
       return ranks.rarityRankTeam ?? null;
-    case RaritySystem.TN:
+    case RaritySystem.Tn:
       return ranks.rarityRankTN ?? null;
   }
 };
