@@ -12,7 +12,7 @@ import {
   SUBSCRIPTION_PREFIX,
   SubscriptionType,
 } from './state';
-import { isNil } from 'lodash';
+import { isNullLike } from '../../utils';
 
 export const fetchYawwwListingAcc = async (
   connection: Connection,
@@ -105,7 +105,7 @@ export const findYawwwBidAcc = async (
     latestBidId = bidId;
   }
 
-  if (type === 'latest' && isNil(latestBidId)) {
+  if (type === 'latest' && isNullLike(latestBidId)) {
     throw new Error('no active bid accs');
   }
 
