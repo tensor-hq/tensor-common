@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.1.81",
+  "version": "0.2.0",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@types/big.js": "^6.1.5",
     "@types/bn.js": "^5.1.0",
+    "npm": "^9.4.0",
     "prettier": "^2.7.1",
     "ts-node": "^10.9.1"
   }
