@@ -3,10 +3,10 @@
 // NB: Make sure keys are CamelCased vs CAMELCased.
 // This is so it aligns with the generated graphql enum keys to make life easier.
 export enum RaritySystem {
-  Hrtt = 'HRTT',
+  Hrtt = 'Hrtt',
   Stat = 'Stat',
   Team = 'Team',
-  Tn = 'TN',
+  Tn = 'Tn',
 }
 
 export type RarityRanks = {
@@ -43,12 +43,12 @@ export enum ActiveListingsSortBy {
   PriceAsc = 'PriceAsc',
   PriceDesc = 'PriceDesc',
   ListedDesc = 'ListedDesc',
-  RankHrttAsc = 'RankHRTTAsc',
-  RankHrttDesc = 'RankHRTTDesc',
+  RankHrttAsc = 'RankHrttAsc',
+  RankHrttDesc = 'RankHrttDesc',
   RankStatAsc = 'RankStatAsc',
   RankStatDesc = 'RankStatDesc',
   RankTeamAsc = 'RankTeamAsc',
   RankTeamDesc = 'RankTeamDesc',
-  RankTnAsc = 'RankTNAsc',
-  RankTnDesc = 'RankTNDesc',
+  RankTnAsc = 'RankTnAsc',
+  RankTnDesc = 'RankTnDesc',
 }
