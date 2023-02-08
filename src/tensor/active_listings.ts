@@ -26,7 +26,7 @@ export const getActiveListingRank = (
   }
 };
 
-const getSortSign = (sortBy: ActiveListingsSortBy): 1 | -1 => {
+export const getSortSign = (sortBy: ActiveListingsSortBy): 1 | -1 => {
   switch (sortBy) {
     case ActiveListingsSortBy.PriceAsc:
     case ActiveListingsSortBy.LastSaleAsc:
@@ -68,6 +68,8 @@ export const makeActiveListingSortFn = (
           sortNumberOrBig(
             a.grossAmount ? new Big(a.grossAmount) : null,
             b.grossAmount ? new Big(b.grossAmount) : null,
+            //(!) sync with the front-end
+            sortBy !== ActiveListingsSortBy.PriceAsc,
           )
         );
       case ActiveListingsSortBy.LastSaleAsc:
@@ -77,6 +79,8 @@ export const makeActiveListingSortFn = (
           sortNumberOrBig(
             a.lastSale ? new Big(a.lastSale) : null,
             b.lastSale ? new Big(b.lastSale) : null,
+            //(!) sync with the front-end
+            sortBy !== ActiveListingsSortBy.LastSaleAsc,
           )
         );
       case ActiveListingsSortBy.ListedDesc:
