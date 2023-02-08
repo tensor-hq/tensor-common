@@ -83,3 +83,63 @@ export const matchesTraitFilter = (
     return matched;
   });
 };
+
+// Copied from Prisma.JsonValue.
+type JsonObject = { [Key in string]?: JsonValue };
+interface JsonArray extends Array<JsonValue> {}
+type JsonValue = string | number | boolean | JsonObject | JsonArray | null;
+
+export const normalizeMintTraits = (
+  attrs: Attribute[] | JsonValue,
+): Attribute[] | null => {
+  // --------------------------------------- normalize trait data
+  if (
+    attrs === null ||
+    typeof attrs === 'number' ||
+    typeof attrs === 'string' ||
+    typeof attrs === 'boolean'
+  ) {
+    return null;
+  }
+
+  // For some collections (rarible), attributes is an object with {traitType: value}.
+  const attrsArr = Array.isArray(attrs)
+    ? attrs
+    : Object.entries(attrs).map(([trait_type, value]) => ({
+        trait_type,
+        value,
+      }));
+
+  // Can't make this an object since mints may have duplicate
+  // trait types.
+  const traits: Attribute[] = [];
+  for (const attr of attrsArr) {
+    if (
+      attr === null ||
+      typeof attr === 'number' ||
+      typeof attr === 'string' ||
+      typeof attr === 'boolean'
+    ) {
+      continue;
+    }
+
+    if (!('value' in attr)) {
+      continue;
+    }
+
+    if (!('trait_type' in attr)) {
+      continue;
+    }
+
+    traits.push({
+      // Some collections (nftworlds) have attributes that only have a value type.
+      // We assign it to the "attribute" trait type.
+      trait_type: (attr['trait_type'] ?? 'attribute') as string,
+      // Some projects (SMB) have leading/trailing whitespace.
+      // This will also store nulls and undefines
+      value: normalizeTraitValue(`${attr['value']}`.trim()),
+    });
+  }
+
+  return traits;
+};
