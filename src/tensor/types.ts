@@ -42,6 +42,8 @@ export type CollectionTraitsActive = Record<
 export enum ActiveListingsSortBy {
   PriceAsc = 'PriceAsc',
   PriceDesc = 'PriceDesc',
+  LastSaleAsc = 'LastSaleAsc',
+  LastSaleDesc = 'LastSaleDesc',
   ListedDesc = 'ListedDesc',
   RankHrttAsc = 'RankHrttAsc',
   RankHrttDesc = 'RankHrttDesc',

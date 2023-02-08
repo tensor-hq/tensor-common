@@ -6,7 +6,7 @@ import { ActiveListingsSortBy, RarityRanks, RaritySystem } from './types';
 export const getActiveListingRank = (
   sortBy: Exclude<
     ActiveListingsSortBy,
-    'PriceAsc' | 'PriceDesc' | 'ListedDesc'
+    'PriceAsc' | 'PriceDesc' | 'ListedDesc' | 'LastSaleAsc' | 'LastSaleDesc'
   >,
   ranks: RarityRanks,
 ): number | null => {
@@ -29,12 +29,14 @@ export const getActiveListingRank = (
 const getSortSign = (sortBy: ActiveListingsSortBy): 1 | -1 => {
   switch (sortBy) {
     case ActiveListingsSortBy.PriceAsc:
+    case ActiveListingsSortBy.LastSaleAsc:
     case ActiveListingsSortBy.RankHrttAsc:
     case ActiveListingsSortBy.RankStatAsc:
     case ActiveListingsSortBy.RankTeamAsc:
     case ActiveListingsSortBy.RankTnAsc:
       return 1;
     case ActiveListingsSortBy.PriceDesc:
+    case ActiveListingsSortBy.LastSaleDesc:
     case ActiveListingsSortBy.ListedDesc:
     case ActiveListingsSortBy.RankHrttDesc:
     case ActiveListingsSortBy.RankStatDesc:
@@ -46,6 +48,7 @@ const getSortSign = (sortBy: ActiveListingsSortBy): 1 | -1 => {
 
 type ActiveListing = {
   grossAmount?: string | null;
+  lastSale?: string | null;
   ranks: RarityRanks;
   txAt: number;
 };
@@ -65,6 +68,15 @@ export const makeActiveListingSortFn = (
           sortNumberOrBig(
             a.grossAmount ? new Big(a.grossAmount) : null,
             b.grossAmount ? new Big(b.grossAmount) : null,
+          )
+        );
+      case ActiveListingsSortBy.LastSaleAsc:
+      case ActiveListingsSortBy.LastSaleDesc:
+        return (
+          sign *
+          sortNumberOrBig(
+            a.lastSale ? new Big(a.lastSale) : null,
+            b.lastSale ? new Big(b.lastSale) : null,
           )
         );
       case ActiveListingsSortBy.ListedDesc:
