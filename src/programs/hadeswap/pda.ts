@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { utils } from '@project-serum/anchor';
 import { HADESWAP_ADDR } from './constants';
-import { hadeswap } from '@tensor-hq/hadeswap-sdk-public';
+import { hadeswap } from 'hadeswap-sdk';
 
 export const findHSwapFeeVaultPda = (pair: PublicKey) => {
   return PublicKey.findProgramAddressSync(
