@@ -1,5 +1,8 @@
 export class TimeoutError extends Error {}
 
+/// Equivalent to Omit<Bob, "foo"> & {foo: string};
+export type Overwrite<T, NewT> = Omit<T, keyof NewT> & NewT;
+
 export const rejectAfterDelay = (ms: number) =>
   new Promise((_, reject) => {
     setTimeout(reject, ms, new TimeoutError(`timeout of ${ms}ms exceeded`));
