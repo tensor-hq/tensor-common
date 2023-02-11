@@ -29,8 +29,13 @@ export const settleAllWithTimeout = async <T>(
   return values;
 };
 
-export const isNullLike = <T>(v: T | null | undefined): v is null | undefined =>
+export type Maybe<T> = T | null | undefined;
+
+export const isNullLike = <T>(v: Maybe<T>): v is null | undefined =>
   v === null || v === undefined;
+
+export const filterNullLike = <T>(arr: Maybe<T>[]) =>
+  arr.filter((v): v is T => !isNullLike(v));
 
 /// Unflattens an object with keys:
 /// {abc: 1, 'foo.abc': 2, 'bar.abc': 2}
