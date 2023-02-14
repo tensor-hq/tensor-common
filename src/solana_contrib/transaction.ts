@@ -2,6 +2,7 @@ import {
   AddressLookupTableAccount,
   BlockhashWithExpiryBlockHeight,
   Commitment,
+  CompiledInstruction,
   ConfirmOptions,
   Connection,
   Context,
@@ -13,13 +14,14 @@ import {
   TransactionError,
   TransactionInstruction,
   TransactionMessage,
+  TransactionResponse,
   TransactionSignature,
   VersionedTransaction,
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
 import { waitMS } from '../time';
-import { settleAllWithTimeout } from '../utils';
+import { isNullLike, settleAllWithTimeout } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
 
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
@@ -512,4 +514,39 @@ export const serializeAnyVersionTx = (
   } else {
     throw new Error('unknown tx type');
   }
+};
+
+export const extractAllIxs = (
+  tx: TransactionResponse,
+  /// If passed, will filter for ixs w/ this program ID.
+  programId?: PublicKey,
+): {
+  rawIx: CompiledInstruction;
+  ixIdx: number;
+}[] => {
+  const message = tx.transaction.message;
+
+  let allIxs = [
+    // Top-level ixs.
+    ...message.instructions.map((rawIx, ixIdx) => ({
+      rawIx,
+      ixIdx,
+    })),
+    // Inner ixs (eg in CPI calls).
+    // TODO: do we need to filter out self-CPI subixs?
+    ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
+      instructions.map((rawIx) => ({ rawIx, ixIdx: index })),
+    ) ?? []),
+  ];
+
+  if (!isNullLike(programId)) {
+    const programIdIndex = message.accountKeys.findIndex((k) =>
+      k.equals(programId),
+    );
+    allIxs = allIxs.filter(
+      ({ rawIx }) => rawIx.programIdIndex === programIdIndex,
+    );
+  }
+
+  return allIxs;
 };
