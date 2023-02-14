@@ -101,13 +101,15 @@ export const parseAnchorEvents = <IDL extends Idl>(
 
 export const parseAnchorIxs = <IDL extends Idl>({
   coder,
-  eventParser,
   tx,
+  eventParser,
   programId,
 }: {
   coder: BorshCoder;
-  eventParser: EventParser;
   tx: TransactionResponse;
+  /// If provided, will try to parse events.
+  /// Do not initialize if there are no events defined!
+  eventParser?: EventParser;
   /// If passed, will only process ixs w/ this program ID.
   programId?: PublicKey;
 }): ParsedAnchorIx<IDL>[] => {
@@ -131,7 +133,7 @@ export const parseAnchorIxs = <IDL extends Idl>({
 
     // Events data.
 
-    const events = parseAnchorEvents<IDL>(eventParser, logs);
+    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
     ixs.push({ ixIdx, ix, events, formatted });
   });
 
