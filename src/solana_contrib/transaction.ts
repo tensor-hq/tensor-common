@@ -465,7 +465,11 @@ export const getLatestBlockhashMultConns = async ({
     );
   }
 
-  return blockhashes.sort((a, b) => b.context.slot - a.context.slot)[0].value;
+  // (!) Regression: sorting by slot is not enough: eg a stale blockhash RPC can still return a newer
+  // slot than the rest. lastValidBlockHeight should correspond 1:1.
+  return blockhashes.sort(
+    (a, b) => b.value.lastValidBlockHeight - a.value.lastValidBlockHeight,
+  )[0].value;
 };
 
 export const getLatestBlockHeight = async ({
