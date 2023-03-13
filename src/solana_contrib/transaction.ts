@@ -516,7 +516,19 @@ export const serializeAnyVersionTx = (
     //verify signatures = always false
     return Array.from(tx.serialize());
   } else {
-    throw new Error('unknown tx type');
+    // This is to handle weird wallet adapters that don't return Transaction/VersionedTransaction objects.
+    const unkTx = tx as any;
+    try {
+      return unkTx.serialize({ verifySignatures }).toJSON().data;
+    } catch (err) {
+      console.error(err);
+      try {
+        return Array.from(unkTx.serialize());
+      } catch (err) {
+        console.error(err);
+        throw new Error('unknown tx type');
+      }
+    }
   }
 };
 
