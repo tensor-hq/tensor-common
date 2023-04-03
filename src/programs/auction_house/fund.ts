@@ -1,17 +1,16 @@
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import BN from 'bn.js';
-import {
   AuctionHouse,
   createDepositInstruction,
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
-import { findAuctionHouseBuyerEscrowPda } from '@metaplex-foundation/js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import { findAuctionHouseBuyerEscrowPda } from '../../metaplex';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 
@@ -34,10 +33,8 @@ export const makeAHDepositWithdrawTx = async (
     auctionHouseKey,
   );
 
-  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
-    auctionHouseKey,
-    ownerKey,
-  );
+  const [escrowPaymentAccount, escrowPaymentBump] =
+    findAuctionHouseBuyerEscrowPda(auctionHouseKey, ownerKey);
 
   const ix =
     action === 'deposit'
@@ -54,7 +51,7 @@ export const makeAHDepositWithdrawTx = async (
           },
           {
             amount: amountLamports,
-            escrowPaymentBump: escrowPaymentAccount.bump,
+            escrowPaymentBump,
           },
         )
       : createWithdrawInstruction(
@@ -69,7 +66,7 @@ export const makeAHDepositWithdrawTx = async (
           },
           {
             amount: amountLamports,
-            escrowPaymentBump: escrowPaymentAccount.bump,
+            escrowPaymentBump,
           },
         );
 

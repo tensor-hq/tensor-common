@@ -5,28 +5,26 @@ deposit + buy + transfer
  */
 
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { getQuantityWithMantissa } from './shared';
-import BN from 'bn.js';
-import {
   AuctionHouse,
   createBuyInstruction,
   createDepositInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import {
   findAuctionHouseBuyerEscrowPda,
   findAuctionHouseTradeStatePda,
   findMetadataPda,
-  toBigNumber,
-} from '@metaplex-foundation/js';
+} from '../../metaplex';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
+import { getQuantityWithMantissa } from './shared';
 
 export const makeAHBidTx = async (
   connections: Array<Connection>,
@@ -58,20 +56,18 @@ export const makeAHBidTx = async (
   const largestTokenHolders = await connection.getTokenLargestAccounts(mintKey);
   const tokenAccountKey = largestTokenHolders.value[0].address;
 
-  const tradeState = await findAuctionHouseTradeStatePda(
+  const [tradeState, tradeStateBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     bidderKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(priceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    priceLamports,
+    tokenSizeAdjusted,
     tokenAccountKey,
   );
 
-  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
-    auctionHouseKey,
-    bidderKey,
-  );
+  const [escrowPaymentAccount, escrowPaymentAccountBump] =
+    findAuctionHouseBuyerEscrowPda(auctionHouseKey, bidderKey);
 
   const buyIx = createBuyInstruction(
     {
@@ -80,7 +76,7 @@ export const makeAHBidTx = async (
       authority: auctionHouseObj.authority,
       buyerTradeState: tradeState,
       escrowPaymentAccount,
-      metadata: await findMetadataPda(mintKey),
+      metadata: findMetadataPda(mintKey)[0],
       paymentAccount: bidderKey,
       tokenAccount: tokenAccountKey,
       transferAuthority: SystemProgram.programId, //as per OpenSea
@@ -89,9 +85,9 @@ export const makeAHBidTx = async (
     },
     {
       buyerPrice: priceLamports,
-      escrowPaymentBump: escrowPaymentAccount.bump,
+      escrowPaymentBump: escrowPaymentAccountBump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump: tradeState.bump,
+      tradeStateBump: tradeStateBump,
     },
   );
 
@@ -112,7 +108,7 @@ export const makeAHBidTx = async (
       },
       {
         amount: totalDepositLamports,
-        escrowPaymentBump: escrowPaymentAccount.bump,
+        escrowPaymentBump: escrowPaymentAccountBump,
       },
     );
 

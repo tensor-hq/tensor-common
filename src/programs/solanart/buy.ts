@@ -1,4 +1,3 @@
-import { Metaplex } from '@metaplex-foundation/js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   Connection,
@@ -7,6 +6,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
+import { fetchMetadataAcct } from '../../metaplex';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 import {
@@ -40,9 +40,6 @@ export const makeSolanartBuyTx = async (
       mint: mintAcc,
     });
 
-  const metaplex = new Metaplex(connection);
-  const nft = await metaplex.nfts().findByMint(mintAcc).run();
-
   const currTempTokenAcc = (
     await connection.getTokenLargestAccounts(mintAcc)
   ).value.find((r) => r.uiAmount === 1);
@@ -50,6 +47,8 @@ export const makeSolanartBuyTx = async (
   if (!currTempTokenAcc) {
     throw new Error(`cannot find current token account for ${tokenMint}`);
   }
+
+  const metadata = await fetchMetadataAcct(connection, mintAcc);
 
   const [escrowDataAcc] = findDataEscrowPda(mintAcc);
   const [royaltiesAcc] = findRoyaltiesPda(mintAcc, sellerAcc);
@@ -115,7 +114,7 @@ export const makeSolanartBuyTx = async (
     },
     /// 9. [] metadata account
     {
-      pubkey: nft.metadataAddress,
+      pubkey: metadata.address,
       isSigner: false,
       isWritable: false,
     },
@@ -142,14 +141,13 @@ export const makeSolanartBuyTx = async (
   ///  + `[writable]` Creator wallets (up to 5) - all creators
   ///
 
-  for (let i = 0; i < nft.creators.length; i++) {
-    const creator = nft.creators[i];
+  metadata.creators?.forEach((creator) => {
     instructionAccounts.push({
-      pubkey: new PublicKey(creator.address),
+      pubkey: creator.address,
       isSigner: false,
       isWritable: true,
     });
-  }
+  });
 
   const transactionInstruction = new TransactionInstruction({
     programId: SOLANART_PROGRAM_ID,

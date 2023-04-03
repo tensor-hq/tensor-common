@@ -13,26 +13,24 @@ the code basically checks if owner of token === wallet, if so it calls revoke, e
  */
 
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { getQuantityWithMantissa } from './shared';
-import BN from 'bn.js';
-import {
   AuctionHouse,
   createCancelInstruction,
   createWithdrawInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import {
   findAuctionHouseBuyerEscrowPda,
   findAuctionHouseTradeStatePda,
-  toBigNumber,
-} from '@metaplex-foundation/js';
+} from '../../metaplex';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
+import { getQuantityWithMantissa } from './shared';
 
 export const makeAHCancelBidTx = async (
   connections: Array<Connection>,
@@ -66,20 +64,18 @@ export const makeAHCancelBidTx = async (
   const largestTokenHolders = await connection.getTokenLargestAccounts(mintKey);
   const tokenAccountKey = largestTokenHolders.value[0].address;
 
-  const tradeState = await findAuctionHouseTradeStatePda(
+  const [tradeState] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(priceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    priceLamports,
+    tokenSizeAdjusted,
     tokenAccountKey,
   );
 
-  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
-    auctionHouseKey,
-    ownerKey,
-  );
+  const [escrowPaymentAccount, escrowPaymentBump] =
+    findAuctionHouseBuyerEscrowPda(auctionHouseKey, ownerKey);
 
   const cancelIx = createCancelInstruction(
     {
@@ -108,7 +104,7 @@ export const makeAHCancelBidTx = async (
       },
       {
         amount: totalWithdrawLamports,
-        escrowPaymentBump: escrowPaymentAccount.bump,
+        escrowPaymentBump,
       },
     );
 

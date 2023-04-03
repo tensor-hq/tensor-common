@@ -24,6 +24,8 @@ import { waitMS } from '../time';
 import { isNullLike, settleAllWithTimeout } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
 
+const BLOCK_TIME_MS = 400;
+
 const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   commitment: 'confirmed',
   //even if we're skipping preflight, this should be set to the same level as committment above
@@ -33,6 +35,7 @@ const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
 };
 const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_RETRY_MS = 2000;
+const MAX_WAIT_BLOCKHEIGHT_MS = 10 * 1000;
 
 export type ConfirmedTx = {
   txSig: TransactionSignature;
@@ -266,12 +269,16 @@ export class RetryTxSender {
       connections: [this.connection, ...this.additionalConnections],
     });
     while (!this.done && currentHeight < lastValidBlockHeight) {
+      const waitMs = Math.min(
+        (lastValidBlockHeight - currentHeight) * BLOCK_TIME_MS,
+        MAX_WAIT_BLOCKHEIGHT_MS,
+      );
       this.logger?.debug(
         `current height is ${
           lastValidBlockHeight - currentHeight
-        } below lastValidBlockHeight, continuing`,
+        } below lastValidBlockHeight, waiting ${waitMs}ms before checking again...`,
       );
-      await waitMS(this.retrySleep);
+      await waitMS(waitMs);
       currentHeight = await getLatestBlockHeight({
         connections: [this.connection, ...this.additionalConnections],
       });
@@ -293,7 +300,7 @@ export class RetryTxSender {
     lastValidBlockHeight?: number,
   ): Promise<T | null> {
     let timeoutId: ReturnType<typeof setTimeout>;
-    const timeoutPromise: Promise<null> = new Promise((resolve) => {
+    const timeoutPromise = new Promise<null>((resolve) => {
       timeoutId = setTimeout(() => {
         this.logger?.warn(`[${txSig}] timeout waiting for sig`);
         resolve(null);
@@ -344,23 +351,15 @@ export class RetryTxSender {
 //(!) this should be the only function across our code used to build txs
 // reason: we want to control how blockchash is constructed to minimize tx failures
 export const buildTx = async ({
-  connections,
   feePayer,
   instructions,
   additionalSigners,
-  commitment = 'confirmed',
-  blockhashRetries = 3,
-  blockhashTimeoutMs = 2000,
+  ...blockhashArgs
 }: {
-  //(!) ideally this should be the same RPC node that will then try to send/confirm the tx
-  connections: Array<Connection>;
   feePayer: PublicKey;
   instructions: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
-  commitment?: Commitment;
-  blockhashRetries?: number;
-  blockhashTimeoutMs?: number;
-}): Promise<TxWithHeight> => {
+} & GetRpcMultipleConnsArgs): Promise<TxWithHeight> => {
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
   }
@@ -369,12 +368,7 @@ export const buildTx = async ({
   tx.add(...instructions);
   tx.feePayer = feePayer;
 
-  const latestBlockhash = await getLatestBlockhashMultConns({
-    connections,
-    commitment,
-    blockhashRetries,
-    blockhashTimeoutMs,
-  });
+  const latestBlockhash = await getLatestBlockhashMultConns(blockhashArgs);
   tx.recentBlockhash = latestBlockhash.blockhash;
   const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
 
@@ -390,35 +384,22 @@ export const buildTx = async ({
 };
 
 export const buildTxV0 = async ({
-  connections,
   feePayer,
   instructions,
   additionalSigners,
-  commitment = 'confirmed',
-  blockhashRetries = 3,
-  blockhashTimeoutMs = 2000,
   addressLookupTableAccs,
+  ...blockhashArgs
 }: {
-  //(!) ideally this should be the same RPC node that will then try to send/confirm the tx
-  connections: Array<Connection>;
   feePayer: PublicKey;
   instructions: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
-  commitment?: Commitment;
-  blockhashRetries?: number;
-  blockhashTimeoutMs?: number;
   addressLookupTableAccs: AddressLookupTableAccount[];
-}): Promise<TxV0WithHeight> => {
+} & GetRpcMultipleConnsArgs): Promise<TxV0WithHeight> => {
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
   }
 
-  const latestBlockhash = await getLatestBlockhashMultConns({
-    connections,
-    commitment,
-    blockhashRetries,
-    blockhashTimeoutMs,
-  });
+  const latestBlockhash = await getLatestBlockhashMultConns(blockhashArgs);
   const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
 
   const msg = new TransactionMessage({
@@ -435,28 +416,36 @@ export const buildTxV0 = async ({
   return { tx, lastValidBlockHeight };
 };
 
+type GetRpcMultipleConnsArgs = {
+  ///(!) ideally this should be the same RPC node that will then try to send/confirm the tx
+  connections: Array<Connection>;
+  commitment?: Commitment;
+  /// Exp backoff params for blockhash.
+  maxRetries?: number;
+  startTimeoutMs?: number;
+  maxTimeoutMs?: number;
+};
+
 export const getLatestBlockhashMultConns = async ({
   connections,
   commitment = 'confirmed',
-  blockhashRetries = 3,
-  blockhashTimeoutMs = 2000,
-}: {
-  connections: Array<Connection>;
-  commitment?: Commitment;
-  blockhashRetries?: number;
-  blockhashTimeoutMs?: number;
-}): Promise<BlockhashWithExpiryBlockHeight> => {
+  maxRetries = 5,
+  startTimeoutMs = 100,
+  maxTimeoutMs = 2000,
+}: GetRpcMultipleConnsArgs): Promise<BlockhashWithExpiryBlockHeight> => {
   let retries = 0;
+  let timeoutMs = startTimeoutMs;
   let blockhashes: RpcResponseAndContext<BlockhashWithExpiryBlockHeight>[] = [];
 
-  while (blockhashes.length < 1 && retries < blockhashRetries) {
+  while (blockhashes.length < 1 && retries < maxRetries) {
     //poll blockhashes from multiple providers, then take the one from RPC with latest slot
     //as per advice here https://jstarry.notion.site/Transaction-confirmation-d5b8f4e09b9c4a70a1f263f82307d7ce
     blockhashes = await settleAllWithTimeout(
       connections.map((c) => c.getLatestBlockhashAndContext(commitment)),
-      blockhashTimeoutMs,
+      timeoutMs,
     );
     retries++;
+    timeoutMs = Math.min(timeoutMs * 2, maxTimeoutMs);
   }
 
   if (!blockhashes.length) {
@@ -475,15 +464,12 @@ export const getLatestBlockhashMultConns = async ({
 export const getLatestBlockHeight = async ({
   connections,
   commitment = 'confirmed',
-  maxRetries = 3,
-  timeoutMs = 2000,
-}: {
-  connections: Connection[];
-  commitment?: Commitment;
-  maxRetries?: number;
-  timeoutMs?: number;
-}) => {
+  maxRetries = 5,
+  startTimeoutMs = 100,
+  maxTimeoutMs = 2000,
+}: GetRpcMultipleConnsArgs) => {
   let retries = 0;
+  let timeoutMs = startTimeoutMs;
   let heights: number[] = [];
 
   while (heights.length < 1 && retries < maxRetries) {
@@ -494,6 +480,7 @@ export const getLatestBlockHeight = async ({
       timeoutMs,
     );
     retries++;
+    timeoutMs = Math.min(timeoutMs * 2, maxTimeoutMs);
   }
 
   if (!heights.length) {

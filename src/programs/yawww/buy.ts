@@ -11,7 +11,6 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { Metaplex } from '@metaplex-foundation/js';
 import { serialize } from 'borsh';
 import {
   BuyListingInstructionData,
@@ -27,6 +26,7 @@ import {
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 import BN from 'bn.js';
+import { fetchMetadataAcct } from '../../metaplex';
 
 export const makeYawwwBuyTx = async (
   connections: Array<Connection>,
@@ -74,11 +74,7 @@ export const makeYawwwBuyTx = async (
     ),
   );
 
-  const metaplex = new Metaplex(connection);
-  const nft = await metaplex
-    .nfts()
-    .findByMint(new PublicKey(listingAcc.item_mint))
-    .run();
+  const metadata = await fetchMetadataAcct(connection, listingAcc.item_mint);
 
   const instructionAccounts = [
     ///   0. `[signer]` Buyer's wallet account
@@ -132,7 +128,7 @@ export const makeYawwwBuyTx = async (
     },
     ///   8. `[]` Item metadata
     {
-      pubkey: nft.metadataAddress,
+      pubkey: metadata.address,
       isSigner: false,
       isWritable: false,
     },
@@ -164,16 +160,15 @@ export const makeYawwwBuyTx = async (
   ///  + `[writable]` Creator wallets (up to 5) - ONLY creators with share > 0 (no candy machine creators given)
   ///
 
-  for (let i = 0; i < nft.creators.length; i++) {
-    const creator = nft.creators[i];
+  metadata.creators?.forEach((creator) => {
     if (creator.share > 0) {
       instructionAccounts.push({
-        pubkey: new PublicKey(creator.address),
+        pubkey: creator.address,
         isSigner: false,
         isWritable: true,
       });
     }
-  }
+  });
 
   ///  + `[writable]` optional wallet - ONLY if optional wallet was given in making the listing
   if (listingAcc.optional_wallet) {

@@ -17,14 +17,13 @@ import {
   createSellInstruction,
 } from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { buildTx } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 import {
   findAuctionHouseProgramAsSignerPda,
   findAuctionHouseTradeStatePda,
   findMetadataPda,
-  toBigNumber,
-} from '@metaplex-foundation/js';
-import { buildTx } from '../../solana_contrib';
-import { TxWithHeight } from '../../solana_contrib/types';
+} from '../../metaplex';
 
 export const makeAHListTx = async (
   connections: Array<Connection>,
@@ -53,25 +52,26 @@ export const makeAHListTx = async (
 
   const tokenAccountKey = await getAssociatedTokenAddress(mintKey, ownerKey);
 
-  const programAsSigner = await findAuctionHouseProgramAsSignerPda();
+  const [programAsSigner, programAsSignerBump] =
+    findAuctionHouseProgramAsSignerPda();
 
-  const tradeState = await findAuctionHouseTradeStatePda(
+  const [tradeState, tradeStateBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(priceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    priceLamports,
+    tokenSizeAdjusted,
     tokenAccountKey,
   );
 
-  const freeTradeState = await findAuctionHouseTradeStatePda(
+  const [freeTradeState, freeTradeStateBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     ownerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(0),
-    toBigNumber(tokenSizeAdjusted),
+    new BN(0),
+    tokenSizeAdjusted,
     tokenAccountKey,
   );
 
@@ -82,17 +82,17 @@ export const makeAHListTx = async (
       auctionHouse: auctionHouseKey,
       auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
       freeSellerTradeState: freeTradeState,
-      metadata: await findMetadataPda(mintKey),
+      metadata: findMetadataPda(mintKey)[0],
       programAsSigner,
       sellerTradeState: tradeState,
       tokenAccount: tokenAccountKey,
     },
     {
       buyerPrice: priceLamports,
-      freeTradeStateBump: freeTradeState.bump,
-      programAsSignerBump: programAsSigner.bump,
+      freeTradeStateBump,
+      programAsSignerBump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump: tradeState.bump,
+      tradeStateBump,
     },
   );
 
