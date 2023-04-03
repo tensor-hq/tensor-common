@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.8.3",
+  "version": "0.9.5",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "test": "echo 'no tests!'",
-    "pub": "rm -rf ./dist && yarn tsc && yarn npm publish",
+    "build": "rm -rf ./dist && yarn tsc",
+    "pub": "yarn build && yarn npm publish",
     "push": "git push --atomic",
     "pubpush": "yarn pub && yarn push"
   },
@@ -19,16 +20,16 @@
     "@tensor-hq:registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@metaplex-foundation/js": "0.14.0",
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
-    "@metaplex-foundation/mpl-token-metadata": "^2.7.0",
+    "@metaplex-foundation/mpl-token-auth-rules": "^1.2.0",
+    "@metaplex-foundation/mpl-token-metadata": "^2.8.1",
     "@solana/spl-token": "^0.3.6",
     "@solana/web3.js": "^1.73.0",
     "axios": "^0.27.2",
     "big.js": "^6.2.1",
     "bn.js": "^5.2.1",
     "bs58": "^5.0.0",
-    "hadeswap-sdk": "^0.8.0",
+    "hadeswap-sdk": "^0.8.24",
     "typescript": "^4.7.4"
   },
   "devDependencies": {

@@ -1,17 +1,19 @@
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import {
   Connection,
   Keypair,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
-  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { fetchMetadataAcct } from '../../metaplex';
+import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
+import { TxWithHeight } from '../../solana_contrib/types';
 import {
   fetchYawwwBidAcc,
   findListingAuthAccountPda,
@@ -19,14 +21,11 @@ import {
 } from './shared';
 import {
   InstructionData,
+  MarketInstructionNumber,
   MARKET_FEES_WALLET,
   MARKET_PROGRAM_ID,
   MARKET_SCHEMA,
-  MarketInstructionNumber,
 } from './state';
-import { Metaplex } from '@metaplex-foundation/js';
-import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
-import { TxWithHeight } from '../../solana_contrib/types';
 
 export const makeYawwwAcceptBidTx = async (
   connections: Array<Connection>,
@@ -64,11 +63,10 @@ export const makeYawwwAcceptBidTx = async (
     ),
   );
 
-  const metaplex = new Metaplex(connection);
-  const nft = await metaplex
-    .nfts()
-    .findByMint(new PublicKey(bidAcc.listingAcc.item_mint))
-    .run();
+  const metadata = await fetchMetadataAcct(
+    connection,
+    bidAcc.listingAcc.item_mint,
+  );
 
   const instructionAccounts = [
     ///   0. `[signer]` Listing owner's wallet account
@@ -127,7 +125,7 @@ export const makeYawwwAcceptBidTx = async (
     },
     ///   9. `[]` Item metadata
     {
-      pubkey: nft.metadataAddress,
+      pubkey: metadata.address,
       isSigner: false,
       isWritable: false,
     },
@@ -159,16 +157,15 @@ export const makeYawwwAcceptBidTx = async (
   ///  CREATORS ALWAYS FROM CHAIN, NOT JSON metadata. ALSO ORDER NEEDS TO BE SAME
   ///  + `[writable]` Creator wallets (up to 5) - ONLY creators with share > 0 (no candy machine creators given)
 
-  for (let i = 0; i < nft.creators.length; i++) {
-    const creator = nft.creators[i];
+  metadata.creators?.forEach((creator) => {
     if (creator.share > 0) {
       instructionAccounts.push({
-        pubkey: new PublicKey(creator.address),
+        pubkey: creator.address,
         isSigner: false,
         isWritable: true,
       });
     }
-  }
+  });
 
   ///
   ///  + `[writable]` optional wallet - ONLY if optional wallet was given in making the listing

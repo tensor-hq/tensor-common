@@ -5,14 +5,6 @@ deposit + buy + transfer + withdraw from fee + transfer + transfer + exec sale
  */
 
 import {
-  findAuctionHouseBuyerEscrowPda,
-  findAuctionHouseProgramAsSignerPda,
-  findAuctionHouseTradeStatePda,
-  findMetadataPda,
-  Pda,
-  toBigNumber,
-} from '@metaplex-foundation/js';
-import {
   AuctionHouse,
   createBuyInstruction,
   createDepositInstruction,
@@ -37,6 +29,12 @@ import BN from 'bn.js';
 import { getQuantityWithMantissa } from './shared';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
+import {
+  findAuctionHouseBuyerEscrowPda,
+  findAuctionHouseProgramAsSignerPda,
+  findAuctionHouseTradeStatePda,
+  findMetadataPda,
+} from '../../metaplex';
 
 export const makeAHBuyTx = async (
   connections: Array<Connection>,
@@ -50,7 +48,7 @@ export const makeAHBuyTx = async (
   TxWithHeight & {
     // Include these for later inspection if needed.
     auctionHouseObj: AuctionHouse;
-    sellerTradeState: Pda;
+    sellerTradeState: PublicKey;
   }
 > => {
   const connection = connections[0];
@@ -83,50 +81,43 @@ export const makeAHBuyTx = async (
   const sellerTokenAcc = await getAccount(connection, sellerTokenAccountKey);
   const sellerKey = new PublicKey(sellerTokenAcc.owner);
 
-  const programAsSigner = findAuctionHouseProgramAsSignerPda(ahProgramId);
-  const programAsSignerBump = programAsSigner.bump;
+  const [programAsSigner, programAsSignerBump] =
+    findAuctionHouseProgramAsSignerPda(ahProgramId);
 
-  const sellerTradeState = findAuctionHouseTradeStatePda(
+  const [sellerTradeState] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     sellerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(priceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    priceLamports,
+    tokenSizeAdjusted,
     sellerTokenAccountKey,
   );
 
-  const buyerTradeState = findAuctionHouseTradeStatePda(
+  const [buyerTradeState, buyerTradeBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     buyerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(priceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    priceLamports,
+    tokenSizeAdjusted,
     sellerTokenAccountKey, //yes should be seller's the one containing the nft
   );
-  const buyerTradeBump = buyerTradeState.bump;
 
-  const freeTradeState = findAuctionHouseTradeStatePda(
+  const [freeTradeState, freeTradeBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     sellerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(0),
-    toBigNumber(tokenSizeAdjusted),
+    new BN(0),
+    tokenSizeAdjusted,
     sellerTokenAccountKey,
     ahProgramId,
   );
-  const freeTradeBump = freeTradeState.bump;
 
-  const escrowPaymentAccount = findAuctionHouseBuyerEscrowPda(
-    auctionHouseKey,
-    buyerKey,
-    ahProgramId,
-  );
-  const escrowPaymentBump = escrowPaymentAccount.bump;
-
-  const metadata = findMetadataPda(mintKey);
+  const [escrowPaymentAccount, escrowPaymentBump] =
+    findAuctionHouseBuyerEscrowPda(auctionHouseKey, buyerKey, ahProgramId);
+  const [metadata] = findMetadataPda(mintKey);
 
   const depositIx = createDepositInstruction(
     {

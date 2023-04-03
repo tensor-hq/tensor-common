@@ -5,33 +5,31 @@ sell + transfer + withdraw from fee + transfer + transfer + ata create + execute
  */
 
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { getQuantityWithMantissa } from './shared';
-import BN from 'bn.js';
-import {
   AuctionHouse,
   createExecuteSaleInstruction,
   createSellInstruction,
-} from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+} from '@metaplex-foundation/mpl-auction-house';
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import {
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import {
   findAuctionHouseBuyerEscrowPda,
   findAuctionHouseProgramAsSignerPda,
   findAuctionHouseTradeStatePda,
   findMetadataPda,
-  toBigNumber,
-} from '@metaplex-foundation/js';
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+} from '../../metaplex';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
+import { getQuantityWithMantissa } from './shared';
 
 export const makeAHAcceptBidTx = async (
   connections: Array<Connection>,
@@ -69,44 +67,44 @@ export const makeAHAcceptBidTx = async (
     buyerKey,
   );
 
-  const programAsSigner = await findAuctionHouseProgramAsSignerPda();
+  const [programAsSigner, programAsSignerBump] =
+    findAuctionHouseProgramAsSignerPda();
 
-  const sellerTradeState = await findAuctionHouseTradeStatePda(
-    auctionHouseKey,
-    sellerKey,
-    auctionHouseObj.treasuryMint,
-    mintKey,
-    toBigNumber(newPriceLamports),
-    toBigNumber(tokenSizeAdjusted),
-    sellerTokenAccountKey,
-  );
+  const [sellerTradeState, sellerTradeStateBump] =
+    findAuctionHouseTradeStatePda(
+      auctionHouseKey,
+      sellerKey,
+      auctionHouseObj.treasuryMint,
+      mintKey,
+      newPriceLamports,
+      tokenSizeAdjusted,
+      sellerTokenAccountKey,
+    );
 
-  const buyerTradeState = await findAuctionHouseTradeStatePda(
+  const [buyerTradeState, buyerTradeStateBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     buyerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(newPriceLamports),
-    toBigNumber(tokenSizeAdjusted),
+    newPriceLamports,
+    tokenSizeAdjusted,
     sellerTokenAccountKey, //yes should be seller's the one containing the nft
   );
 
-  const freeTradeState = await findAuctionHouseTradeStatePda(
+  const [freeTradeState, freeTradeStateBump] = findAuctionHouseTradeStatePda(
     auctionHouseKey,
     sellerKey,
     auctionHouseObj.treasuryMint,
     mintKey,
-    toBigNumber(0),
-    toBigNumber(tokenSizeAdjusted),
+    new BN(0),
+    tokenSizeAdjusted,
     sellerTokenAccountKey,
   );
 
-  const escrowPaymentAccount = await findAuctionHouseBuyerEscrowPda(
-    auctionHouseKey,
-    buyerKey,
-  );
+  const [escrowPaymentAccount, escrowPaymentAccountBump] =
+    findAuctionHouseBuyerEscrowPda(auctionHouseKey, buyerKey);
 
-  const metadata = await findMetadataPda(mintKey);
+  const [metadata] = findMetadataPda(mintKey);
 
   const sellIx = createSellInstruction(
     {
@@ -122,10 +120,10 @@ export const makeAHAcceptBidTx = async (
     },
     {
       buyerPrice: newPriceLamports,
-      freeTradeStateBump: freeTradeState.bump,
-      programAsSignerBump: programAsSigner.bump,
+      freeTradeStateBump: freeTradeStateBump,
+      programAsSignerBump: programAsSignerBump,
       tokenSize: tokenSizeAdjusted,
-      tradeStateBump: sellerTradeState.bump,
+      tradeStateBump: sellerTradeStateBump,
     },
   );
 
@@ -158,9 +156,9 @@ export const makeAHAcceptBidTx = async (
     },
     {
       buyerPrice: newPriceLamports,
-      escrowPaymentBump: escrowPaymentAccount.bump,
-      freeTradeStateBump: freeTradeState.bump,
-      programAsSignerBump: programAsSigner.bump,
+      escrowPaymentBump: escrowPaymentAccountBump,
+      freeTradeStateBump: freeTradeStateBump,
+      programAsSignerBump: programAsSignerBump,
       tokenSize: tokenSizeAdjusted,
     },
   );
