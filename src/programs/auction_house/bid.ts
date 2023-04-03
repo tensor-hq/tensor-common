@@ -8,7 +8,7 @@ import {
   AuctionHouse,
   createBuyInstruction,
   createDepositInstruction,
-} from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+} from '@metaplex-foundation/mpl-auction-house';
 import {
   Connection,
   Keypair,

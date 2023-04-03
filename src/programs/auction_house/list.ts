@@ -15,7 +15,7 @@ import BN from 'bn.js';
 import {
   AuctionHouse,
   createSellInstruction,
-} from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+} from '@metaplex-foundation/mpl-auction-house';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';

@@ -8,7 +8,7 @@ import {
   AuctionHouse,
   createExecuteSaleInstruction,
   createSellInstruction,
-} from '@metaplex-foundation/mpl-auction-house/dist/src/generated';
+} from '@metaplex-foundation/mpl-auction-house';
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import {
   createAssociatedTokenAccountInstruction,
