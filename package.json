@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Common methods to be shared between Tensor frontend and backend repos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
+    "@metaplex-foundation/mpl-token-auth-rules": "^1.2.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.7.0",
     "@solana/spl-token": "^0.3.6",
     "@solana/web3.js": "^1.73.0",
