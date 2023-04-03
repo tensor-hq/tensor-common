@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "test": "echo 'no tests!'",
-    "pub": "rm -rf ./dist && yarn tsc && yarn npm publish",
+    "build": "rm -rf ./dist && yarn tsc",
+    "pub": "yarn build && yarn npm publish",
     "push": "git push --atomic",
     "pubpush": "yarn pub && yarn push"
   },
