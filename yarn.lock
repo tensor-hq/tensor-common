@@ -685,21 +685,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metaplex-foundation/mpl-token-metadata@npm:^2.7.0":
-  version: 2.7.0
-  resolution: "@metaplex-foundation/mpl-token-metadata@npm:2.7.0"
-  dependencies:
-    "@metaplex-foundation/beet": ^0.7.1
-    "@metaplex-foundation/beet-solana": ^0.4.0
-    "@metaplex-foundation/cusper": ^0.0.2
-    "@solana/spl-token": ^0.3.6
-    "@solana/web3.js": ^1.66.2
-    bn.js: ^5.2.0
-    debug: ^4.3.4
-  checksum: cffa4e2e249639536b7d3680f440c67814ee16705de7de4747ee0ffe415d717c572dadc6300b8cbc55da73b11ddc8a585a9aeef1da0615e708f5b4c05da821ae
-  languageName: node
-  linkType: hard
-
 "@metaplex-foundation/mpl-token-metadata@npm:^2.8.1":
   version: 2.8.3
   resolution: "@metaplex-foundation/mpl-token-metadata@npm:2.8.3"
@@ -1214,7 +1199,7 @@ __metadata:
   dependencies:
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
     "@metaplex-foundation/mpl-token-auth-rules": ^1.2.0
-    "@metaplex-foundation/mpl-token-metadata": ^2.7.0
+    "@metaplex-foundation/mpl-token-metadata": ^2.8.1
     "@solana/spl-token": ^0.3.6
     "@solana/web3.js": ^1.73.0
     "@types/big.js": ^6.1.5
@@ -1223,7 +1208,7 @@ __metadata:
     big.js: ^6.2.1
     bn.js: ^5.2.1
     bs58: ^5.0.0
-    hadeswap-sdk: ^0.8.22
+    hadeswap-sdk: ^0.8.24
     npm: ^9.4.0
     prettier: ^2.7.1
     ts-node: ^10.9.1
@@ -2794,9 +2779,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hadeswap-sdk@npm:^0.8.22":
-  version: 0.8.22
-  resolution: "hadeswap-sdk@npm:0.8.22"
+"hadeswap-sdk@npm:^0.8.24":
+  version: 0.8.24
+  resolution: "hadeswap-sdk@npm:0.8.24"
   dependencies:
     "@metaplex-foundation/js": ^0.18.3
     "@metaplex-foundation/mpl-token-metadata": ^2.8.1
@@ -2808,7 +2793,7 @@ __metadata:
     lodash: ^4.17.21
     merkletreejs: ^0.3.9
     npm: ^9.2.0
-  checksum: f6be1347ebb14e0557df0ac2b14218b64f8c6d8225c8a9bcc7df38db9afeb1b712136b93cda4cec0e9e94af05b93118bec1a1f4a08d732c45b6ffcc2349a3350
+  checksum: d64c6b55ae24a046db0a43689046a36c8a33787a1f7ff0d4ee02f27bc5643844508d1f500d39838c88a12fd5ea8bc4b3ddbb8e003b6a91c62a77f5c574bdc29b
   languageName: node
   linkType: hard
 
