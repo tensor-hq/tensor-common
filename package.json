@@ -1,7 +1,7 @@
 {
   "name": "@tensor-hq/tensor-common",
   "version": "0.9.6",
-  "description": "Common methods to be shared between Tensor frontend and backend repos.",
+  "description": "Common utility methods used by Tensor.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -12,13 +12,11 @@
     "build": "rm -rf ./dist && yarn tsc",
     "pub": "yarn build && yarn npm publish",
     "push": "git push --atomic",
-    "pubpush": "yarn pub && yarn push"
+    "pubpush": "yarn pub && yarn push",
+    "npmpublish": "yarn build && npm publish --access public"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
-  "publishConfig": {
-    "@tensor-hq:registry": "https://npm.pkg.github.com"
-  },
   "dependencies": {
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
     "@metaplex-foundation/mpl-token-auth-rules": "^1.2.0",
