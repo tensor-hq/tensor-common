@@ -54,9 +54,17 @@ export const normalizeTraitValue = (value: string) => {
   return value;
 };
 
-export const countNonNullAttributes = (attributes: Attribute[]): number => {
+export const countNonNullAttributes = (
+  attributes: Attribute[],
+  /// If true, will count attributes with a value of "None" as non-null.
+  includeNone = false,
+): number => {
   return attributes.filter((a) => {
     if (isNullLike(a.trait_type) || isNullLike(a.value)) {
+      return false;
+    }
+
+    if (!includeNone && NONE_TRAIT_VALUE === a.value) {
       return false;
     }
 
