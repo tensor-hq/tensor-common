@@ -12,6 +12,7 @@ export enum RaritySystem {
 export type RarityRanks = {
   rarityRankTT?: number | null;
   rarityRankTTStat?: number | null;
+  rarityRankTTCustom?: number | null;
   rarityRankHR?: number | null;
   rarityRankTeam?: number | null;
   rarityRankStat?: number | null;
