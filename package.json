@@ -11,7 +11,8 @@
     "test": "echo 'no tests!'",
     "build": "rm -rf ./dist && yarn tsc",
     "publish:private": "yarn build && yarn npm publish",
-    "publish:public": "yarn build && npm publish --access public"
+    "publish:public": "yarn build && npm publish --access public --registry https://registry.npmjs.org",
+    "publish": "yarn publish:private && yarn publish:public"
   },
   "repository": "git@github.com:tensor-hq/tensor-common.git",
   "license": "MIT",
