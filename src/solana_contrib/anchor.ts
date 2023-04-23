@@ -9,7 +9,12 @@ import {
 } from '@project-serum/anchor';
 import { InstructionDisplay } from '@project-serum/anchor/dist/cjs/coder/borsh/instruction';
 import { AllAccountsMap } from '@project-serum/anchor/dist/cjs/program/namespace/types';
-import { AccountInfo, PublicKey, TransactionResponse } from '@solana/web3.js';
+import {
+  AccountInfo,
+  CompiledInnerInstruction,
+  PublicKey,
+  TransactionResponse,
+} from '@solana/web3.js';
 import { extractAllIxs } from './transaction';
 
 type Decoder = (buffer: Buffer) => any;
@@ -30,6 +35,8 @@ export type ParsedAnchorIx<IDL extends Idl> = {
   /// Index of top-level instruction.
   ixIdx: number;
   ix: AnchorIx<IDL>;
+  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  innerIxs?: CompiledInnerInstruction[];
   events: AnchorEvent<IDL>[];
   /// FYI: accounts under InstructionDisplay is the space-separated capitalized
   /// version of the fields for the corresponding #[Accounts].
@@ -117,7 +124,7 @@ export const parseAnchorIxs = <IDL extends Idl>({
   const logs = tx.meta?.logMessages;
 
   const ixs: ParsedAnchorIx<IDL>[] = [];
-  extractAllIxs(tx, programId).forEach(({ rawIx, ixIdx }) => {
+  extractAllIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
     // Instruction data.
     const ix = coder.instruction.decode(rawIx.data, 'base58');
     if (!ix) return;
@@ -132,9 +139,9 @@ export const parseAnchorIxs = <IDL extends Idl>({
     const formatted = coder.instruction.format(ix, accountMetas);
 
     // Events data.
-
+    // TODO: partition events properly by ix.
     const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
-    ixs.push({ ixIdx, ix, events, formatted });
+    ixs.push({ ixIdx, ix, innerIxs, events, formatted });
   });
 
   return ixs;
