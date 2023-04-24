@@ -11,7 +11,7 @@ import { InstructionDisplay } from '@project-serum/anchor/dist/cjs/coder/borsh/i
 import { AllAccountsMap } from '@project-serum/anchor/dist/cjs/program/namespace/types';
 import {
   AccountInfo,
-  CompiledInnerInstruction,
+  CompiledInstruction,
   PublicKey,
   TransactionResponse,
 } from '@solana/web3.js';
@@ -36,12 +36,14 @@ export type ParsedAnchorIx<IDL extends Idl> = {
   ixIdx: number;
   ix: AnchorIx<IDL>;
   /// Presence of field = it's a top-level ix; absence = inner ix itself.
-  innerIxs?: CompiledInnerInstruction[];
+  innerIxs?: CompiledInstruction[];
   events: AnchorEvent<IDL>[];
   /// FYI: accounts under InstructionDisplay is the space-separated capitalized
   /// version of the fields for the corresponding #[Accounts].
   /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   formatted: InstructionDisplay | null;
+  /// Needed to be able to figure out correct programs for sub-ixs
+  accountKeys: PublicKey[];
 };
 
 export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
@@ -136,15 +138,23 @@ export const parseAnchorIxs = <IDL extends Idl>({
         isWritable: message.isAccountWritable(acctIdx),
       };
     });
+
     const formatted = coder.instruction.format(ix, accountMetas);
 
     // Events data.
     // TODO: partition events properly by ix.
     const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
-    ixs.push({ ixIdx, ix, innerIxs, events, formatted });
+
+    ixs.push({
+      ixIdx,
+      ix,
+      innerIxs,
+      events,
+      formatted,
+      accountKeys: message.accountKeys,
+    });
   });
 
   return ixs;
 };
-
 // =============== END Parse ixs/events ===============

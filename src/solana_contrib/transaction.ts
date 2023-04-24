@@ -528,7 +528,7 @@ export const extractAllIxs = (
   rawIx: CompiledInstruction;
   ixIdx: number;
   /// Presence of field = it's a top-level ix; absence = inner ix itself.
-  innerIxs?: CompiledInnerInstruction[];
+  innerIxs?: CompiledInstruction[];
 }[] => {
   const message = tx.transaction.message;
 
@@ -537,8 +537,9 @@ export const extractAllIxs = (
     ...message.instructions.map((rawIx, ixIdx) => ({
       rawIx,
       ixIdx,
-      innerInstructions:
-        tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx) ?? [],
+      innerIxs:
+        tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx)
+          ?.instructions ?? [],
     })),
     // Inner ixs (eg in CPI calls).
     // TODO: do we need to filter out self-CPI subixs?
