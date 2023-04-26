@@ -1,12 +1,20 @@
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import { fetchMetadataAcct } from '../../metaplex';
+import {
+  AUTH_PROG_ID,
+  fetchMetadataAcct,
+  prepPnftAccounts,
+} from '../../metaplex';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 import {
@@ -18,6 +26,8 @@ import {
   SOLANART_FEE_ACCT,
   SOLANART_PROGRAM_ID,
 } from './shared';
+import { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+import { TOKEN_METADATA_PROGRAM_ID } from '..';
 
 export const makeSolanartBuyTx = async (
   connections: Array<Connection>,
@@ -116,7 +126,7 @@ export const makeSolanartBuyTx = async (
     {
       pubkey: metadata.address,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     /// 10. [writable] mint pubkey
     {
@@ -135,6 +145,15 @@ export const makeSolanartBuyTx = async (
     },
     /// 13. [] system Program
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    /// INSERT CREATORS ADDRESSES HERE
+    /// 14. OPTIONAL [] NFT edition
+    /// 15. OPTIONAL [] associated token program
+    /// 16. OPTIONAL [] metadata program id
+    /// 17. OPTIONAL [] sysvar instruction
+    /// 18. OPTIONAL [] owner token record
+    /// 19. OPTIONAL [] dest token record
+    /// 20. OPTIONAL [] AUTH prog id
+    /// 21. OPTIONAL [] ruleset
   ];
 
   ///
@@ -148,6 +167,72 @@ export const makeSolanartBuyTx = async (
       isWritable: true,
     });
   });
+
+  if (
+    metadata.account.tokenStandard === TokenStandard.ProgrammableNonFungible
+  ) {
+    const {
+      ruleSet,
+      nftEditionPda,
+      meta,
+      ownerTokenRecordPda,
+      destTokenRecordPda,
+    } = await prepPnftAccounts({
+      connection,
+      nftMint: new PublicKey(tokenMint),
+      sourceAta: currTempTokenAcc.address,
+      destAta: targetTokenAccount,
+    });
+
+    instructionAccounts.push(
+      ...[
+        {
+          pubkey: nftEditionPda,
+          isSigner: false,
+          isWritable: true,
+        },
+        {
+          pubkey: ASSOCIATED_TOKEN_PROGRAM_ID,
+          isSigner: false,
+          isWritable: false,
+        },
+
+        {
+          pubkey: TOKEN_METADATA_PROGRAM_ID,
+          isSigner: false,
+          isWritable: false,
+        },
+        {
+          pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
+          isSigner: false,
+          isWritable: false,
+        },
+        {
+          pubkey: ownerTokenRecordPda,
+          isSigner: false,
+          isWritable: true,
+        },
+        {
+          pubkey: destTokenRecordPda,
+          isSigner: false,
+          isWritable: true,
+        },
+        {
+          pubkey: AUTH_PROG_ID,
+          isSigner: false,
+          isWritable: false,
+        },
+      ],
+    );
+
+    if (ruleSet) {
+      instructionAccounts.push({
+        pubkey: ruleSet,
+        isSigner: false,
+        isWritable: false,
+      });
+    }
+  }
 
   const transactionInstruction = new TransactionInstruction({
     programId: SOLANART_PROGRAM_ID,
