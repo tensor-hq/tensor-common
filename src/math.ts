@@ -6,6 +6,36 @@ export const sum = (arr: Array<number>) => {
   return arr.reduce((a, b) => a + b, 0);
 };
 
+// ===== dates =====
+
+export const minDate = (a: Date, b: Date) => (a < b ? a : b);
+export const maxDate = (a: Date, b: Date) => (a > b ? a : b);
+
+// ===== bigints =====
+
+export const minBigInt = (a: bigint, b: bigint) => (a < b ? a : b);
+export const maxBigInt = (a: bigint, b: bigint) => (a > b ? a : b);
+export const sqBigInt = (a: bigint) => a * a;
+
+export const minBigInts = (arr: bigint[]) => {
+  if (!arr.length) return null;
+  let min = arr[0];
+  arr.slice(1).forEach((v) => {
+    min = minBigInt(min, v);
+  });
+  return min;
+};
+
+export const maxBigInts = (arr: bigint[]) => {
+  if (!arr.length) return null;
+  let min = arr[0];
+  arr.slice(1).forEach((v) => {
+    min = maxBigInt(min, v);
+  });
+  return min;
+};
+
+// ===== Bigs =====
 export const validBigStr = (s: string) => {
   try {
     new Big(s);
@@ -14,31 +44,48 @@ export const validBigStr = (s: string) => {
     return false;
   }
 };
-
 export const sumBig = (arr: Array<Big>): Big => {
   return arr.reduce((a, b) => a.add(b), new Big(0));
 };
 
-export const minBig = (a: Big, b: Big) => (a.lt(b) ? a : b);
-export const maxBig = (a: Big, b: Big) => (a.gt(b) ? a : b);
+export const sumBN = (arr: Array<BN>): BN => {
+  return arr.reduce((a, b) => a.add(b), new BN(0));
+};
 
-export const minBigs = (arr: Big[]) => {
+// ===== Bigs/BNs =====
+
+export function minBigBN(a: Big, b: Big): Big;
+export function minBigBN(a: BN, b: BN): BN;
+export function minBigBN(a: any, b: any) {
+  return a.lt(b) ? a : b;
+}
+export function maxBigBN(a: Big, b: Big): Big;
+export function maxBigBN(a: BN, b: BN): BN;
+export function maxBigBN(a: any, b: any) {
+  return a.gt(b) ? a : b;
+}
+
+export function minBigsBNs(arr: Big[]): Big | null;
+export function minBigsBNs(arr: BN[]): BN | null;
+export function minBigsBNs(arr: any[]) {
   if (!arr.length) return null;
   let min = arr[0];
   arr.slice(1).forEach((v) => {
-    min = minBig(min, v);
+    min = minBigBN(min, v);
   });
   return min;
-};
+}
 
-export const maxBigs = (arr: Big[]) => {
+export function maxBigsBNs(arr: Big[]): Big | null;
+export function maxBigsBNs(arr: BN[]): BN | null;
+export function maxBigsBNs(arr: any[]) {
   if (!arr.length) return null;
   let max = arr[0];
   arr.slice(1).forEach((v) => {
-    max = maxBig(max, v);
+    max = maxBigBN(max, v);
   });
   return max;
-};
+}
 
 export const sortNumberOrBig = (
   a: Big | BN | number | null | undefined,
