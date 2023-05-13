@@ -103,10 +103,11 @@ interface JsonArray extends Array<JsonValue> {}
 type JsonValue = string | number | boolean | JsonObject | JsonArray | null;
 
 export const normalizeMintTraits = (
-  attrs: Attribute[] | JsonValue,
+  attrs: Attribute[] | JsonValue | undefined,
 ): Attribute[] | null => {
   // --------------------------------------- normalize trait data
   if (
+    attrs === undefined ||
     attrs === null ||
     typeof attrs === 'number' ||
     typeof attrs === 'string' ||
