@@ -1,6 +1,7 @@
 import { PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+export { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
 
 export const findMetadataPda = (
   mint: PublicKey,
