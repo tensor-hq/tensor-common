@@ -147,16 +147,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metaplex-foundation/mpl-token-auth-rules@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@metaplex-foundation/mpl-token-auth-rules@npm:1.2.0"
+"@metaplex-foundation/mpl-token-auth-rules@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@metaplex-foundation/mpl-token-auth-rules@npm:2.0.0"
   dependencies:
     "@metaplex-foundation/beet": ^0.7.1
     "@metaplex-foundation/beet-solana": ^0.4.0
     "@metaplex-foundation/cusper": ^0.0.2
+    "@msgpack/msgpack": ^2.8.0
     "@solana/spl-token": ^0.3.6
     "@solana/web3.js": ^1.66.2
-  checksum: 9e6a82b4074079d57ad1a7de430dd70169871a83d814eefddac4507b1e4d425f70086d689c09a05752a4ef0a36d7d1fcdc6daa554f66ad72c0b6e0f161af38c8
+    bn.js: ^5.2.1
+  checksum: 968bcd743568b07fc5b04207e73e2ac6cf20adb8b93cf226e3e130f66a1f1dbfc8702da18a129da9bfa75868811b9cfe18a8cdcec9593e6a96710c70626035bf
   languageName: node
   linkType: hard
 
@@ -172,6 +174,13 @@ __metadata:
     bn.js: ^5.2.0
     debug: ^4.3.4
   checksum: c926ec1cbd4f909a8010fcc149f35577cac6e69114138a295e51a9804b8383a4aa6186f786b36c52d62e6f73dc92981b3797bfe7aa326358ffe2b64638e7f08c
+  languageName: node
+  linkType: hard
+
+"@msgpack/msgpack@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "@msgpack/msgpack@npm:2.8.0"
+  checksum: bead9393f57239007a2fe455df5277cbc03b125f14f310162a652b81471dcf3ab6780eaa24b36e20aa742998910a6840147d08b7267063b8e2de5d40c624360e
   languageName: node
   linkType: hard
 
@@ -610,7 +619,7 @@ __metadata:
   resolution: "@tensor-hq/tensor-common@workspace:."
   dependencies:
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
-    "@metaplex-foundation/mpl-token-auth-rules": ^1.2.0
+    "@metaplex-foundation/mpl-token-auth-rules": ^2.0.0
     "@metaplex-foundation/mpl-token-metadata": ^2.8.1
     "@solana/spl-token": ^0.3.6
     "@solana/web3.js": ^1.73.0
