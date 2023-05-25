@@ -10,14 +10,16 @@ export const makeMEBuyTx = async ({
   seller,
   priceLamports,
   apiKey,
+  expiry,
 }: {
   tokenMint: string;
   buyer: string;
   seller: string;
-  priceLamports: Big;
+  priceLamports: string;
   apiKey: string;
+  expiry?: number;
 }): Promise<METxSigned> => {
-  const price = priceLamports.div(LAMPORTS_PER_SOL).toNumber();
+  const price = new Big(priceLamports).div(LAMPORTS_PER_SOL).toNumber();
 
   const [tokenAccount, sellerReferral] = await Promise.all([
     getAssociatedTokenAddress(new PublicKey(tokenMint), new PublicKey(seller)),
@@ -46,7 +48,7 @@ export const makeMEBuyTx = async ({
       tokenATA: tokenAccount.toBase58(),
       price,
       sellerReferral,
-      sellerExpiry: '-1',
+      sellerExpiry: expiry,
     },
     headers: makeMEHeaders(apiKey),
   });
