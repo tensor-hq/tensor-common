@@ -1,4 +1,4 @@
-import { isNullLike } from '../utils';
+import { Maybe, isNullLike } from '../utils';
 import { Attribute, RarityRanks, RaritySystem } from './types';
 
 export const getRarityRank = (
@@ -83,12 +83,20 @@ export const countNonNullAttributes = (
   }).length;
 };
 
-export const matchesTraitFilter = (
-  traitsFilter: { traitType: string; values: string[] }[],
-  attributes: Attribute[] | null | undefined,
-) => {
+export const matchesTraitFilter = ({
+  traitsFilter,
+  attributes,
+  name,
+}: {
+  traitsFilter: { traitType: string; values: string[] }[];
+  attributes: Maybe<Attribute[]>;
+  name: Maybe<string>;
+}) => {
   //AND for traits themselves
   return traitsFilter.every(({ traitType, values }) => {
+    if (traitType === NAME_TRAIT_TYPE && (!name || !values.includes(name)))
+      return false;
+
     const matches = attributes?.filter((attr) => attr.trait_type === traitType);
     if (!matches?.length) return values.includes(NONE_TRAIT_VALUE);
 
