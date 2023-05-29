@@ -94,8 +94,9 @@ export const matchesTraitFilter = ({
 }) => {
   //AND for traits themselves
   return traitsFilter.every(({ traitType, values }) => {
-    if (traitType === NAME_TRAIT_TYPE && (!name || !values.includes(name)))
-      return false;
+    if (traitType === NAME_TRAIT_TYPE) {
+      return !isNullLike(name) && values.includes(name);
+    }
 
     const matches = attributes?.filter((attr) => attr.trait_type === traitType);
     if (!matches?.length) return values.includes(NONE_TRAIT_VALUE);
