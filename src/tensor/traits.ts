@@ -22,6 +22,9 @@ export const getRarityRank = (
   }
 };
 
+// Special trait type to use for filtering by the NFT's name.
+export const NAME_TRAIT_TYPE = '<name>';
+
 export const nullLikeTraitValues = [
   'none',
   'null',
