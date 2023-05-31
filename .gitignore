@@ -20,7 +20,17 @@
 node_modules/
 npm-debug.*
 dist/
+
+# Yarn (uncomment for zero-install: https://stackoverflow.com/a/58550620)
 .yarn/
+#!.yarn/cache
+#!.yarn/patches
+#!.yarn/plugins
+#!.yarn/releases
+!.yarn/versions
+#!.yarn/sdks
+# .yarn/unplugged
+# .yarn/build-state.yaml
 
 # IDEs
 .idea/

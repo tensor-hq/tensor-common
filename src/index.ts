@@ -1,3 +1,4 @@
+export * from './creator';
 export * from './math';
 export * from './metaplex';
 export * from './programs';
