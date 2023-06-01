@@ -23,7 +23,7 @@ export const collectionCategory = [
   'PHOTOGRAPHY',
   'SPORTS',
   'DOMAIN_NAMES',
-  'UTILITIES',
+  'UTILITY',
   'OTHER',
 ] as const;
 export type CollectionCategory = (typeof collectionCategory)[number];
