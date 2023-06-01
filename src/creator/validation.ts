@@ -1,0 +1,323 @@
+import * as yup from 'yup';
+import { PublicKey } from '@solana/web3.js';
+import { hashlistToPublicKeys } from '.';
+
+// Redeclare prisma enums here. If a prisma enum field ends up in a tRPC interface, the field will be missing on the client side
+export const creatorIdentifyMode = ['VOC', 'FVC', 'HASHLIST'] as const;
+export type CreatorIdentifyMode = (typeof creatorIdentifyMode)[number];
+
+export const creatorReviewStatus = [
+  'DRAFT',
+  'REVIEW',
+  'APPROVED',
+  'DENIED',
+] as const;
+export type CreatorReviewStatus = (typeof creatorReviewStatus)[number];
+
+export const collectionCategory = [
+  'PFPS',
+  'GAMING',
+  'ART',
+  'METAVERSE',
+  'MUSIC',
+  'PHOTOGRAPHY',
+  'SPORTS',
+  'OTHER',
+] as const;
+export type CollectionCategory = (typeof collectionCategory)[number];
+
+export const creatorTeamRole = ['READ', 'WRITE', 'OWNER'] as const;
+export type CreatorTeamRole = (typeof creatorTeamRole)[number];
+
+export interface ReviewFormData {
+  reviewStatus: CreatorReviewStatus;
+  version: number;
+  notes: {
+    id: string | undefined;
+    noteContent: string | undefined;
+    noteUserVisible: boolean;
+    username: string;
+  }[];
+  mintConflicts: MintConflict[];
+  claimed: boolean;
+  claimedByYou: boolean;
+}
+
+export interface MintConflict {
+  slug: string;
+  slugDisplay: string | null;
+  secured: boolean;
+  mint?: string;
+  voc?: string;
+  fvc?: string;
+}
+
+export interface HaveYouMintedFormData {
+  listedOnTensor: boolean | null;
+  collectionId: string | null;
+  haveYouMinted: boolean | null;
+  estimatedSupply: number | null;
+}
+
+export interface IdentifyCollectionFormData {
+  identifyMode: CreatorIdentifyMode | null;
+  voc: string[];
+  fvc: string[];
+  hashlist: string;
+}
+
+export interface PopulateDetailsFormData {
+  name: string;
+  slugDisplay: string;
+  symbol: string;
+  description: string;
+  imageUri: string;
+  twitter: string;
+  discord: string;
+  website: string | undefined;
+  categories: CollectionCategory[];
+  explicitContent: boolean;
+  mintDate: string;
+}
+
+export type EditFormData = HaveYouMintedFormData &
+  IdentifyCollectionFormData &
+  PopulateDetailsFormData &
+  ReviewFormData;
+
+/** Alphanumberic and underscore strings only */
+export const getSlugSchema = () =>
+  yup
+    .string()
+    .test(
+      'isValidSlug',
+      'Only letters, numbers and underscores are allowed',
+      (value) => {
+        if (!value) {
+          return true;
+        }
+
+        // Regexp:
+        // a to z
+        // A to Z
+        // 0 to 9
+        // '_'
+        return /^[a-zA-Z0-9_]+$/.test(value);
+      },
+    );
+
+/** Uppercase A-Z alphabet only */
+export const getSymbolSchema = () => {
+  return yup
+    .string()
+    .test('isValidSymbol', 'Only letters are allowed', (value) => {
+      if (!value) {
+        return true;
+      }
+
+      // Regexp:
+      // A to Z
+      // Allow lowercase because chakra textTransform will store
+      // the underlying value how the user typed it
+      return /^[a-zA-Z]+$/.test(value);
+    });
+};
+
+export const getPublicKeySchema = () =>
+  yup.string().test('isValidPublicKey', 'Invalid Public Key', (value) => {
+    if (!value) {
+      return true;
+    }
+
+    try {
+      new PublicKey(value);
+      return true;
+    } catch (err: unknown) {
+      return false;
+    }
+  });
+
+export const getHashlistSchema = () =>
+  yup.string().test('isValidHashlist', (value, testContext) => {
+    if (!value) {
+      return true;
+    }
+
+    const { errors } = hashlistToPublicKeys(value);
+    if (errors) {
+      return testContext.createError({ message: errors });
+    }
+
+    return true;
+  });
+
+/**
+ * Max string lengths for all Populate Details fields. Synchronize with database
+ */
+export const populateDetailsSchemaLengths: Record<
+  keyof Omit<
+    PopulateDetailsFormData,
+    'categories' | 'explicitContent' | 'mintDate'
+  >,
+  number
+> = {
+  name: 40,
+  slugDisplay: 20,
+  symbol: 10,
+  imageUri: 250,
+  description: 500,
+  twitter: 64,
+  discord: 64,
+  website: 64,
+};
+
+export const getReviewFormSchema = () => {
+  const schema: yup.ObjectSchema<ReviewFormData> = yup.object({
+    reviewStatus: yup
+      .mixed<CreatorReviewStatus>()
+      .oneOf([...creatorReviewStatus])
+      .required(),
+    version: yup.number().integer().min(1).required(),
+    notes: yup
+      .array(
+        yup.object({
+          id: yup.string().uuid(),
+          noteContent: yup.string().max(500),
+          noteUserVisible: yup.boolean().required(),
+          username: yup.string(),
+        }) as yup.Schema<ReviewFormData['notes'][number]>,
+      )
+      .required(),
+    mintConflicts: yup
+      .array(
+        yup.object({
+          slug: yup.string().required(),
+          slugDisplay: yup.string().nullable().required(),
+          secured: yup.boolean().required(),
+          mint: getPublicKeySchema().optional(),
+          voc: getPublicKeySchema().optional(),
+          fvc: yup.string().optional(),
+        }),
+      )
+      .required(),
+    claimed: yup.boolean().required(),
+    claimedByYou: yup.boolean().required(),
+  });
+  return schema;
+};
+
+export const getHaveYouMintedFormSchema = () => {
+  const schema: yup.ObjectSchema<HaveYouMintedFormData> = yup.object({
+    listedOnTensor: yup.boolean().required() as yup.BooleanSchema<
+      boolean | null
+    >,
+    collectionId: yup
+      .string()
+      .uuid()
+      .when('listedOnTensor', {
+        is: true,
+        then: (schema) => schema.required(),
+        otherwise: (schema) => schema.nullable(),
+      }) as yup.StringSchema<string | null>,
+    haveYouMinted: yup
+      .boolean()
+      .when('listedOnTensor', {
+        is: false,
+        then: (schema) => schema.required(),
+      })
+      .required(),
+    estimatedSupply: yup.number().integer().min(1) as yup.NumberSchema<
+      number | null
+    >,
+  });
+  return schema;
+};
+
+export const getIdentifyCollectionFormSchema = () => {
+  const schema: yup.ObjectSchema<IdentifyCollectionFormData> = yup.object({
+    identifyMode: yup
+      .mixed<CreatorIdentifyMode>()
+      .oneOf([...creatorIdentifyMode])
+      .required(),
+    voc: yup
+      .array()
+      .when('identifyMode', {
+        is: 'VOC',
+        then: (schema) => yup.array(getPublicKeySchema().required()).min(1),
+      })
+      .max(10)
+      .required(),
+    fvc: yup
+      .array()
+      .when('identifyMode', {
+        is: 'FVC',
+        then: (schema) => yup.array(getPublicKeySchema().required()).min(1),
+      })
+      .max(10)
+      .required(),
+    hashlist: yup
+      .string()
+      .when('identifyMode', {
+        is: 'HASHLIST',
+        then: (schema) => getHashlistSchema(),
+      })
+      .max(1_250_000) as yup.StringSchema<string>,
+  });
+  return schema;
+};
+
+export const getPopulateDetailsFormSchema = () => {
+  const schema: yup.ObjectSchema<PopulateDetailsFormData> = yup.object({
+    name: yup
+      .string()
+      .min(3)
+      .max(populateDetailsSchemaLengths.name)
+      .required('Collection name is required'),
+    slugDisplay: getSlugSchema()
+      .min(3)
+      .max(populateDetailsSchemaLengths.slugDisplay)
+      .required('Url slug is required'),
+    symbol: getSymbolSchema()
+      .min(1)
+      .max(populateDetailsSchemaLengths.symbol)
+      .required('Collection symbol is required'),
+    imageUri: yup
+      .string()
+      .max(populateDetailsSchemaLengths.imageUri)
+      .required('Image url is required'),
+    description: yup
+      .string()
+      .max(populateDetailsSchemaLengths.description)
+      .required('Description is required'),
+    twitter: yup
+      .string()
+      .max(populateDetailsSchemaLengths.twitter)
+      .required('Linking a Twitter account is required'),
+    discord: yup
+      .string()
+      .max(populateDetailsSchemaLengths.discord) as yup.StringSchema<string>,
+    website: yup
+      .string()
+      .max(populateDetailsSchemaLengths.website) as yup.StringSchema<string>,
+    categories: yup
+      .array(
+        yup
+          .mixed<CollectionCategory>()
+          .oneOf([...collectionCategory])
+          .required('Category is required'),
+      )
+      .length(1)
+      .required(),
+    explicitContent: yup.boolean().required(),
+    mintDate: yup.string().required('Mint date is required'),
+  });
+  return schema;
+};
+
+export const getEditFormSchema = () => {
+  const schema: yup.ObjectSchema<EditFormData> = getReviewFormSchema()
+    .concat(getHaveYouMintedFormSchema())
+    .concat(getIdentifyCollectionFormSchema())
+    .concat(getPopulateDetailsFormSchema()) as yup.ObjectSchema<EditFormData>;
+  return schema;
+};
