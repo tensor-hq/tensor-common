@@ -22,6 +22,8 @@ export const collectionCategory = [
   'MUSIC',
   'PHOTOGRAPHY',
   'SPORTS',
+  'DOMAIN_NAMES',
+  'UTILITIES',
   'OTHER',
 ] as const;
 export type CollectionCategory = (typeof collectionCategory)[number];
@@ -77,7 +79,7 @@ export interface PopulateDetailsFormData {
   website: string | undefined;
   categories: CollectionCategory[];
   explicitContent: boolean;
-  mintDate: string;
+  estimatedMintDate: string | undefined;
 }
 
 export type EditFormData = HaveYouMintedFormData &
@@ -123,8 +125,22 @@ export const getSymbolSchema = () => {
     });
 };
 
+/** Any string except carriage returns */
+export const getNoNewlineSchema = () => {
+  return yup
+    .string()
+    .test('isNoNewline', 'New lines are not allowed', (value) => {
+      if (!value) {
+        return true;
+      }
+
+      // Regexp: Anything except new lines
+      return /\r|\n/.test(value);
+    });
+};
+
 export const getPublicKeySchema = () =>
-  yup.string().test('isValidPublicKey', 'Invalid Public Key', (value) => {
+  yup.string().test('isValidPublicKey', 'Invalid public key', (value) => {
     if (!value) {
       return true;
     }
@@ -157,7 +173,7 @@ export const getHashlistSchema = () =>
 export const populateDetailsSchemaLengths: Record<
   keyof Omit<
     PopulateDetailsFormData,
-    'categories' | 'explicitContent' | 'mintDate'
+    'categories' | 'explicitContent' | 'estimatedMintDate'
   >,
   number
 > = {
@@ -226,9 +242,14 @@ export const getHaveYouMintedFormSchema = () => {
         then: (schema) => schema.required(),
       })
       .required(),
-    estimatedSupply: yup.number().integer().min(1) as yup.NumberSchema<
-      number | null
-    >,
+    estimatedSupply: yup
+      .number()
+      .integer()
+      .min(1)
+      .when('haveYouMinted', {
+        is: false,
+        then: (schema) => schema.required('Estimated supply is required'),
+      }) as yup.NumberSchema<number | null>,
   });
   return schema;
 };
@@ -238,12 +259,23 @@ export const getIdentifyCollectionFormSchema = () => {
     identifyMode: yup
       .mixed<CreatorIdentifyMode>()
       .oneOf([...creatorIdentifyMode])
-      .required(),
+      .when('haveYouMinted', {
+        is: true,
+        then: (schema) =>
+          schema.required('Please choose an identification method'),
+      }) as yup.MixedSchema<CreatorIdentifyMode | null>,
     voc: yup
       .array()
       .when('identifyMode', {
         is: 'VOC',
-        then: (schema) => yup.array(getPublicKeySchema().required()).min(1),
+        then: (schema) =>
+          yup
+            .array(
+              getPublicKeySchema().required(
+                'Metaplex certified collection is required',
+              ),
+            )
+            .min(1),
       })
       .max(10)
       .required(),
@@ -251,7 +283,14 @@ export const getIdentifyCollectionFormSchema = () => {
       .array()
       .when('identifyMode', {
         is: 'FVC',
-        then: (schema) => yup.array(getPublicKeySchema().required()).min(1),
+        then: (schema) =>
+          yup
+            .array(
+              getPublicKeySchema().required(
+                'First verified creator is required',
+              ),
+            )
+            .min(1),
       })
       .max(10)
       .required(),
@@ -259,7 +298,8 @@ export const getIdentifyCollectionFormSchema = () => {
       .string()
       .when('identifyMode', {
         is: 'HASHLIST',
-        then: (schema) => getHashlistSchema(),
+        then: (schema) =>
+          getHashlistSchema().required('A collection hashlist is required'),
       })
       .max(1_250_000) as yup.StringSchema<string>,
   });
@@ -285,8 +325,7 @@ export const getPopulateDetailsFormSchema = () => {
       .string()
       .max(populateDetailsSchemaLengths.imageUri)
       .required('Image url is required'),
-    description: yup
-      .string()
+    description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
     twitter: yup
@@ -309,7 +348,9 @@ export const getPopulateDetailsFormSchema = () => {
       .length(1)
       .required(),
     explicitContent: yup.boolean().required(),
-    mintDate: yup.string().required('Mint date is required'),
+    estimatedMintDate: yup.string().nullable() as yup.StringSchema<
+      string | undefined
+    >,
   });
   return schema;
 };
