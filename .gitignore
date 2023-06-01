@@ -26,8 +26,8 @@ dist/
 #!.yarn/cache
 #!.yarn/patches
 #!.yarn/plugins
-#!.yarn/releases
-!.yarn/versions
+!.yarn/releases
+#!.yarn/versions
 #!.yarn/sdks
 # .yarn/unplugged
 # .yarn/build-state.yaml
