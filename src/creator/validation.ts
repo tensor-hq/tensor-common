@@ -73,7 +73,6 @@ export interface PopulateDetailsFormData {
   slugDisplay: string;
   symbol: string;
   description: string;
-  imageUri: string;
   twitter: string;
   discord: string;
   website: string | undefined;
@@ -180,7 +179,6 @@ export const populateDetailsSchemaLengths: Record<
   name: 40,
   slugDisplay: 20,
   symbol: 10,
-  imageUri: 250,
   description: 500,
   twitter: 64,
   discord: 64,
@@ -321,10 +319,6 @@ export const getPopulateDetailsFormSchema = () => {
       .min(1)
       .max(populateDetailsSchemaLengths.symbol)
       .required('Collection symbol is required'),
-    imageUri: yup
-      .string()
-      .max(populateDetailsSchemaLengths.imageUri)
-      .required('Image url is required'),
     description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
