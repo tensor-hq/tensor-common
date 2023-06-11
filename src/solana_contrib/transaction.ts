@@ -22,7 +22,7 @@ import {
 import assert from 'assert';
 import bs58 from 'bs58';
 import { waitMS } from '../time';
-import { isNullLike, settleAllWithTimeout } from '../utils';
+import { filterNullLike, isNullLike, settleAllWithTimeout } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
 
 const BLOCK_TIME_MS = 400;
@@ -349,6 +349,12 @@ export class RetryTxSender {
   }
 }
 
+type BuildTxArgs = {
+  feePayer: PublicKey;
+  instructions: TransactionInstruction[];
+  additionalSigners?: Array<Signer>;
+} & GetRpcMultipleConnsArgs;
+
 //(!) this should be the only function across our code used to build txs
 // reason: we want to control how blockchash is constructed to minimize tx failures
 export const buildTx = async ({
@@ -356,11 +362,7 @@ export const buildTx = async ({
   instructions,
   additionalSigners,
   ...blockhashArgs
-}: {
-  feePayer: PublicKey;
-  instructions: TransactionInstruction[];
-  additionalSigners?: Array<Signer>;
-} & GetRpcMultipleConnsArgs): Promise<TxWithHeight> => {
+}: BuildTxArgs): Promise<TxWithHeight> => {
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
   }
@@ -369,9 +371,10 @@ export const buildTx = async ({
   tx.add(...instructions);
   tx.feePayer = feePayer;
 
-  const latestBlockhash = await getLatestBlockhashMultConns(blockhashArgs);
-  tx.recentBlockhash = latestBlockhash.blockhash;
-  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
+    blockhashArgs,
+  );
+  tx.recentBlockhash = blockhash;
 
   if (additionalSigners) {
     additionalSigners
@@ -381,7 +384,7 @@ export const buildTx = async ({
       });
   }
 
-  return { tx, lastValidBlockHeight };
+  return { tx, blockhash, lastValidBlockHeight };
 };
 
 export const buildTxV0 = async ({
@@ -391,21 +394,19 @@ export const buildTxV0 = async ({
   addressLookupTableAccs,
   ...blockhashArgs
 }: {
-  feePayer: PublicKey;
-  instructions: TransactionInstruction[];
-  additionalSigners?: Array<Signer>;
   addressLookupTableAccs: AddressLookupTableAccount[];
-} & GetRpcMultipleConnsArgs): Promise<TxV0WithHeight> => {
+} & BuildTxArgs): Promise<TxV0WithHeight> => {
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
   }
 
-  const latestBlockhash = await getLatestBlockhashMultConns(blockhashArgs);
-  const lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
+    blockhashArgs,
+  );
 
   const msg = new TransactionMessage({
     payerKey: feePayer,
-    recentBlockhash: latestBlockhash.blockhash,
+    recentBlockhash: blockhash,
     instructions,
   }).compileToV0Message(addressLookupTableAccs);
   const tx = new VersionedTransaction(msg);
@@ -414,7 +415,47 @@ export const buildTxV0 = async ({
     tx.sign(additionalSigners.filter((s): s is Signer => s !== undefined));
   }
 
-  return { tx, lastValidBlockHeight };
+  return { tx, blockhash, lastValidBlockHeight };
+};
+
+export const buildTxsLegacyV0 = async ({
+  feePayer,
+  instructions,
+  additionalSigners,
+  addressLookupTableAccs,
+  ...blockhashArgs
+}: {
+  addressLookupTableAccs: AddressLookupTableAccount[];
+} & BuildTxArgs) => {
+  if (!instructions.length) {
+    throw new Error('must pass at least one instruction');
+  }
+
+  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
+    blockhashArgs,
+  );
+
+  const msg = new TransactionMessage({
+    payerKey: feePayer,
+    recentBlockhash: blockhash,
+    instructions,
+  });
+  const tx = new Transaction({
+    blockhash,
+    lastValidBlockHeight,
+    feePayer,
+  }).add(...instructions);
+  const txV0 = new VersionedTransaction(msg.compileToV0Message());
+
+  if (additionalSigners) {
+    const signers = filterNullLike(additionalSigners);
+    signers.forEach((kp) => {
+      tx.partialSign(kp);
+    });
+    txV0.sign(signers);
+  }
+
+  return { tx, txV0, blockhash, lastValidBlockHeight };
 };
 
 type GetRpcMultipleConnsArgs = {
