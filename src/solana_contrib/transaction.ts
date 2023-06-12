@@ -445,7 +445,9 @@ export const buildTxsLegacyV0 = async ({
     lastValidBlockHeight,
     feePayer,
   }).add(...instructions);
-  const txV0 = new VersionedTransaction(msg.compileToV0Message());
+  const txV0 = new VersionedTransaction(
+    msg.compileToV0Message(addressLookupTableAccs),
+  );
 
   if (additionalSigners) {
     const signers = filterNullLike(additionalSigners);
