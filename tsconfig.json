@@ -12,6 +12,5 @@
     "module": "commonjs",
     "target": "esnext"
   },
-  "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["src", "tests"]
 }

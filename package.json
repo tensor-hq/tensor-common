@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.13.10",
+  "version": "0.13.11",
   "description": "Common utility methods used by Tensor.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,7 @@
     "/dist"
   ],
   "scripts": {
-    "test": "echo 'no tests!'",
+    "test": "ts-mocha tests/**/*.test.ts -p ./tsconfig.json",
     "build": "rm -rf ./dist && yarn tsc",
     "publish:private": "yarn build && yarn npm publish",
     "publish:public": "yarn build && npm publish --access public --registry https://registry.npmjs.org",
@@ -33,8 +33,13 @@
   "devDependencies": {
     "@types/big.js": "^6.1.5",
     "@types/bn.js": "^5.1.0",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "npm": "^9.4.0",
     "prettier": "^2.7.1",
+    "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1"
   },
   "packageManager": "yarn@3.3.1"
