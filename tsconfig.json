@@ -12,5 +12,5 @@
     "module": "commonjs",
     "target": "esnext"
   },
-  "include": ["src", "tests"]
+  "include": ["src/**/*"]
 }
