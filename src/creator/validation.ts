@@ -3,33 +3,45 @@ import { PublicKey } from '@solana/web3.js';
 import { hashlistToPublicKeys } from '.';
 
 // Redeclare prisma enums here. If a prisma enum field ends up in a tRPC interface, the field will be missing on the client side
-export const creatorIdentifyMode = ['VOC', 'FVC', 'HASHLIST'] as const;
-export type CreatorIdentifyMode = (typeof creatorIdentifyMode)[number];
+export enum CreatorIdentifyMode {
+  VOC = 'VOC',
+  FVC = 'FVC',
+  HASHLIST = 'HASHLIST',
+}
+export const creatorIdentifyMode: readonly CreatorIdentifyMode[] =
+  Object.values(CreatorIdentifyMode);
 
-export const creatorReviewStatus = [
-  'DRAFT',
-  'REVIEW',
-  'APPROVED',
-  'DENIED',
-] as const;
-export type CreatorReviewStatus = (typeof creatorReviewStatus)[number];
+export enum CreatorReviewStatus {
+  DRAFT = 'DRAFT',
+  REVIEW = 'REVIEW',
+  APPROVED = 'APPROVED',
+  DENIED = 'DENIED',
+}
+export const creatorReviewStatus: readonly CreatorReviewStatus[] =
+  Object.values(CreatorReviewStatus);
 
-export const collectionCategory = [
-  'PFPS',
-  'GAMING',
-  'ART',
-  'METAVERSE',
-  'MUSIC',
-  'PHOTOGRAPHY',
-  'SPORTS',
-  'DOMAIN_NAMES',
-  'UTILITY',
-  'OTHER',
-] as const;
-export type CollectionCategory = (typeof collectionCategory)[number];
+export enum CollectionCategory {
+  PFPS = 'PFPS',
+  GAMING = 'GAMING',
+  ART = 'ART',
+  METAVERSE = 'METAVERSE',
+  MUSIC = 'MUSIC',
+  PHOTOGRAPHY = 'PHOTOGRAPHY',
+  SPORTS = 'SPORTS',
+  DOMAIN_NAMES = 'DOMAIN_NAMES',
+  UTILITY = 'UTILITY',
+  OTHER = 'OTHER',
+}
+export const collectionCategory: readonly CollectionCategory[] =
+  Object.values(CollectionCategory);
 
-export const creatorTeamRole = ['READ', 'WRITE', 'OWNER'] as const;
-export type CreatorTeamRole = (typeof creatorTeamRole)[number];
+export enum CreatorTeamRole {
+  READ = 'READ',
+  WRITE = 'WRITE',
+  OWNER = 'OWNER',
+}
+export const creatorTeamRole: readonly CreatorTeamRole[] =
+  Object.values(CreatorTeamRole);
 
 export interface ReviewFormData {
   reviewStatus: CreatorReviewStatus;
@@ -73,7 +85,6 @@ export interface PopulateDetailsFormData {
   slugDisplay: string;
   symbol: string;
   description: string;
-  imageUri: string;
   twitter: string;
   discord: string;
   website: string | undefined;
@@ -180,7 +191,6 @@ export const populateDetailsSchemaLengths: Record<
   name: 40,
   slugDisplay: 20,
   symbol: 10,
-  imageUri: 250,
   description: 500,
   twitter: 64,
   discord: 64,
@@ -191,7 +201,7 @@ export const getReviewFormSchema = () => {
   const schema: yup.ObjectSchema<ReviewFormData> = yup.object({
     reviewStatus: yup
       .mixed<CreatorReviewStatus>()
-      .oneOf([...creatorReviewStatus])
+      .oneOf(creatorReviewStatus)
       .required(),
     version: yup.number().integer().min(1).required(),
     notes: yup
@@ -258,7 +268,7 @@ export const getIdentifyCollectionFormSchema = () => {
   const schema: yup.ObjectSchema<IdentifyCollectionFormData> = yup.object({
     identifyMode: yup
       .mixed<CreatorIdentifyMode>()
-      .oneOf([...creatorIdentifyMode])
+      .oneOf(creatorIdentifyMode)
       .when('haveYouMinted', {
         is: true,
         then: (schema) =>
@@ -321,10 +331,6 @@ export const getPopulateDetailsFormSchema = () => {
       .min(1)
       .max(populateDetailsSchemaLengths.symbol)
       .required('Collection symbol is required'),
-    imageUri: yup
-      .string()
-      .max(populateDetailsSchemaLengths.imageUri)
-      .required('Image url is required'),
     description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
@@ -342,7 +348,7 @@ export const getPopulateDetailsFormSchema = () => {
       .array(
         yup
           .mixed<CollectionCategory>()
-          .oneOf([...collectionCategory])
+          .oneOf(collectionCategory)
           .required('Category is required'),
       )
       .length(1)
