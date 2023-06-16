@@ -145,8 +145,8 @@ export const getNoNewlineSchema = () => {
         return true;
       }
 
-      // Regexp: Anything except new lines
-      return /\r|\n/.test(value);
+      // Regexp: Contains new lines
+      return !/\r|\n/.test(value);
     });
 };
 
