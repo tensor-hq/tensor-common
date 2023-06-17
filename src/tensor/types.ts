@@ -24,6 +24,11 @@ export type Attribute = {
   value: string;
 };
 
+export type AttributeCamelCase = {
+  traitType: string;
+  value: string;
+};
+
 // ======================== Traits info.
 
 export type CollectionTraitsMeta = Record<

@@ -1,5 +1,10 @@
 import { Maybe, isNullLike } from '../utils';
-import { Attribute, RarityRanks, RaritySystem } from './types';
+import {
+  Attribute,
+  AttributeCamelCase,
+  RarityRanks,
+  RaritySystem,
+} from './types';
 
 export const getRarityRank = (
   system: RaritySystem,
@@ -169,3 +174,19 @@ export const normalizeMintTraits = (
 
   return traits;
 };
+
+export const camelCaseAttributes = (
+  attributes: Attribute[],
+): AttributeCamelCase[] =>
+  attributes.map((a) => ({
+    traitType: a.trait_type,
+    value: a.value,
+  }));
+
+export const snakeCaseAttributes = (
+  attributes: AttributeCamelCase[],
+): Attribute[] =>
+  attributes.map((a) => ({
+    trait_type: a.traitType,
+    value: a.value,
+  }));
