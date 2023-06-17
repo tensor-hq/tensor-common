@@ -268,6 +268,7 @@ export const getIdentifyCollectionFormSchema = () => {
   const schema: yup.ObjectSchema<IdentifyCollectionFormData> = yup.object({
     identifyMode: yup
       .mixed<CreatorIdentifyMode>()
+      .nullable()
       .oneOf(creatorIdentifyMode)
       .when('haveYouMinted', {
         is: true,
