@@ -352,8 +352,8 @@ export const getPopulateDetailsFormSchema = () => {
           .oneOf(collectionCategory)
           .required('Category is required'),
       )
-      .length(1)
-      .required(),
+      .length(1, 'Category is required')
+      .required('Category is required'),
     explicitContent: yup.boolean().required(),
     estimatedMintDate: yup.string().nullable() as yup.StringSchema<
       string | undefined
