@@ -179,6 +179,18 @@ export const getHashlistSchema = () =>
   });
 
 /**
+ * Max array lengths for all Identify Collection fields.
+ */
+export const identifyCollectionSchemaLengths: Record<
+  keyof Omit<IdentifyCollectionFormData, 'identifyMode'>,
+  number
+> = {
+  voc: 1,
+  fvc: 1,
+  hashlist: 1_250_000,
+};
+
+/**
  * Max string lengths for all Populate Details fields. Synchronize with database
  */
 export const populateDetailsSchemaLengths: Record<
@@ -288,7 +300,7 @@ export const getIdentifyCollectionFormSchema = () => {
             )
             .min(1),
       })
-      .max(10)
+      .max(identifyCollectionSchemaLengths.voc)
       .required(),
     fvc: yup
       .array()
@@ -303,7 +315,7 @@ export const getIdentifyCollectionFormSchema = () => {
             )
             .min(1),
       })
-      .max(10)
+      .max(identifyCollectionSchemaLengths.fvc)
       .required(),
     hashlist: yup
       .string()
@@ -312,7 +324,9 @@ export const getIdentifyCollectionFormSchema = () => {
         then: (schema) =>
           getHashlistSchema().required('A collection hashlist is required'),
       })
-      .max(1_250_000) as yup.StringSchema<string>,
+      .max(
+        identifyCollectionSchemaLengths.hashlist,
+      ) as yup.StringSchema<string>,
   });
   return schema;
 };
