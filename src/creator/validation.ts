@@ -53,6 +53,7 @@ export interface ReviewFormData {
     username: string;
   }[];
   mintConflicts: MintConflict[];
+  teamId: string | null;
   claimed: boolean;
   claimedByYou: boolean;
 }
@@ -238,6 +239,7 @@ export const getReviewFormSchema = () => {
         }),
       )
       .required(),
+    teamId: yup.string().uuid().nullable() as yup.StringSchema<string | null>,
     claimed: yup.boolean().required(),
     claimedByYou: yup.boolean().required(),
   });
