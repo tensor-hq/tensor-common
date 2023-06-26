@@ -53,6 +53,8 @@ export interface ReviewFormData {
     username: string;
   }[];
   mintConflicts: MintConflict[];
+  teamId: string | null;
+  teamName: string | null;
   claimed: boolean;
   claimedByYou: boolean;
 }
@@ -145,8 +147,8 @@ export const getNoNewlineSchema = () => {
         return true;
       }
 
-      // Regexp: Anything except new lines
-      return /\r|\n/.test(value);
+      // Regexp: Contains new lines
+      return !/\r|\n/.test(value);
     });
 };
 
@@ -177,6 +179,18 @@ export const getHashlistSchema = () =>
 
     return true;
   });
+
+/**
+ * Max array lengths for all Identify Collection fields.
+ */
+export const identifyCollectionSchemaLengths: Record<
+  keyof Omit<IdentifyCollectionFormData, 'identifyMode'>,
+  number
+> = {
+  voc: 1,
+  fvc: 1,
+  hashlist: 1_250_000,
+};
 
 /**
  * Max string lengths for all Populate Details fields. Synchronize with database
@@ -226,6 +240,8 @@ export const getReviewFormSchema = () => {
         }),
       )
       .required(),
+    teamId: yup.string().uuid().nullable() as yup.StringSchema<string | null>,
+    teamName: yup.string().nullable() as yup.StringSchema<string | null>,
     claimed: yup.boolean().required(),
     claimedByYou: yup.boolean().required(),
   });
@@ -268,6 +284,7 @@ export const getIdentifyCollectionFormSchema = () => {
   const schema: yup.ObjectSchema<IdentifyCollectionFormData> = yup.object({
     identifyMode: yup
       .mixed<CreatorIdentifyMode>()
+      .nullable()
       .oneOf(creatorIdentifyMode)
       .when('haveYouMinted', {
         is: true,
@@ -287,7 +304,7 @@ export const getIdentifyCollectionFormSchema = () => {
             )
             .min(1),
       })
-      .max(10)
+      .max(identifyCollectionSchemaLengths.voc)
       .required(),
     fvc: yup
       .array()
@@ -302,7 +319,7 @@ export const getIdentifyCollectionFormSchema = () => {
             )
             .min(1),
       })
-      .max(10)
+      .max(identifyCollectionSchemaLengths.fvc)
       .required(),
     hashlist: yup
       .string()
@@ -311,7 +328,9 @@ export const getIdentifyCollectionFormSchema = () => {
         then: (schema) =>
           getHashlistSchema().required('A collection hashlist is required'),
       })
-      .max(1_250_000) as yup.StringSchema<string>,
+      .max(
+        identifyCollectionSchemaLengths.hashlist,
+      ) as yup.StringSchema<string>,
   });
   return schema;
 };
@@ -351,8 +370,8 @@ export const getPopulateDetailsFormSchema = () => {
           .oneOf(collectionCategory)
           .required('Category is required'),
       )
-      .length(1)
-      .required(),
+      .length(1, 'Category is required')
+      .required('Category is required'),
     explicitContent: yup.boolean().required(),
     estimatedMintDate: yup.string().nullable() as yup.StringSchema<
       string | undefined
