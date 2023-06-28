@@ -1,6 +1,7 @@
 import * as yup from 'yup';
 import { PublicKey } from '@solana/web3.js';
 import { hashlistToPublicKeys } from '.';
+import { isNullLike } from '../utils';
 
 // Redeclare prisma enums here. If a prisma enum field ends up in a tRPC interface, the field will be missing on the client side
 export enum CreatorIdentifyMode {
@@ -76,6 +77,7 @@ export interface HaveYouMintedFormData {
 }
 
 export interface IdentifyCollectionFormData {
+  compressed: boolean | null;
   identifyMode: CreatorIdentifyMode | null;
   voc: string[];
   fvc: string[];
@@ -184,7 +186,7 @@ export const getHashlistSchema = () =>
  * Max array lengths for all Identify Collection fields.
  */
 export const identifyCollectionSchemaLengths: Record<
-  keyof Omit<IdentifyCollectionFormData, 'identifyMode'>,
+  keyof Omit<IdentifyCollectionFormData, 'compressed' | 'identifyMode'>,
   number
 > = {
   voc: 1,
@@ -282,14 +284,26 @@ export const getHaveYouMintedFormSchema = () => {
 
 export const getIdentifyCollectionFormSchema = () => {
   const schema: yup.ObjectSchema<IdentifyCollectionFormData> = yup.object({
+    compressed: yup
+      .boolean()
+      .nullable()
+      .when('haveYouMinted', {
+        is: true,
+        then: (schema) =>
+          schema.required('Please specify if the collection is compressed'),
+      }) as yup.BooleanSchema<boolean | null>,
     identifyMode: yup
       .mixed<CreatorIdentifyMode>()
       .nullable()
       .oneOf(creatorIdentifyMode)
-      .when('haveYouMinted', {
-        is: true,
+      .when('compressed', {
+        is: (compressed: boolean | null) => !isNullLike(compressed),
         then: (schema) =>
           schema.required('Please choose an identification method'),
+      })
+      .when('compressed', {
+        is: true,
+        then: (schema) => schema.oneOf([CreatorIdentifyMode.VOC]),
       }) as yup.MixedSchema<CreatorIdentifyMode | null>,
     voc: yup
       .array()
