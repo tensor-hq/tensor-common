@@ -353,15 +353,15 @@ export const getPopulateDetailsFormSchema = () => {
   const schema: yup.ObjectSchema<PopulateDetailsFormData> = yup.object({
     name: yup
       .string()
-      .min(3)
+      .min(3, 'Collection name must be at least 3 characters')
       .max(populateDetailsSchemaLengths.name)
       .required('Collection name is required'),
     slugDisplay: getSlugSchema()
-      .min(3)
+      .min(3, 'Url slug must be at least 3 characters')
       .max(populateDetailsSchemaLengths.slugDisplay)
       .required('Url slug is required'),
     symbol: getSymbolSchema()
-      .min(1)
+      .min(1, 'Collection symbol must be at least 1 character')
       .max(populateDetailsSchemaLengths.symbol)
       .required('Collection symbol is required'),
     description: getNoNewlineSchema()
@@ -384,7 +384,7 @@ export const getPopulateDetailsFormSchema = () => {
           .oneOf(collectionCategory)
           .required('Category is required'),
       )
-      .length(1, 'Category is required')
+      .max(1, 'Category is required')
       .required('Category is required'),
     explicitContent: yup.boolean().required(),
     estimatedMintDate: yup.string().nullable() as yup.StringSchema<
