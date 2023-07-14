@@ -367,10 +367,7 @@ export const getPopulateDetailsFormSchema = () => {
     description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
-    twitter: yup
-      .string()
-      .max(populateDetailsSchemaLengths.twitter)
-      .required('Linking a Twitter account is required'),
+    twitter: yup.string().max(populateDetailsSchemaLengths.twitter).default(''),
     discord: yup
       .string()
       .max(populateDetailsSchemaLengths.discord) as yup.StringSchema<string>,
