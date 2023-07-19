@@ -53,20 +53,10 @@ export interface ReviewFormData {
     noteUserVisible: boolean;
     username: string;
   }[];
-  mintConflicts: MintConflict[];
   teamId: string | null;
   teamName: string | null;
   claimed: boolean;
   claimedByYou: boolean;
-}
-
-export interface MintConflict {
-  slug: string;
-  slugDisplay: string | null;
-  secured: boolean;
-  mint?: string;
-  voc?: string;
-  fvc?: string;
 }
 
 export interface HaveYouMintedFormData {
@@ -235,7 +225,7 @@ export const getReviewFormSchema = () => {
         yup.object({
           slug: yup.string().required(),
           slugDisplay: yup.string().nullable().required(),
-          secured: yup.boolean().required(),
+          secured: yup.boolean().optional(),
           mint: getPublicKeySchema().optional(),
           voc: getPublicKeySchema().optional(),
           fvc: yup.string().optional(),
@@ -274,6 +264,7 @@ export const getHaveYouMintedFormSchema = () => {
       .number()
       .integer()
       .min(1)
+      .max(2_000_000_000) // signed int32
       .when('haveYouMinted', {
         is: false,
         then: (schema) => schema.required('Estimated supply is required'),
