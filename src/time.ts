@@ -36,3 +36,8 @@ export const truncateTime = (date: Date) => {
 export const addTime = (date: Date | number, time: Timespan) => {
   return new Date(new Date(date).getTime() + totalMS(time));
 };
+
+export const calcNumDays = (start: number, end: number) => {
+  const difference = new Date(start).getTime() - new Date(end).getTime();
+  return Math.ceil(difference / (1000 * 3600 * 24));
+};

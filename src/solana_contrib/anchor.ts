@@ -1,4 +1,5 @@
 import {
+  Wallet,
   BorshCoder,
   Event,
   EventParser,
@@ -12,10 +13,13 @@ import { AllAccountsMap } from '@project-serum/anchor/dist/cjs/program/namespace
 import {
   AccountInfo,
   CompiledInstruction,
+  Keypair,
   PublicKey,
   TransactionResponse,
 } from '@solana/web3.js';
 import { extractAllIxs } from './transaction';
+
+export const dummyWallet = () => new Wallet(Keypair.generate());
 
 type Decoder = (buffer: Buffer) => any;
 export type AnchorDiscMap<IDL extends Idl> = Record<

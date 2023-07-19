@@ -627,6 +627,7 @@ __metadata:
     "@types/bn.js": ^5.1.0
     "@types/chai": ^4.3.5
     "@types/mocha": ^10.0.1
+    "@types/semaphore": ^1.1.1
     axios: ^0.27.2
     big.js: ^6.2.1
     bn.js: ^5.2.1
@@ -636,6 +637,7 @@ __metadata:
     mocha: ^10.2.0
     npm: ^9.4.0
     prettier: ^2.7.1
+    semaphore: ^1.1.0
     ts-mocha: ^10.0.0
     ts-node: ^10.9.1
     typescript: ^4.7.4
@@ -753,6 +755,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 1bd10b9afa724084b655dc81b7b315def3d2d0e272014ef16009fa76e17537411c07c0695fdea412bc7b36d2a02687f5fea33522d55b8ef29eda42992f812913
+  languageName: node
+  linkType: hard
+
+"@types/semaphore@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@types/semaphore@npm:1.1.1"
+  checksum: 4d5e93046acb885fab46c1f196b5d34dbd708488630b5a53aa7a2aeb2ff4b129636b2ae561bad80bfa49305aa4babbdb5be3bb6e01e1157331a2c82ac6dbad5a
   languageName: node
   linkType: hard
 
@@ -4105,6 +4114,13 @@ __metadata:
     node-gyp: latest
     node-gyp-build: ^4.2.0
   checksum: 21e219adc0024fbd75021001358780a3cc6ac21273c3fcaef46943af73969729709b03f1df7c012a0baab0830fb9a06ccc6b42f8d50050c665cb98078eab477b
+  languageName: node
+  linkType: hard
+
+"semaphore@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "semaphore@npm:1.1.0"
+  checksum: d2445d232ad9959048d4748ef54eb01bc7b60436be2b42fb7de20c4cffacf70eafeeecd3772c1baf408cfdce3805fa6618a4389590335671f18cde54ef3cfae4
   languageName: node
   linkType: hard
 
