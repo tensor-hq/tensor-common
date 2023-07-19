@@ -220,18 +220,6 @@ export const getReviewFormSchema = () => {
         }) as yup.Schema<ReviewFormData['notes'][number]>,
       )
       .required(),
-    mintConflicts: yup
-      .array(
-        yup.object({
-          slug: yup.string().required(),
-          slugDisplay: yup.string().nullable().required(),
-          secured: yup.boolean().optional(),
-          mint: getPublicKeySchema().optional(),
-          voc: getPublicKeySchema().optional(),
-          fvc: yup.string().optional(),
-        }),
-      )
-      .required(),
     teamId: yup.string().uuid().nullable() as yup.StringSchema<string | null>,
     teamName: yup.string().nullable() as yup.StringSchema<string | null>,
     claimed: yup.boolean().required(),
