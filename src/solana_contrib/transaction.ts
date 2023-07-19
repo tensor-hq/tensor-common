@@ -24,6 +24,7 @@ import bs58 from 'bs58';
 import { waitMS } from '../time';
 import { filterNullLike, isNullLike, settleAllWithTimeout } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
+import { Buffer } from 'buffer';
 
 const BLOCK_TIME_MS = 400;
 
@@ -601,4 +602,10 @@ export const extractAllIxs = (
   }
 
   return allIxs;
+};
+
+export const legacyToV0Tx = (
+  legacy: Buffer | Uint8Array | Array<number>,
+): VersionedTransaction => {
+  return new VersionedTransaction(Transaction.from(legacy).compileMessage());
 };
