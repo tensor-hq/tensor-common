@@ -53,20 +53,10 @@ export interface ReviewFormData {
     noteUserVisible: boolean;
     username: string;
   }[];
-  mintConflicts: MintConflict[];
   teamId: string | null;
   teamName: string | null;
   claimed: boolean;
   claimedByYou: boolean;
-}
-
-export interface MintConflict {
-  slug: string;
-  slugDisplay: string | null;
-  secured?: boolean;
-  mint?: string;
-  voc?: string;
-  fvc?: string;
 }
 
 export interface HaveYouMintedFormData {
