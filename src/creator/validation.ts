@@ -179,8 +179,8 @@ export const identifyCollectionSchemaLengths: Record<
   keyof Omit<IdentifyCollectionFormData, 'compressed' | 'identifyMode'>,
   number
 > = {
-  voc: 1,
-  fvc: 1,
+  voc: 5,
+  fvc: 5,
   hashlist: 1_250_000,
 };
 
