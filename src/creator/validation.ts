@@ -117,16 +117,17 @@ export const getSlugSchema = () =>
 export const getSymbolSchema = () => {
   return yup
     .string()
-    .test('isValidSymbol', 'Only letters are allowed', (value) => {
+    .test('isValidSymbol', 'Only letters and numbers are allowed', (value) => {
       if (!value) {
         return true;
       }
 
       // Regexp:
       // A to Z
+      // 0 to 9
       // Allow lowercase because chakra textTransform will store
       // the underlying value how the user typed it
-      return /^[a-zA-Z]+$/.test(value);
+      return /^[a-zA-Z0-9]+$/.test(value);
     });
 };
 
