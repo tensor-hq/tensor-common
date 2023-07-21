@@ -117,16 +117,17 @@ export const getSlugSchema = () =>
 export const getSymbolSchema = () => {
   return yup
     .string()
-    .test('isValidSymbol', 'Only letters are allowed', (value) => {
+    .test('isValidSymbol', 'Only letters and numbers are allowed', (value) => {
       if (!value) {
         return true;
       }
 
       // Regexp:
       // A to Z
+      // 0 to 9
       // Allow lowercase because chakra textTransform will store
       // the underlying value how the user typed it
-      return /^[a-zA-Z]+$/.test(value);
+      return /^[a-zA-Z0-9]+$/.test(value);
     });
 };
 
@@ -179,8 +180,8 @@ export const identifyCollectionSchemaLengths: Record<
   keyof Omit<IdentifyCollectionFormData, 'compressed' | 'identifyMode'>,
   number
 > = {
-  voc: 1,
-  fvc: 1,
+  voc: 5,
+  fvc: 5,
   hashlist: 1_250_000,
 };
 
@@ -218,18 +219,6 @@ export const getReviewFormSchema = () => {
           noteUserVisible: yup.boolean().required(),
           username: yup.string(),
         }) as yup.Schema<ReviewFormData['notes'][number]>,
-      )
-      .required(),
-    mintConflicts: yup
-      .array(
-        yup.object({
-          slug: yup.string().required(),
-          slugDisplay: yup.string().nullable().required(),
-          secured: yup.boolean().optional(),
-          mint: getPublicKeySchema().optional(),
-          voc: getPublicKeySchema().optional(),
-          fvc: yup.string().optional(),
-        }),
       )
       .required(),
     teamId: yup.string().uuid().nullable() as yup.StringSchema<string | null>,
