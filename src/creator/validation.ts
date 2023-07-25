@@ -196,7 +196,7 @@ export const populateDetailsSchemaLengths: Record<
   number
 > = {
   name: 40,
-  slugDisplay: 20,
+  slugDisplay: 40,
   symbol: 10,
   description: 500,
   twitter: 64,
@@ -289,14 +289,12 @@ export const getIdentifyCollectionFormSchema = () => {
       .array()
       .when('identifyMode', {
         is: 'VOC',
-        then: (schema) =>
-          yup
-            .array(
-              getPublicKeySchema().required(
-                'Metaplex certified collection is required',
-              ),
-            )
-            .min(1),
+        then: () =>
+          yup.array(
+            getPublicKeySchema().required(
+              'Metaplex certified collection is required',
+            ),
+          ),
       })
       .max(identifyCollectionSchemaLengths.voc)
       .required(),
@@ -304,14 +302,10 @@ export const getIdentifyCollectionFormSchema = () => {
       .array()
       .when('identifyMode', {
         is: 'FVC',
-        then: (schema) =>
-          yup
-            .array(
-              getPublicKeySchema().required(
-                'First verified creator is required',
-              ),
-            )
-            .min(1),
+        then: () =>
+          yup.array(
+            getPublicKeySchema().required('First verified creator is required'),
+          ),
       })
       .max(identifyCollectionSchemaLengths.fvc)
       .required(),
@@ -319,7 +313,7 @@ export const getIdentifyCollectionFormSchema = () => {
       .string()
       .when('identifyMode', {
         is: 'HASHLIST',
-        then: (schema) =>
+        then: () =>
           getHashlistSchema().required('A collection hashlist is required'),
       })
       .max(
