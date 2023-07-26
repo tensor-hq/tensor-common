@@ -7,9 +7,9 @@ import {
   Instruction,
   Program,
   utils,
-} from '@project-serum/anchor';
-import { InstructionDisplay } from '@project-serum/anchor/dist/cjs/coder/borsh/instruction';
-import { AllAccountsMap } from '@project-serum/anchor/dist/cjs/program/namespace/types';
+} from '@coral-xyz/anchor';
+import { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
+import { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
 import {
   AccountInfo,
   CompiledInstruction,
