@@ -173,6 +173,20 @@ export const getHashlistSchema = () =>
     return true;
   });
 
+export const getUrlSchema = () =>
+  yup
+    .string()
+    .test('isValidUrl', "The link must start with 'https://'", (value) => {
+      if (!value) {
+        return true;
+      }
+
+      if (!value.startsWith('https://')) {
+        return false;
+      }
+      return true;
+    });
+
 export const getTwitterSchema = () =>
   yup
     .string()
@@ -388,9 +402,9 @@ export const getPopulateDetailsFormSchema = () => {
     discord: getDiscordSchema().max(
       populateDetailsSchemaLengths.discord,
     ) as yup.StringSchema<string>,
-    website: yup
-      .string()
-      .max(populateDetailsSchemaLengths.website) as yup.StringSchema<string>,
+    website: getUrlSchema().max(
+      populateDetailsSchemaLengths.website,
+    ) as yup.StringSchema<string>,
     categories: yup
       .array(
         yup
