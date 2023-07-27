@@ -173,6 +173,47 @@ export const getHashlistSchema = () =>
     return true;
   });
 
+export const getTwitterSchema = () =>
+  yup
+    .string()
+    .test(
+      'isValidTwitter',
+      "The Twitter profile url must start with 'https://twitter.com'",
+      (value) => {
+        if (!value) {
+          return true;
+        }
+
+        if (!value.startsWith('https://twitter.com/')) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
+export const getDiscordSchema = () =>
+  yup
+    .string()
+    .test(
+      'isValidDiscord',
+      "The Discord invite link must start with 'https://discord.com' or 'https://discord.gg'",
+      (value) => {
+        if (!value) {
+          return true;
+        }
+
+        if (
+          !value.startsWith('https://discord.com/') ||
+          !value.startsWith('https://discord.gg/')
+        ) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
 /**
  * Max array lengths for all Identify Collection fields.
  */
@@ -341,10 +382,12 @@ export const getPopulateDetailsFormSchema = () => {
     description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
-    twitter: yup.string().max(populateDetailsSchemaLengths.twitter).default(''),
-    discord: yup
-      .string()
-      .max(populateDetailsSchemaLengths.discord) as yup.StringSchema<string>,
+    twitter: getTwitterSchema()
+      .max(populateDetailsSchemaLengths.twitter)
+      .default(''),
+    discord: getDiscordSchema().max(
+      populateDetailsSchemaLengths.discord,
+    ) as yup.StringSchema<string>,
     website: yup
       .string()
       .max(populateDetailsSchemaLengths.website) as yup.StringSchema<string>,
