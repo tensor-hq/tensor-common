@@ -211,14 +211,14 @@ export const getDiscordSchema = () =>
     .string()
     .test(
       'isValidDiscord',
-      "The Discord invite link must start with 'https://discord.com' or 'https://discord.gg'",
+      "The Discord invite link must start with 'https://discord.com/invite/' or 'https://discord.gg'",
       (value) => {
         if (!value) {
           return true;
         }
 
         if (
-          !value.startsWith('https://discord.com/') ||
+          !value.startsWith('https://discord.com/invite') ||
           !value.startsWith('https://discord.gg/')
         ) {
           return false;
