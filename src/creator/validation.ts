@@ -57,6 +57,9 @@ export interface ReviewFormData {
   teamName: string | null;
   claimed: boolean;
   claimedByYou: boolean;
+  secured: boolean;
+  tensorVerified: boolean;
+  hidden: boolean;
 }
 
 export interface HaveYouMintedFormData {
@@ -173,6 +176,61 @@ export const getHashlistSchema = () =>
     return true;
   });
 
+export const getUrlSchema = () =>
+  yup
+    .string()
+    .test('isValidUrl', "The link must start with 'https://'", (value) => {
+      if (!value) {
+        return true;
+      }
+
+      if (!value.startsWith('https://')) {
+        return false;
+      }
+      return true;
+    });
+
+export const getTwitterSchema = () =>
+  yup
+    .string()
+    .test(
+      'isValidTwitter',
+      "The Twitter profile url must start with 'https://twitter.com'",
+      (value) => {
+        if (!value) {
+          return true;
+        }
+
+        if (!value.startsWith('https://twitter.com/')) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
+export const getDiscordSchema = () =>
+  yup
+    .string()
+    .test(
+      'isValidDiscord',
+      "The Discord invite link must start with 'https://discord.com/invite/' or 'https://discord.gg'",
+      (value) => {
+        if (!value) {
+          return true;
+        }
+
+        if (
+          !value.startsWith('https://discord.com/invite') ||
+          !value.startsWith('https://discord.gg/')
+        ) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
 /**
  * Max array lengths for all Identify Collection fields.
  */
@@ -196,7 +254,7 @@ export const populateDetailsSchemaLengths: Record<
   number
 > = {
   name: 40,
-  slugDisplay: 20,
+  slugDisplay: 40,
   symbol: 10,
   description: 500,
   twitter: 64,
@@ -225,6 +283,9 @@ export const getReviewFormSchema = () => {
     teamName: yup.string().nullable() as yup.StringSchema<string | null>,
     claimed: yup.boolean().required(),
     claimedByYou: yup.boolean().required(),
+    secured: yup.boolean().required(),
+    tensorVerified: yup.boolean().required(),
+    hidden: yup.boolean().required(),
   });
   return schema;
 };
@@ -289,14 +350,12 @@ export const getIdentifyCollectionFormSchema = () => {
       .array()
       .when('identifyMode', {
         is: 'VOC',
-        then: (schema) =>
-          yup
-            .array(
-              getPublicKeySchema().required(
-                'Metaplex certified collection is required',
-              ),
-            )
-            .min(1),
+        then: () =>
+          yup.array(
+            getPublicKeySchema().required(
+              'Metaplex certified collection is required',
+            ),
+          ),
       })
       .max(identifyCollectionSchemaLengths.voc)
       .required(),
@@ -304,14 +363,10 @@ export const getIdentifyCollectionFormSchema = () => {
       .array()
       .when('identifyMode', {
         is: 'FVC',
-        then: (schema) =>
-          yup
-            .array(
-              getPublicKeySchema().required(
-                'First verified creator is required',
-              ),
-            )
-            .min(1),
+        then: () =>
+          yup.array(
+            getPublicKeySchema().required('First verified creator is required'),
+          ),
       })
       .max(identifyCollectionSchemaLengths.fvc)
       .required(),
@@ -319,7 +374,7 @@ export const getIdentifyCollectionFormSchema = () => {
       .string()
       .when('identifyMode', {
         is: 'HASHLIST',
-        then: (schema) =>
+        then: () =>
           getHashlistSchema().required('A collection hashlist is required'),
       })
       .max(
@@ -347,13 +402,15 @@ export const getPopulateDetailsFormSchema = () => {
     description: getNoNewlineSchema()
       .max(populateDetailsSchemaLengths.description)
       .required('Description is required'),
-    twitter: yup.string().max(populateDetailsSchemaLengths.twitter).default(''),
-    discord: yup
-      .string()
-      .max(populateDetailsSchemaLengths.discord) as yup.StringSchema<string>,
-    website: yup
-      .string()
-      .max(populateDetailsSchemaLengths.website) as yup.StringSchema<string>,
+    twitter: getTwitterSchema()
+      .max(populateDetailsSchemaLengths.twitter)
+      .default(''),
+    discord: getDiscordSchema().max(
+      populateDetailsSchemaLengths.discord,
+    ) as yup.StringSchema<string>,
+    website: getUrlSchema().max(
+      populateDetailsSchemaLengths.website,
+    ) as yup.StringSchema<string>,
     categories: yup
       .array(
         yup
