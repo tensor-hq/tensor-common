@@ -224,9 +224,9 @@ export const getDiscordSchema = () =>
         }
 
         if (
-          !value.startsWith('https://discord.com/invite/') ||
-          !value.startsWith('https://discord.gg/') ||
-          !value.startsWith('https://www.discord.com/invite/') ||
+          !value.startsWith('https://discord.com/invite/') &&
+          !value.startsWith('https://discord.gg/') &&
+          !value.startsWith('https://www.discord.com/invite/') &&
           !value.startsWith('https://www.discord.gg/')
         ) {
           return false;
