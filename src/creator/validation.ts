@@ -195,13 +195,16 @@ export const getTwitterSchema = () =>
     .string()
     .test(
       'isValidTwitter',
-      "The Twitter profile url must start with 'https://twitter.com'",
+      "The Twitter profile url must start with 'https://twitter.com/'",
       (value) => {
         if (!value) {
           return true;
         }
 
-        if (!value.startsWith('https://twitter.com/')) {
+        if (
+          !value.startsWith('https://twitter.com/') &&
+          !value.startsWith('https://www.twitter.com/')
+        ) {
           return false;
         }
 
@@ -214,15 +217,17 @@ export const getDiscordSchema = () =>
     .string()
     .test(
       'isValidDiscord',
-      "The Discord invite link must start with 'https://discord.com/invite/' or 'https://discord.gg'",
+      "The Discord invite link must start with 'https://discord.com/invite/' or 'https://discord.gg/'",
       (value) => {
         if (!value) {
           return true;
         }
 
         if (
-          !value.startsWith('https://discord.com/invite') ||
-          !value.startsWith('https://discord.gg/')
+          !value.startsWith('https://discord.com/invite/') ||
+          !value.startsWith('https://discord.gg/') ||
+          !value.startsWith('https://www.discord.com/invite/') ||
+          !value.startsWith('https://www.discord.gg/')
         ) {
           return false;
         }

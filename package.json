@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.15.6",
+  "version": "0.15.7",
   "description": "Common utility methods used by Tensor.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
