@@ -57,6 +57,9 @@ export interface ReviewFormData {
   teamName: string | null;
   claimed: boolean;
   claimedByYou: boolean;
+  secured: boolean;
+  tensorVerified: boolean;
+  hidden: boolean;
 }
 
 export interface HaveYouMintedFormData {
@@ -280,6 +283,9 @@ export const getReviewFormSchema = () => {
     teamName: yup.string().nullable() as yup.StringSchema<string | null>,
     claimed: yup.boolean().required(),
     claimedByYou: yup.boolean().required(),
+    secured: yup.boolean().required(),
+    tensorVerified: yup.boolean().required(),
+    hidden: yup.boolean().required(),
   });
   return schema;
 };
