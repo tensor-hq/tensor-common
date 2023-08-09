@@ -69,7 +69,8 @@ export const makeActiveListingSortFn = (
             a.grossAmount ? new Big(a.grossAmount) : null,
             b.grossAmount ? new Big(b.grossAmount) : null,
             //(!) sync with the front-end
-            sortBy !== ActiveListingsSortBy.PriceAsc,
+            // nulls always come last after the sort.
+            sortBy === ActiveListingsSortBy.PriceDesc,
           )
         );
       case ActiveListingsSortBy.LastSaleAsc:
@@ -80,7 +81,8 @@ export const makeActiveListingSortFn = (
             a.lastSale ? new Big(a.lastSale) : null,
             b.lastSale ? new Big(b.lastSale) : null,
             //(!) sync with the front-end
-            sortBy !== ActiveListingsSortBy.LastSaleAsc,
+            // nulls always come last after the sort.
+            sortBy === ActiveListingsSortBy.LastSaleDesc,
           )
         );
       case ActiveListingsSortBy.ListedDesc:
@@ -91,6 +93,9 @@ export const makeActiveListingSortFn = (
           sortNumberOrBig(
             getActiveListingRank(sortBy, a.ranks),
             getActiveListingRank(sortBy, b.ranks),
+            //(!) sync with the front-end
+            // nulls always come last after the sort.
+            sign === -1,
           )
         );
     }

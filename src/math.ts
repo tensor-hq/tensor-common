@@ -90,7 +90,11 @@ export function maxBigsBNs(arr: any[]) {
 export const sortNumberOrBig = (
   a: Big | BN | number | null | undefined,
   b: Big | BN | number | null | undefined,
-  // If true, means nulls sort before all other non-null values.
+  /** If true, means nulls sort before all other non-null values.
+   * NB: sorting before other values means it will:
+   *  - come first if you're sorting in ASC order
+   *  - come last if you're sorting in DESC order
+   */
   nullsFirst: boolean = true,
 ): number => {
   if (isNullLike(a) && isNullLike(b)) return 0;
