@@ -11,8 +11,5 @@ Make sure to ugprade version in `package.json` for new changes that may be break
 ### Add to another project
 
 ```sh
-# Adds GH repo (not recommended for prod)
-yarn add tensor-hq/tensor-common # add --force if you want to force pull if you don't change version
-
-# TODO: push to npm
+yarn add tensor-hq/tensor-common
 ```
