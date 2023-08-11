@@ -10,6 +10,7 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SignatureResult,
+  SignatureStatus,
   Signer,
   Transaction,
   TransactionError,
@@ -25,6 +26,7 @@ import { waitMS } from '../time';
 import { filterNullLike, isNullLike, settleAllWithTimeout } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
 import { Buffer } from 'buffer';
+import { backOff } from 'exponential-backoff';
 
 const BLOCK_TIME_MS = 400;
 
@@ -504,6 +506,65 @@ export const getLatestBlockhashMultConns = async ({
   return blockhashes.sort(
     (a, b) => b.value.lastValidBlockHeight - a.value.lastValidBlockHeight,
   )[0].value;
+};
+
+/**
+ * Races multiple connections to confirm a tx.
+ *
+ * This will throw TransactionExpiredBlockheightExceededError
+ * if we cannot confirm by the tx's lastValidBlockHeight.
+ */
+export const confirmTransactionMultConns = async ({
+  conns,
+  sig,
+  timeoutMs = 60 * 1000,
+  maxDelayMs = 10 * 1000,
+  startingDelayMs = 3 * 1000,
+  numOfAttempts = 7,
+}: {
+  conns: Connection[];
+  sig: string;
+  timeoutMs?: number;
+  maxDelayMs?: number;
+  startingDelayMs?: number;
+  numOfAttempts?: number;
+}) => {
+  return await Promise.race<RpcResponseAndContext<SignatureStatus>>([
+    new Promise((_, rej) =>
+      setTimeout(
+        () => rej(new Error(`confirming ${sig} timeout exceed ${timeoutMs}ms`)),
+        timeoutMs,
+      ),
+    ),
+    // LOL this doesn't actually work for old sigs wtf.
+    // ...conns.map(async (c) =>
+    //   // Backoff in case one of the RPCs is acting up: hopefully the other will out-race a confirmation.
+    //   backOff(() => c.confirmTransaction(args), {
+    //     retry: (e) => {
+    //       return !(e instanceof TransactionExpiredBlockheightExceededError);
+    //     },
+    //   })
+    // ),
+    ...conns.map(async (c) =>
+      backOff(
+        async () => {
+          const { value, context } = await c.getSignatureStatus(sig, {
+            searchTransactionHistory: true,
+          });
+          if (!value) throw new Error(`sig status for ${sig} not found`);
+          return {
+            value,
+            context,
+          };
+        },
+        {
+          maxDelay: maxDelayMs,
+          startingDelay: startingDelayMs,
+          numOfAttempts,
+        },
+      ),
+    ),
+  ]);
 };
 
 export const getLatestBlockHeight = async ({

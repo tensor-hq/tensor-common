@@ -580,6 +580,7 @@ __metadata:
     bn.js: ^5.2.1
     bs58: ^5.0.0
     chai: ^4.3.7
+    exponential-backoff: ^3.1.1
     hadeswap-sdk: ^0.8.25
     mocha: ^10.2.0
     prettier: ^2.7.1
@@ -1796,6 +1797,13 @@ __metadata:
     node-gyp: latest
     safe-buffer: ^5.1.1
   checksum: ad4e1577f1a6b721c7800dcc7c733fe01f6c310732bb5bf2240245c2a5b45a38518b91d8be2c610611623160b9d1c0e91f1ce96d639f8b53e8894625cf20fa45
+  languageName: node
+  linkType: hard
+
+"exponential-backoff@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "exponential-backoff@npm:3.1.1"
+  checksum: 3d21519a4f8207c99f7457287291316306255a328770d320b401114ec8481986e4e467e854cb9914dd965e0a1ca810a23ccb559c642c88f4c7f55c55778a9b48
   languageName: node
   linkType: hard
 
