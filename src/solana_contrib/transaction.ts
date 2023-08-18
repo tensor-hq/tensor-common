@@ -1,12 +1,17 @@
 import {
+  AccountInfo,
   AddressLookupTableAccount,
   BlockhashWithExpiryBlockHeight,
   Commitment,
-  CompiledInnerInstruction,
   CompiledInstruction,
+  ComputeBudgetInstruction,
+  ComputeBudgetProgram,
   ConfirmOptions,
   Connection,
   Context,
+  Finality,
+  Message,
+  MessageV0,
   PublicKey,
   RpcResponseAndContext,
   SignatureResult,
@@ -19,14 +24,20 @@ import {
   TransactionResponse,
   TransactionSignature,
   VersionedTransaction,
+  VersionedTransactionResponse,
 } from '@solana/web3.js';
 import assert from 'assert';
 import bs58 from 'bs58';
-import { waitMS } from '../time';
-import { filterNullLike, isNullLike, settleAllWithTimeout } from '../utils';
-import { TxV0WithHeight, TxWithHeight } from './types';
 import { Buffer } from 'buffer';
 import { backOff } from 'exponential-backoff';
+import { sleep, waitMS } from '../time';
+import {
+  filterNullLike,
+  isNullLike,
+  makeBatches,
+  settleAllWithTimeout,
+} from '../utils';
+import { TxV0WithHeight, TxWithHeight } from './types';
 
 const BLOCK_TIME_MS = 400;
 
@@ -669,4 +680,245 @@ export const legacyToV0Tx = (
   legacy: Buffer | Uint8Array | Array<number>,
 ): VersionedTransaction => {
   return new VersionedTransaction(Transaction.from(legacy).compileMessage());
+};
+
+const MIN_SLOT_MS = 400;
+// In case we get a flaky slot from a bad RPC (o/w we may end up waiting A LONG time = stuck).
+const MAX_WAIT_UNTIL_MS = 5 * 1000;
+
+type AccountWithSlot = {
+  slot: number;
+  account: AccountInfo<Buffer> | null;
+  pubkey: PublicKey;
+};
+
+/** Use this vs getAccountInfo w/ minContextSlot since minContextSlot just spam retries.
+ * See getMultiAccountsWaitSlot if you have a batch of accounts.  */
+export const getAccountWaitSlot = async ({
+  conn,
+  slot,
+  pubkey,
+  beforeHook,
+  retries = 5,
+}: {
+  conn: Connection;
+  slot: number;
+  pubkey: PublicKey;
+  /** Hook right before RPC call */
+  beforeHook?: () => Promise<void>;
+  /** Retries for connection request. */
+  retries?: number;
+}): Promise<AccountWithSlot> => {
+  let curSlot: number;
+  let account: AccountInfo<Buffer> | null;
+  while (true) {
+    ({
+      context: { slot: curSlot },
+      // Will be null if account cannot be found.
+      value: account,
+    } = await backOff(
+      async () => {
+        await beforeHook?.();
+        return await conn.getAccountInfoAndContext(pubkey);
+      },
+      {
+        numOfAttempts: retries,
+      },
+    ));
+    // Need to wait for slot AFTER the tx.
+    if (curSlot > slot) break;
+
+    const interval = Math.min(
+      Math.ceil(Math.max(1, slot - curSlot) * MIN_SLOT_MS),
+      MAX_WAIT_UNTIL_MS,
+    );
+
+    console.warn(
+      `retrieve pda ${pubkey.toBase58()} with pda slot ${curSlot} <= tx slot ${slot}, waiting ${interval}ms and retrying...`,
+    );
+    await sleep({ Millis: interval });
+  }
+
+  return { slot: curSlot, account, pubkey };
+};
+
+export const getMultipleAccountsWaitSlot = async ({
+  conn,
+  slot,
+  pubkeys,
+  beforeHook,
+  retries = 5,
+}: {
+  conn: Connection;
+  slot: number;
+  pubkeys: PublicKey[];
+  /** Hook right before RPC call */
+  beforeHook?: () => Promise<void>;
+  /** Retries for connection request. */
+  retries?: number;
+}): Promise<AccountWithSlot[]> => {
+  return (
+    await Promise.all(
+      makeBatches(pubkeys, 100).map(async (batch, batchIdx) => {
+        let curSlot: number;
+        let accounts: (AccountInfo<Buffer> | null)[];
+        while (true) {
+          ({
+            context: { slot: curSlot },
+            // Will be null if account cannot be found.
+            value: accounts,
+          } = await backOff(
+            async () => {
+              await beforeHook?.();
+              return await conn.getMultipleAccountsInfoAndContext(batch);
+            },
+            {
+              numOfAttempts: retries,
+            },
+          ));
+          // Need to wait for slot AFTER the tx.
+          if (curSlot > slot) break;
+
+          const interval = Math.min(
+            Math.ceil(Math.max(1, slot - curSlot) * MIN_SLOT_MS),
+            MAX_WAIT_UNTIL_MS,
+          );
+
+          console.warn(
+            `retrieve pda for ${
+              batch.length
+            } keys (batch ${batchIdx}, first: ${batch[0].toBase58()}) with pda slot ${curSlot} <= tx slot ${slot}, waiting ${interval}ms and retrying...`,
+          );
+          await sleep({ Millis: interval });
+        }
+        return accounts.map((account, idx) => ({
+          slot: curSlot,
+          account,
+          pubkey: batch[idx],
+        }));
+      }),
+    )
+  ).flat();
+};
+
+// NB: use this o/w the getAccountKey fn on VersionedTransactionResponse from Geyser/RPC doesn't work...
+export const getAccountKeys = (tx: VersionedTransactionResponse) => {
+  return [
+    ...(tx.transaction.message.staticAccountKeys ?? []),
+    ...(tx.meta?.loadedAddresses?.writable ?? []),
+    ...(tx.meta?.loadedAddresses?.readonly ?? []),
+  ];
+};
+
+/** converts the new v0 tx type to legacy so that our downstream parser works as expected */
+export const convertTxToLegacy = (
+  tx: VersionedTransactionResponse,
+): TransactionResponse => {
+  // Okay this is really fucking weird, but here is the observed behavior:
+  // JSON RPC getTransaction:
+  // - legacy: in TransactionResponse format
+  // - v0: in VersionedTransactionResponse format
+  // Geyser SQS:
+  // - legacy & v0 in VersionedTransactionResponse
+
+  //handle TransactionResponse/legacy format, return as is
+  if (
+    (tx.version === undefined ||
+      tx.version === null ||
+      tx.version === 'legacy') &&
+    !('compiledInstructions' in tx.transaction.message)
+  ) {
+    return tx as TransactionResponse;
+  }
+  //handle VersionedTransactionResponse
+  const v0msg = tx.transaction.message as MessageV0;
+  const legacyMsg = new Message({
+    header: v0msg.header,
+    accountKeys: getAccountKeys(tx),
+    instructions: v0msg.compiledInstructions.map((i) => {
+      const { accountKeyIndexes, ...rest } = i;
+      return {
+        ...rest,
+        accounts: accountKeyIndexes,
+        //when parsing a JSON file, this field is a stringified buffer ({type: Buffer, data: [1,2,3]})
+        data:
+          'data' in i.data
+            ? bs58.encode(Uint8Array.from((i.data as any).data))
+            : bs58.encode(i.data),
+      };
+    }),
+    recentBlockhash: v0msg.recentBlockhash,
+  });
+  return {
+    ...tx,
+    meta: tx.meta
+      ? {
+          ...tx.meta,
+          loadedAddresses: {
+            readonly: [],
+            writable: [],
+          },
+        }
+      : null,
+    transaction: {
+      ...tx.transaction,
+      message: legacyMsg,
+    },
+  };
+};
+
+/** gets new v0 and legacy transactions with the old TransactionResponse format */
+export const getTransactionConvertedToLegacy = async (
+  conn: Connection,
+  sig: string,
+  commitment: Finality = 'confirmed',
+): Promise<TransactionResponse | null> => {
+  const tx: VersionedTransactionResponse | null = await conn.getTransaction(
+    sig,
+    {
+      commitment,
+      maxSupportedTransactionVersion: 0,
+    },
+  );
+  if (!tx) return null;
+  return convertTxToLegacy(tx);
+};
+
+// Current max compute per tx.
+const MAX_COMPUTE_UNITS = 1_400_000;
+/** Adds (1) increase compute + (2) priority fees */
+export const prependComputeIxs = (
+  ixs: TransactionInstruction[],
+  compute: number,
+  priorityMicroLamports?: number,
+): TransactionInstruction[] => {
+  const out = [...ixs];
+  if (
+    !ixs.some(
+      (ix) =>
+        ix.programId.equals(ComputeBudgetProgram.programId) &&
+        ComputeBudgetInstruction.decodeInstructionType(ix) ===
+          'SetComputeUnitLimit',
+    )
+  ) {
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+      units: Math.min(MAX_COMPUTE_UNITS, compute),
+    });
+    out.splice(0, 0, modifyComputeUnits);
+  }
+  if (
+    priorityMicroLamports &&
+    !ixs.some(
+      (ix) =>
+        ix.programId.equals(ComputeBudgetProgram.programId) &&
+        ComputeBudgetInstruction.decodeInstructionType(ix) ===
+          'SetComputeUnitPrice',
+    )
+  ) {
+    const addPriorityFee = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: priorityMicroLamports,
+    });
+    out.splice(0, 0, addPriorityFee);
+  }
+  return out;
 };
