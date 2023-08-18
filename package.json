@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.16.3",
+  "version": "0.17.0",
   "description": "Common utility methods used by Tensor.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.26.0",
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
+    "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
     "@metaplex-foundation/mpl-token-auth-rules": "^2.0.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.8.1",
     "@solana/spl-token": "^0.3.6",

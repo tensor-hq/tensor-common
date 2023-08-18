@@ -13,7 +13,7 @@ export const findMetadataPda = (
   );
 };
 
-export const findMasterEditionV2Pda = (
+export const findMasterEditionPda = (
   mint: PublicKey,
   programId: PublicKey = PROGRAM_ID,
 ) => {
