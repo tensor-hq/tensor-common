@@ -12,7 +12,7 @@ import {
 import { backOff } from 'exponential-backoff';
 import { buildTxV0 } from '../solana_contrib';
 
-type BuildAndSendTxArgs = {
+export type BuildAndSendTxArgs = {
   conn: Connection;
   payer: Signer;
   ixs: TransactionInstruction[];
