@@ -148,6 +148,13 @@ export const createNft = async ({
       createIx.keys[i].isSigner = true;
       createIx.keys[i].isWritable = true;
     }
+    if (
+      creators?.some((c) =>
+        c.authority?.publicKey.equals(createIx.keys[i].pubkey),
+      )
+    ) {
+      createIx.keys[i].isSigner = true;
+    }
   }
 
   // --------------------------------------- mint
