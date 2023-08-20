@@ -10,6 +10,7 @@ import {
   TokenStandard,
   createCreateInstruction,
   createMintInstruction,
+  createSignMetadataInstruction,
   createVerifyCollectionInstruction,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
@@ -120,7 +121,7 @@ export const createNft = async ({
             return {
               address: c.address,
               share: c.share,
-              verified: !!c.authority,
+              verified: false,
             };
           }) ?? null,
         primarySaleHappened: true,
@@ -147,13 +148,6 @@ export const createNft = async ({
     if (createIx.keys[i].pubkey.toBase58() === mint.publicKey.toBase58()) {
       createIx.keys[i].isSigner = true;
       createIx.keys[i].isWritable = true;
-    }
-    if (
-      creators?.some((c) =>
-        c.authority?.publicKey.equals(createIx.keys[i].pubkey),
-      )
-    ) {
-      createIx.keys[i].isSigner = true;
     }
   }
 
@@ -200,7 +194,7 @@ export const createNft = async ({
   const mintIx = createMintInstruction(mintAcccounts, mintArgs);
   // Have to do separately o/w for regular NFTs it'll complain about
   // collection verified can't be set.
-  const verifyIxs =
+  const verifyCollIxs =
     collection && collectionVerified
       ? [
           createVerifyCollectionInstruction({
@@ -216,12 +210,22 @@ export const createNft = async ({
         ]
       : [];
 
+  const verifyCreatorIxs = filterNullLike(
+    creators?.map((c) => {
+      if (!c.authority) return;
+      return createSignMetadataInstruction({
+        metadata,
+        creator: c.authority.publicKey,
+      });
+    }) ?? [],
+  );
+
   // --------------------------------------- send
 
   await buildAndSendTx({
     conn,
     payer,
-    ixs: [createIx, mintIx, ...verifyIxs],
+    ixs: [createIx, mintIx, ...verifyCollIxs, ...verifyCreatorIxs],
     extraSigners: dedupeList(
       filterNullLike([
         owner,
