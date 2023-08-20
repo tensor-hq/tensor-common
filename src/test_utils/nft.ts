@@ -10,6 +10,7 @@ import {
   TokenStandard,
   createCreateInstruction,
   createMintInstruction,
+  createVerifyCollectionInstruction,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -125,7 +126,8 @@ export const createNft = async ({
         isMutable: true,
         tokenStandard,
         collection: collection
-          ? { verified: collectionVerified, key: collection.publicKey }
+          ? // Must be verified as separate ix for nfts.
+            { verified: false, key: collection.publicKey }
           : null,
         uses: null,
         collectionDetails: null,
@@ -188,13 +190,30 @@ export const createNft = async ({
   };
 
   const mintIx = createMintInstruction(mintAcccounts, mintArgs);
+  // Have to do separately o/w for regular NFTs it'll complain about
+  // collection verified can't be set.
+  const verifyIxs =
+    collection && collectionVerified
+      ? [
+          createVerifyCollectionInstruction({
+            metadata,
+            collectionAuthority: owner.publicKey,
+            payer: owner.publicKey,
+            collectionMint: collection.publicKey,
+            collection: findMetadataPda(collection.publicKey)[0],
+            collectionMasterEditionAccount: findMasterEditionPda(
+              collection.publicKey,
+            )[0],
+          }),
+        ]
+      : [];
 
   // --------------------------------------- send
 
   await buildAndSendTx({
     conn,
     payer,
-    ixs: [createIx, mintIx],
+    ixs: [createIx, mintIx, ...verifyIxs],
     extraSigners: [owner, mint],
   });
 
@@ -249,7 +268,6 @@ export const createAndFundAta = async ({
     });
   }
 
-  //create programmable nft
   const { metadataAddress, tokenAddress, masterEditionAddress } =
     await createNft({
       conn,
