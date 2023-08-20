@@ -12,6 +12,7 @@ import {
   createMintInstruction,
   createSignMetadataInstruction,
   createVerifyCollectionInstruction,
+  createVerifyInstruction,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -93,6 +94,7 @@ export const createNft = async ({
   ruleSet?: PublicKey | null;
 }) => {
   // --------------------------------------- create
+  const isPnft = tokenStandard === TokenStandard.ProgrammableNonFungible;
 
   const [metadata] = findMetadataPda(mint.publicKey);
   const [masterEdition] = findMasterEditionPda(mint.publicKey);
@@ -128,8 +130,12 @@ export const createNft = async ({
         isMutable: true,
         tokenStandard,
         collection: collection
-          ? // Must be verified as separate ix for nfts.
-            { verified: false, key: collection.publicKey }
+          ? {
+              // For pNFTs, must verify collection at the same time.
+              // Non-pNFTs: must do it separately.
+              verified: isPnft ? collectionVerified : false,
+              key: collection.publicKey,
+            }
           : null,
         uses: null,
         collectionDetails: null,
@@ -195,7 +201,7 @@ export const createNft = async ({
   // Have to do separately o/w for regular NFTs it'll complain about
   // collection verified can't be set.
   const verifyCollIxs =
-    collection && collectionVerified
+    collection && collectionVerified && !isPnft
       ? [
           createVerifyCollectionInstruction({
             metadata,
