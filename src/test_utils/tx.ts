@@ -57,9 +57,11 @@ export const buildAndSendTx = async ({
   );
 
   try {
+    // Need to pass commitment here o/w it doesn't work...?
+    // @ts-ignore
     const sig = await conn.sendTransaction(tx, {
       ...opts,
-      preflightCommitment: commitment,
+      commitment,
     });
     await conn.confirmTransaction(
       { signature: sig, blockhash, lastValidBlockHeight },
