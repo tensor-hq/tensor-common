@@ -1,5 +1,6 @@
 import {
   AddressLookupTableAccount,
+  ConfirmOptions,
   Connection,
   Finality,
   Keypair,
@@ -18,7 +19,7 @@ export type BuildAndSendTxArgs = {
   payer: Signer;
   ixs: TransactionInstruction[];
   extraSigners?: Signer[];
-  opts?: SendOptions;
+  opts?: ConfirmOptions;
   commitment?: Finality;
   // Prints out transaction (w/ logs) to stdout
   debug?: boolean;
@@ -32,7 +33,7 @@ export const buildAndSendTx = async ({
   ixs,
   extraSigners,
   /** For tests, skip preflight so we can expect tx errors */
-  opts = { preflightCommitment: 'confirmed', skipPreflight: true },
+  opts,
   commitment = 'confirmed',
   debug,
   lookupTableAccounts,
@@ -58,10 +59,9 @@ export const buildAndSendTx = async ({
 
   try {
     // Need to pass commitment here o/w it doesn't work...?
-    // @ts-ignore
+    if (debug) opts = { ...opts, commitment: 'confirmed' };
     const sig = await conn.sendTransaction(tx, {
       ...opts,
-      commitment,
     });
     await conn.confirmTransaction(
       { signature: sig, blockhash, lastValidBlockHeight },
