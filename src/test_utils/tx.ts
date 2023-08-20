@@ -4,6 +4,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  SendOptions,
   Signer,
   SystemProgram,
   Transaction,
@@ -17,7 +18,7 @@ export type BuildAndSendTxArgs = {
   payer: Signer;
   ixs: TransactionInstruction[];
   extraSigners?: Signer[];
-  opts?: ConfirmOptions;
+  opts?: SendOptions;
   // Prints out transaction (w/ logs) to stdout
   debug?: boolean;
   // Optional, if present signify that a V0 tx should be sent
@@ -29,7 +30,8 @@ export const buildAndSendTx = async ({
   payer,
   ixs,
   extraSigners,
-  opts,
+  /** For tests, skip preflight so we can expect tx errors */
+  opts = { skipPreflight: true },
   debug,
   lookupTableAccounts,
 }: BuildAndSendTxArgs) => {
@@ -53,7 +55,6 @@ export const buildAndSendTx = async ({
   );
 
   try {
-    if (debug) opts = { ...opts, commitment: 'confirmed' };
     const sig = await conn.sendTransaction(tx, opts);
     await conn.confirmTransaction(
       { signature: sig, blockhash, lastValidBlockHeight },

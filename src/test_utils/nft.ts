@@ -31,6 +31,7 @@ import {
   findTokenRecordPda,
 } from '../metaplex';
 import { buildAndSendTx, createFundedWallet } from './tx';
+import { dedupeList, filterNullLike } from '../utils';
 
 export const createAta = async ({
   conn,
@@ -214,7 +215,14 @@ export const createNft = async ({
     conn,
     payer,
     ixs: [createIx, mintIx, ...verifyIxs],
-    extraSigners: [owner, mint],
+    extraSigners: dedupeList(
+      filterNullLike([
+        owner,
+        mint,
+        ...(creators?.map((c) => c.authority) ?? []),
+      ]),
+      (k) => k.publicKey.toBase58(),
+    ),
   });
 
   return {
