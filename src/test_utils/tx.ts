@@ -1,7 +1,7 @@
 import {
   AddressLookupTableAccount,
-  ConfirmOptions,
   Connection,
+  Finality,
   Keypair,
   LAMPORTS_PER_SOL,
   SendOptions,
@@ -19,6 +19,7 @@ export type BuildAndSendTxArgs = {
   ixs: TransactionInstruction[];
   extraSigners?: Signer[];
   opts?: SendOptions;
+  commitment?: Finality;
   // Prints out transaction (w/ logs) to stdout
   debug?: boolean;
   // Optional, if present signify that a V0 tx should be sent
@@ -31,7 +32,8 @@ export const buildAndSendTx = async ({
   ixs,
   extraSigners,
   /** For tests, skip preflight so we can expect tx errors */
-  opts = { skipPreflight: true },
+  opts = { preflightCommitment: 'confirmed', skipPreflight: true },
+  commitment = 'confirmed',
   debug,
   lookupTableAccounts,
 }: BuildAndSendTxArgs) => {
@@ -55,15 +57,18 @@ export const buildAndSendTx = async ({
   );
 
   try {
-    const sig = await conn.sendTransaction(tx, opts);
+    const sig = await conn.sendTransaction(tx, {
+      ...opts,
+      preflightCommitment: commitment,
+    });
     await conn.confirmTransaction(
       { signature: sig, blockhash, lastValidBlockHeight },
-      'confirmed',
+      commitment,
     );
     if (debug) {
       console.log(
         await conn.getTransaction(sig, {
-          commitment: 'confirmed',
+          commitment,
           maxSupportedTransactionVersion: 0,
         }),
       );
