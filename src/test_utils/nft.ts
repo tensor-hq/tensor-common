@@ -1,39 +1,38 @@
 import {
-  PROGRAM_ID as AUTH_PROGRAM_ID,
   Payload,
+  PROGRAM_ID as AUTH_PROGRAM_ID,
 } from '@metaplex-foundation/mpl-token-auth-rules';
 import {
+  createCreateInstruction,
   CreateInstructionAccounts,
   CreateInstructionArgs,
+  createMintInstruction,
+  createVerifyInstruction,
   MintInstructionAccounts,
   MintInstructionArgs,
   TokenStandard,
-  createCreateInstruction,
-  createMintInstruction,
-  createSignMetadataInstruction,
-  createVerifyCollectionInstruction,
-  createVerifyInstruction,
+  VerificationArgs,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {
   Connection,
   Keypair,
   PublicKey,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
   Signer,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
 } from '@solana/web3.js';
 import {
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
 } from '../metaplex';
-import { buildAndSendTx, createFundedWallet } from './tx';
 import { dedupeList, filterNullLike } from '../utils';
+import { buildAndSendTx, createFundedWallet } from './tx';
 
 export const createAta = async ({
   conn,
@@ -94,8 +93,6 @@ export const createNft = async ({
   ruleSet?: PublicKey | null;
 }) => {
   // --------------------------------------- create
-  const isPnft = tokenStandard === TokenStandard.ProgrammableNonFungible;
-
   const [metadata] = findMetadataPda(mint.publicKey);
   const [masterEdition] = findMasterEditionPda(mint.publicKey);
 
@@ -131,9 +128,7 @@ export const createNft = async ({
         tokenStandard,
         collection: collection
           ? {
-              // For pNFTs, must verify collection at the same time.
-              // Non-pNFTs: must do it separately.
-              verified: isPnft ? collectionVerified : false,
+              verified: false,
               key: collection.publicKey,
             }
           : null,
@@ -160,15 +155,11 @@ export const createNft = async ({
   // --------------------------------------- mint
 
   // mint instrution will initialize a ATA account
-  const tokenPda = getAssociatedTokenAddressSync(
-    mint.publicKey,
-    owner.publicKey,
-  );
+  const ata = getAssociatedTokenAddressSync(mint.publicKey, owner.publicKey);
 
-  const [tokenRecord] = findTokenRecordPda(mint.publicKey, tokenPda);
-
+  const [tokenRecord] = findTokenRecordPda(mint.publicKey, ata);
   const mintAcccounts: MintInstructionAccounts = {
-    token: tokenPda,
+    token: ata,
     tokenOwner: owner.publicKey,
     metadata,
     masterEdition,
@@ -201,28 +192,39 @@ export const createNft = async ({
   // Have to do separately o/w for regular NFTs it'll complain about
   // collection verified can't be set.
   const verifyCollIxs =
-    collection && collectionVerified && !isPnft
+    collection && collectionVerified
       ? [
-          createVerifyCollectionInstruction({
-            metadata,
-            collectionAuthority: owner.publicKey,
-            payer: owner.publicKey,
-            collectionMint: collection.publicKey,
-            collection: findMetadataPda(collection.publicKey)[0],
-            collectionMasterEditionAccount: findMasterEditionPda(
-              collection.publicKey,
-            )[0],
-          }),
+          createVerifyInstruction(
+            {
+              authority: owner.publicKey,
+              metadata,
+              collectionMint: collection.publicKey,
+              collectionMetadata: findMetadataPda(collection.publicKey)[0],
+              collectionMasterEdition: findMasterEditionPda(
+                collection.publicKey,
+              )[0],
+              sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+            },
+            {
+              verificationArgs: VerificationArgs.CollectionV1,
+            },
+          ),
         ]
       : [];
 
   const verifyCreatorIxs = filterNullLike(
     creators?.map((c) => {
       if (!c.authority) return;
-      return createSignMetadataInstruction({
-        metadata,
-        creator: c.authority.publicKey,
-      });
+      return createVerifyInstruction(
+        {
+          metadata,
+          authority: c.authority.publicKey,
+          sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+        },
+        {
+          verificationArgs: VerificationArgs.CreatorV1,
+        },
+      );
     }) ?? [],
   );
 
@@ -243,9 +245,9 @@ export const createNft = async ({
   });
 
   return {
-    tokenAddress: tokenPda,
-    metadataAddress: metadata,
-    masterEditionAddress: masterEdition,
+    ata,
+    metadata,
+    masterEdition,
   };
 };
 
@@ -293,28 +295,27 @@ export const createAndFundAta = async ({
     });
   }
 
-  const { metadataAddress, tokenAddress, masterEditionAddress } =
-    await createNft({
-      conn,
-      payer,
-      mint: usedMint,
-      owner: usedOwner,
-      royaltyBps,
-      creators,
-      collection,
-      collectionVerified,
-      ruleSet: ruleSetAddr,
-      tokenStandard: programmable
-        ? TokenStandard.ProgrammableNonFungible
-        : TokenStandard.NonFungible,
-    });
+  const { metadata, ata, masterEdition } = await createNft({
+    conn,
+    payer,
+    mint: usedMint,
+    owner: usedOwner,
+    royaltyBps,
+    creators,
+    collection,
+    collectionVerified,
+    ruleSet: ruleSetAddr,
+    tokenStandard: programmable
+      ? TokenStandard.ProgrammableNonFungible
+      : TokenStandard.NonFungible,
+  });
 
   return {
     mint: usedMint.publicKey,
-    ata: tokenAddress,
+    ata,
     owner: usedOwner,
-    metadata: metadataAddress,
-    masterEdition: masterEditionAddress,
+    metadata,
+    masterEdition,
   };
 };
 
