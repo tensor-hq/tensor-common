@@ -563,6 +563,9 @@ export const confirmTransactionMultConns = async ({
             searchTransactionHistory: true,
           });
           if (!value) throw new Error(`sig status for ${sig} not found`);
+          // This is possible, and the slot may != confirmed slot if minority node processed it.
+          if (value.confirmationStatus === 'processed')
+            throw new Error(`sig status for ${sig} still in processed state`);
           return {
             value,
             context,
