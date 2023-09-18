@@ -163,11 +163,15 @@ export const equalWithNull = <T>(
     ? a === b
     : eqFn(a, b);
 
-export const removeNullBytes = (str: string) => {
-  return str
-    .split('')
-    .filter((char) => char.codePointAt(0))
-    .join('');
+/** Amortized O(n) complexity */
+export const removeNullBytes = (str: string): string => {
+  let result = '';
+  for (let i = 0; i < str.length; i++) {
+    if (str.charCodeAt(i) !== 0) {
+      result += str[i]; // concatenations are optimized in modern browsers
+    }
+  }
+  return result;
 };
 
 //#region Stringify function.
