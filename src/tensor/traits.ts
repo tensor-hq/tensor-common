@@ -14,12 +14,13 @@ export const getRarityRank = (
     case RaritySystem.Hrtt:
       return (
         ranks.rarityRankTTCustom ??
-        ranks.rarityRankHR ??
+        ranks.rarityRankTeam ??
         ranks.rarityRankTT ??
+        ranks.rarityRankHR ??
         null
       );
     case RaritySystem.Stat:
-      return ranks.rarityRankStat ?? ranks.rarityRankTTStat ?? null;
+      return ranks.rarityRankTTStat ?? ranks.rarityRankStat ?? null;
     case RaritySystem.Team:
       return ranks.rarityRankTeam ?? null;
     case RaritySystem.Tn:

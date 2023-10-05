@@ -86,10 +86,23 @@ export const makeBatches = <T>(
   return out;
 };
 
-/** Earlier items take precedence. */
+export const partitionByKey = <T>(
+  arr: Array<T>,
+  getKey: (item: T) => Maybe<string>,
+) => {
+  const out: Record<string, T[]> = {};
+  arr.forEach((item) => {
+    const k = getKey(item);
+    if (isNullLike(k)) return;
+    out[k] ??= [];
+    out[k].push(item);
+  });
+  return out;
+};
+
+/** Earlier items take precedence IF `getKey` is specified. */
 export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
   if (!getKey) {
-    // Fast path without selector func
     return [...new Set(arr)];
   }
 
