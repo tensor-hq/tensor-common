@@ -90,12 +90,14 @@ export const partitionByKey = <T>(
   arr: Array<T>,
   getKey: (item: T) => Maybe<string>,
 ) => {
-  const out: Record<string, T[]> = {};
+  // Important to make partial to denote that for any arbitrary key
+  // there may not be a value.
+  const out: Partial<Record<string, T[]>> = {};
   arr.forEach((item) => {
     const k = getKey(item);
     if (isNullLike(k)) return;
     out[k] ??= [];
-    out[k].push(item);
+    out[k]!.push(item);
   });
   return out;
 };
