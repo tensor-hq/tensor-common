@@ -703,7 +703,7 @@ export const extractAllIxs = ({
   programId,
   noopIxDiscHex,
 }: {
-  tx: TransactionResponse;
+  tx: TransactionResponse | TransactionResponseJSON;
   /** If passed, will filter for ixs w/ this program ID. */
   programId?: PublicKey;
   /** If passed WITH programId, will attach self-CPI noop ixs to corresponding programId ixs. NB: noopIxs are included in the final array too. */
@@ -712,7 +712,7 @@ export const extractAllIxs = ({
   const outIxs: ExtractedIx[] = [];
   const msg = tx.transaction.message;
   const programIdIndex = programId
-    ? msg.accountKeys.findIndex((k) => k.equals(programId))
+    ? msg.accountKeys.findIndex((k) => new PublicKey(k).equals(programId))
     : null;
 
   const maybeAttachNoopIx = (ix: CompiledInstruction) => {

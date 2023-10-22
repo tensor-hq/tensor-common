@@ -5,9 +5,9 @@ import {
   parseAnchorEvents,
   parseAnchorIxs,
 } from '../../src/solana_contrib/anchor';
-import { IDL as IDL_TComp } from './anchor_testfiles/tcomp';
-import { IDL, Tensorswap } from './anchor_testfiles/tswap';
-import { IDL as IDL_v1_6_0 } from './anchor_testfiles/tswap_v1_6_0';
+import { IDL as IDL_TComp } from './test_data/tcomp';
+import { IDL, Tensorswap } from './test_data/tswap';
+import { IDL as IDL_v1_6_0 } from './test_data/tswap_v1_6_0';
 import { PublicKey, TransactionResponse } from '@solana/web3.js';
 import { expect } from 'chai';
 import { stringifyPKsAndBNs } from '../../src/utils';
@@ -83,7 +83,7 @@ describe('Anchor Tests', () => {
 
   describe('parseAnchorEvents', () => {
     it('parses 1 event in 1 tx', () => {
-      const tx: TransactionResponseJSON = require('./anchor_testfiles/tswap_buy_tx.json');
+      const tx: TransactionResponseJSON = require('./test_data/tswap_buy_tx.json');
       const events = parseAnchorEvents(
         eventParser,
         tswap,
@@ -94,7 +94,7 @@ describe('Anchor Tests', () => {
     });
 
     it('parses 2 events in 1 tx', () => {
-      const tx: TransactionResponseJSON = require('./anchor_testfiles/tswap_buy_sell_tx_v1_6_0.json');
+      const tx: TransactionResponseJSON = require('./test_data/tswap_buy_sell_tx_v1_6_0.json');
       const events = parseAnchorEvents(
         eventParserV1_6_0,
         tswap,
@@ -108,7 +108,7 @@ describe('Anchor Tests', () => {
   describe('parseAnchorIxs', () => {
     it('parses 1 ix in 1 tx', () => {
       const tx: TransactionResponse = castTxResponse(
-        require('./anchor_testfiles/tswap_buy_tx.json'),
+        require('./test_data/tswap_buy_tx.json'),
       );
       const ixs = parseAnchorIxs({
         coder,
@@ -124,7 +124,7 @@ describe('Anchor Tests', () => {
 
     it('parses 2 ixs in 1 tx', () => {
       const tx: TransactionResponse = castTxResponse(
-        require('./anchor_testfiles/tswap_buy_sell_tx_v1_6_0.json'),
+        require('./test_data/tswap_buy_sell_tx_v1_6_0.json'),
       );
       const ixs = parseAnchorIxs({
         coder: coderV1_6_0,
@@ -145,7 +145,7 @@ describe('Anchor Tests', () => {
 
     it('parses noop ixs', () => {
       const tx: TransactionResponse = castTxResponse(
-        require('./anchor_testfiles/tcomp_list_tx.json'),
+        require('./test_data/tcomp_list_tx.json'),
       );
       const discs = genIxDiscHexMap(IDL_TComp);
 
