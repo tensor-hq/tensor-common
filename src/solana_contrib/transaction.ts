@@ -1,6 +1,7 @@
 import {
   AccountInfo,
   AddressLookupTableAccount,
+  Blockhash,
   BlockhashWithExpiryBlockHeight,
   Commitment,
   CompiledInstruction,
@@ -11,6 +12,7 @@ import {
   Context,
   Finality,
   Message,
+  MessageHeader,
   MessageV0,
   PublicKey,
   RpcResponseAndContext,
@@ -38,6 +40,7 @@ import {
   settleAllWithTimeout,
 } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
+import { getIxDiscHex } from './anchor';
 
 const BLOCK_TIME_MS = 400;
 
@@ -67,6 +70,53 @@ type Logger = {
   warn: (msg: string) => void;
   error: (msg: string) => void;
   debug: (msg: string) => void;
+};
+
+export type TransactionMessageJSON = {
+  header: MessageHeader;
+  accountKeys: string[];
+  recentBlockhash: Blockhash;
+  instructions: CompiledInstruction[];
+};
+
+export type TransactionResponseJSON = Omit<
+  TransactionResponse,
+  'transaction'
+> & {
+  transaction: Omit<TransactionResponse['transaction'], 'message'> & {
+    message: TransactionMessageJSON;
+  };
+};
+
+export const castTxResponseJSON = (
+  tx: TransactionResponse,
+): TransactionResponseJSON => {
+  return {
+    ...tx,
+    transaction: {
+      ...tx.transaction,
+      message: castMessageJSON(tx.transaction.message),
+    },
+  };
+};
+
+export const castTxResponse = (
+  tx: TransactionResponseJSON,
+): TransactionResponse => {
+  return {
+    ...tx,
+    transaction: {
+      ...tx.transaction,
+      message: new Message(tx.transaction.message),
+    },
+  };
+};
+
+export const castMessageJSON = (msg: Message): TransactionMessageJSON => {
+  return {
+    ...msg,
+    accountKeys: msg.accountKeys.map((k) => k.toBase58()),
+  };
 };
 
 export class RetryTxSender {
@@ -639,44 +689,71 @@ export const serializeAnyVersionTx = (
   }
 };
 
-export const extractAllIxs = (
-  tx: TransactionResponse,
-  /// If passed, will filter for ixs w/ this program ID.
-  programId?: PublicKey,
-): {
+export type ExtractedIx = {
   rawIx: CompiledInstruction;
+  /** Index of top-level instruction. */
   ixIdx: number;
-  /// Presence of field = it's a top-level ix; absence = inner ix itself.
+  /** Presence of field = it's a top-level ix; absence = inner ix itself. */
   innerIxs?: CompiledInstruction[];
-}[] => {
-  const message = tx.transaction.message;
+  noopIxs?: CompiledInstruction[];
+};
 
-  let allIxs = [
-    // Top-level ixs.
-    ...message.instructions.map((rawIx, ixIdx) => ({
-      rawIx,
+export const extractAllIxs = ({
+  tx,
+  programId,
+  noopIxDiscHex,
+}: {
+  tx: TransactionResponse;
+  /** If passed, will filter for ixs w/ this program ID. */
+  programId?: PublicKey;
+  /** If passed WITH programId, will attach self-CPI noop ixs to corresponding programId ixs. NB: noopIxs are included in the final array too. */
+  noopIxDiscHex?: string;
+}) => {
+  const outIxs: ExtractedIx[] = [];
+  const msg = tx.transaction.message;
+  const programIdIndex = programId
+    ? msg.accountKeys.findIndex((k) => k.equals(programId))
+    : null;
+
+  const maybeAttachNoopIx = (ix: CompiledInstruction) => {
+    if (isNullLike(programIdIndex || programIdIndex !== ix.programIdIndex))
+      return;
+    if (getIxDiscHex(ix.data) !== noopIxDiscHex) return;
+    const prev = outIxs.at(-1);
+    if (isNullLike(prev)) return;
+    prev.noopIxs ??= [];
+    prev.noopIxs.push(ix);
+  };
+
+  const addIx = (
+    ix: CompiledInstruction,
+    ixIdx: number,
+    innerIxs: CompiledInstruction[] | undefined,
+  ) => {
+    if (!isNullLike(programIdIndex) && programIdIndex !== ix.programIdIndex)
+      return;
+
+    maybeAttachNoopIx(ix);
+    outIxs.push({
+      rawIx: ix,
       ixIdx,
-      innerIxs:
-        tx.meta?.innerInstructions?.find(({ index }) => index === ixIdx)
-          ?.instructions ?? [],
-    })),
-    // Inner ixs (eg in CPI calls).
-    // TODO: do we need to filter out self-CPI subixs?
-    ...(tx.meta?.innerInstructions?.flatMap(({ instructions, index }) =>
-      instructions.map((rawIx) => ({ rawIx, ixIdx: index })),
-    ) ?? []),
-  ];
+      innerIxs,
+    });
+  };
 
-  if (!isNullLike(programId)) {
-    const programIdIndex = message.accountKeys.findIndex((k) =>
-      k.equals(programId),
-    );
-    allIxs = allIxs.filter(
-      ({ rawIx }) => rawIx.programIdIndex === programIdIndex,
-    );
-  }
+  tx.transaction.message.instructions.forEach((ix, ixIdx) => {
+    const innerIxs =
+      tx.meta?.innerInstructions?.find((inner) => inner.index === ixIdx)
+        ?.instructions ?? [];
 
-  return allIxs;
+    addIx(ix, ixIdx, innerIxs);
+
+    innerIxs.forEach((innerIx) => {
+      addIx(innerIx, ixIdx, undefined);
+    });
+  });
+
+  return outIxs;
 };
 
 export const legacyToV0Tx = (
