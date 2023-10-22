@@ -205,7 +205,6 @@ export const parseAnchorIxs = <IDL extends Idl>({
         }
       }
 
-      // Catch any ixs whose data can't be decoded (eg complex self-noop ixs).
       try {
         const formatted = coder.instruction.format(ix, accountMetas);
         ixs.push({
@@ -218,6 +217,7 @@ export const parseAnchorIxs = <IDL extends Idl>({
           accountKeys: message.accountKeys,
         });
       } catch (err: any) {
+        // Catch any ixs whose arg data can't be decoded (eg complex self-noop ixs).
         if (err.message === 'Unable to find variant') return;
         throw err;
       }
