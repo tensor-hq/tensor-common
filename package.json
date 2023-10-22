@@ -8,7 +8,7 @@
     "/dist"
   ],
   "scripts": {
-    "test": "ts-mocha tests/**/*.test.ts -p ./tsconfig.json",
+    "test": "yarn ts-mocha -p ./tsconfig.json tests/**/*.test.ts",
     "build": "rm -rf ./dist && yarn tsc",
     "publish:private": "yarn build && yarn npm publish",
     "publish:public": "yarn build && npm publish --access public --registry https://registry.npmjs.org",

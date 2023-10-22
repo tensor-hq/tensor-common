@@ -5,7 +5,6 @@ import {
   Finality,
   Keypair,
   LAMPORTS_PER_SOL,
-  SendOptions,
   Signer,
   SystemProgram,
   Transaction,

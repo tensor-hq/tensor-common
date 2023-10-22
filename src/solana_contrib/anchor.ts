@@ -1,23 +1,23 @@
 import {
-  Wallet,
   BorshCoder,
   Event,
   EventParser,
   Idl,
   Instruction,
   Program,
+  Wallet,
   utils,
 } from '@coral-xyz/anchor';
 import { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
 import { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
 import {
   AccountInfo,
-  CompiledInstruction,
   Keypair,
   PublicKey,
   TransactionResponse,
 } from '@solana/web3.js';
-import { extractAllIxs } from './transaction';
+import bs58 from 'bs58';
+import { ExtractedIx, extractAllIxs } from './transaction';
 
 export const dummyWallet = () => new Wallet(Keypair.generate());
 
@@ -31,24 +31,26 @@ export type AnchorIxName<IDL extends Idl> = IDL['instructions'][number]['name'];
 export type AnchorIx<IDL extends Idl> = Omit<Instruction, 'name'> & {
   name: AnchorIxName<IDL>;
 };
+export type ParsedAnchorEvent<IDL extends Idl> = {
+  ixName: string | null;
+  /** Increments every time a new invocation of a program ix happens. */
+  ixSeq: number;
+  event: AnchorEvent<IDL>;
+};
 export type AnchorEvent<
   IDL extends Idl,
   Events = IDL['events'],
 > = Events extends any[] ? Event<Events[number]> : undefined;
 export type ParsedAnchorIx<IDL extends Idl> = {
-  /// Index of top-level instruction.
-  ixIdx: number;
   ix: AnchorIx<IDL>;
-  /// Presence of field = it's a top-level ix; absence = inner ix itself.
-  innerIxs?: CompiledInstruction[];
-  events: AnchorEvent<IDL>[];
+  events: ParsedAnchorEvent<IDL>[];
   /// FYI: accounts under InstructionDisplay is the space-separated capitalized
   /// version of the fields for the corresponding #[Accounts].
   /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
   formatted: InstructionDisplay | null;
   /// Needed to be able to figure out correct programs for sub-ixs
   accountKeys: PublicKey[];
-};
+} & Pick<ExtractedIx, 'ixIdx' | 'innerIxs' | 'noopIxs'>;
 
 export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
@@ -90,23 +92,67 @@ export const decodeAnchorAcct = <IDL extends Idl>(
 
 // =============== END Decode accounts ===============
 
+export const genIxDiscHexMap = <IDL extends Idl>(
+  idl: IDL,
+): Record<AnchorIxName<IDL>, string> => {
+  return Object.fromEntries(
+    idl.instructions.map((ix) => {
+      const name = ix.name;
+      const snakeCaseName = name.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
+
+      return [name, utils.sha256.hash(`global:${snakeCaseName}`).slice(0, 16)];
+    }),
+  ) as Record<AnchorIxName<IDL>, string>;
+};
+
+export const getIxDiscHex = (bs58Data: string): string =>
+  Buffer.from(bs58.decode(bs58Data)).toString('hex').slice(0, 16);
+
 // =============== Parse ixs/events ===============
 
-/// Stolen from https://github.com/saber-hq/saber-common/blob/4b533d77af8ad5c26f033fd5e69bace96b0e1840/packages/anchor-contrib/src/utils/coder.ts#L171-L185
+const invokeRegex = /^Program ([A-Za-z0-9]{32,44}) invoke \[\d+\]$/;
+const ixNameRegex = /^Program log: Instruction: ([A-Za-z0-9]+)$/;
+const eventRegex = /^Program data:/;
+
+/// Adapted from https://github.com/saber-hq/saber-common/blob/4b533d77af8ad5c26f033fd5e69bace96b0e1840/packages/anchor-contrib/src/utils/coder.ts#L171-L185
 export const parseAnchorEvents = <IDL extends Idl>(
   eventParser: EventParser,
+  programId: PublicKey,
   logs: string[] | undefined | null,
-): AnchorEvent<IDL>[] => {
+): ParsedAnchorEvent<IDL>[] => {
   if (!logs) {
     return [];
   }
-
-  const events: AnchorEvent<IDL>[] = [];
-  const parsedLogsIter = eventParser.parseLogs(logs ?? []);
+  const parsedLogsIter = eventParser.parseLogs(logs);
   let parsedEvent = parsedLogsIter.next();
-  while (!parsedEvent.done) {
-    events.push(parsedEvent.value as AnchorEvent<IDL>);
-    parsedEvent = parsedLogsIter.next();
+
+  let latestIxName: string | null = null;
+  let ixSeq = -1;
+  const events: ParsedAnchorEvent<IDL>[] = [];
+  for (let idx = 0; idx < logs.length; idx++) {
+    const invokeMatch = logs[idx].match(invokeRegex);
+    if (invokeMatch?.at(1) === programId.toBase58()) {
+      idx++;
+      const instrMatch = logs.at(idx)?.match(ixNameRegex);
+      if (instrMatch?.at(1)) {
+        // Lower case this so it matches what ix decoder gives back.
+        latestIxName =
+          instrMatch[1].at(0)!.toLowerCase() + instrMatch[1].slice(1);
+        ixSeq++;
+        idx++;
+      }
+    }
+    if (idx >= logs.length) continue;
+    if (!logs[idx].match(eventRegex)) continue;
+
+    if (!parsedEvent.done) {
+      events.push({
+        ixName: latestIxName,
+        ixSeq,
+        event: parsedEvent.value as AnchorEvent<IDL>,
+      });
+      parsedEvent = parsedLogsIter.next();
+    }
   }
 
   return events;
@@ -115,49 +161,68 @@ export const parseAnchorEvents = <IDL extends Idl>(
 export const parseAnchorIxs = <IDL extends Idl>({
   coder,
   tx,
-  eventParser,
   programId,
+  noopIxDiscHex,
+  eventParser,
 }: {
   coder: BorshCoder;
   tx: TransactionResponse;
+  programId: PublicKey;
+  noopIxDiscHex?: string;
   /// If provided, will try to parse events.
   /// Do not initialize if there are no events defined!
   eventParser?: EventParser;
-  /// If passed, will only process ixs w/ this program ID.
-  programId?: PublicKey;
 }): ParsedAnchorIx<IDL>[] => {
   const message = tx.transaction.message;
   const logs = tx.meta?.logMessages;
+  const allEvents = eventParser
+    ? parseAnchorEvents<IDL>(eventParser, programId, logs)
+    : [];
 
+  let eventsIdx = 0;
   const ixs: ParsedAnchorIx<IDL>[] = [];
-  extractAllIxs(tx, programId).forEach(({ rawIx, ixIdx, innerIxs }) => {
-    // Instruction data.
-    const ix = coder.instruction.decode(rawIx.data, 'base58');
-    if (!ix) return;
-    const accountMetas = rawIx.accounts.map((acctIdx) => {
-      const pubkey = message.accountKeys[acctIdx];
-      return {
-        pubkey,
-        isSigner: message.isAccountSigner(acctIdx),
-        isWritable: message.isAccountWritable(acctIdx),
-      };
-    });
+  extractAllIxs({ tx, programId, noopIxDiscHex }).forEach(
+    ({ rawIx, ixIdx, innerIxs, noopIxs }) => {
+      // Instruction data.
+      const ix = coder.instruction.decode(rawIx.data, 'base58');
+      if (!ix) return;
+      const accountMetas = rawIx.accounts.map((acctIdx) => {
+        const pubkey = message.accountKeys[acctIdx];
+        return {
+          pubkey,
+          isSigner: message.isAccountSigner(acctIdx),
+          isWritable: message.isAccountWritable(acctIdx),
+        };
+      });
 
-    const formatted = coder.instruction.format(ix, accountMetas);
+      // Match events (if any).
+      const events: ParsedAnchorEvent<IDL>[] = [];
+      if (allEvents.at(eventsIdx)?.ixName === ix.name) {
+        let ixSeq = allEvents[eventsIdx].ixSeq;
+        while (allEvents.at(eventsIdx)?.ixSeq === ixSeq) {
+          events.push(allEvents[eventsIdx]);
+          eventsIdx++;
+        }
+      }
 
-    // Events data.
-    // TODO: partition events properly by ix.
-    const events = eventParser ? parseAnchorEvents<IDL>(eventParser, logs) : [];
-
-    ixs.push({
-      ixIdx,
-      ix,
-      innerIxs,
-      events,
-      formatted,
-      accountKeys: message.accountKeys,
-    });
-  });
+      try {
+        const formatted = coder.instruction.format(ix, accountMetas);
+        ixs.push({
+          ixIdx,
+          ix,
+          innerIxs,
+          noopIxs,
+          events,
+          formatted,
+          accountKeys: message.accountKeys,
+        });
+      } catch (err: any) {
+        // Catch any ixs whose arg data can't be decoded (eg complex self-noop ixs).
+        if (err.message === 'Unable to find variant') return;
+        throw err;
+      }
+    },
+  );
 
   return ixs;
 };
