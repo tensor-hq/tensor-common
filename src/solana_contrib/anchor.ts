@@ -43,7 +43,7 @@ export type AnchorEvent<
 > = Events extends any[] ? Event<Events[number]> : undefined;
 export type ParsedAnchorIx<IDL extends Idl> = {
   ix: AnchorIx<IDL>;
-  events: ParsedAnchorEvent<IDL>[];
+  events: AnchorEvent<IDL>[];
   /// FYI: accounts under InstructionDisplay is the space-separated capitalized
   /// version of the fields for the corresponding #[Accounts].
   /// eg sol_escrow -> "Sol Escrow', or tswap -> "Tswap"
@@ -196,11 +196,11 @@ export const parseAnchorIxs = <IDL extends Idl>({
       });
 
       // Match events (if any).
-      const events: ParsedAnchorEvent<IDL>[] = [];
+      const events: AnchorEvent<IDL>[] = [];
       if (allEvents.at(eventsIdx)?.ixName === ix.name) {
         let ixSeq = allEvents[eventsIdx].ixSeq;
         while (allEvents.at(eventsIdx)?.ixSeq === ixSeq) {
-          events.push(allEvents[eventsIdx]);
+          events.push(allEvents[eventsIdx].event);
           eventsIdx++;
         }
       }

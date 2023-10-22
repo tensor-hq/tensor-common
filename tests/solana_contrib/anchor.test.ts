@@ -7,7 +7,10 @@ import {
 } from '../../src/solana_contrib/anchor';
 import { IDL as IDL_TComp } from './test_data/tcomp';
 import { IDL, Tensorswap } from './test_data/tswap';
-import { IDL as IDL_v1_6_0 } from './test_data/tswap_v1_6_0';
+import {
+  IDL as IDL_v1_6_0,
+  Tensorswap as Tensorswap_v1_6_0,
+} from './test_data/tswap_v1_6_0';
 import { PublicKey, TransactionResponse } from '@solana/web3.js';
 import { expect } from 'chai';
 import { stringifyPKsAndBNs } from '../../src/utils';
@@ -110,7 +113,7 @@ describe('Anchor Tests', () => {
       const tx: TransactionResponse = castTxResponse(
         require('./test_data/tswap_buy_tx.json'),
       );
-      const ixs = parseAnchorIxs({
+      const ixs = parseAnchorIxs<Tensorswap>({
         coder,
         tx,
         programId: tswap,
@@ -119,14 +122,18 @@ describe('Anchor Tests', () => {
       expect(ixs).length(1);
       expect(ixs[0].ix.name).eq('buySingleListing');
       expect(ixs[0].events).length(1);
-      expectBuyTx(ixs[0].events[0]);
+      expectBuyTx({
+        ixName: 'buySingleListing',
+        ixSeq: 0,
+        event: ixs[0].events[0],
+      });
     });
 
     it('parses 2 ixs in 1 tx', () => {
       const tx: TransactionResponse = castTxResponse(
         require('./test_data/tswap_buy_sell_tx_v1_6_0.json'),
       );
-      const ixs = parseAnchorIxs({
+      const ixs = parseAnchorIxs<Tensorswap_v1_6_0>({
         coder: coderV1_6_0,
         tx,
         programId: tswap,
@@ -140,7 +147,18 @@ describe('Anchor Tests', () => {
       expect(ixs[1].events).length(1);
       expect(ixs[1].noopIxs).undefined;
 
-      expectBuySellTx(ixs[0].events[0], ixs[1].events[0]);
+      expectBuySellTx(
+        {
+          ixName: 'buyNft',
+          ixSeq: 0,
+          event: ixs[0].events[0],
+        },
+        {
+          ixName: 'sellNftTradePool',
+          ixSeq: 1,
+          event: ixs[1].events[0],
+        },
+      );
     });
 
     it('parses noop ixs', () => {
