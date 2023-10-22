@@ -1,10 +1,10 @@
 import {
   BorshCoder,
+  Coder,
   Event,
   EventParser,
   Idl,
   Instruction,
-  Program,
   Wallet,
   utils,
 } from '@coral-xyz/anchor';
@@ -56,19 +56,22 @@ export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
 // =============== Decode accounts ===============
 
-export const genDiscToDecoderMap = <IDL extends Idl>(
-  program: Program<IDL>,
-): AnchorDiscMap<IDL> => {
+export const genDiscToDecoderMap = <IDL extends Idl>({
+  idl,
+  coder,
+}: {
+  idl: IDL;
+  coder: Coder;
+}): AnchorDiscMap<IDL> => {
   return Object.fromEntries(
-    program.idl.accounts?.map((acc) => {
+    idl.accounts?.map((acc) => {
       const name = acc.name as keyof AllAccountsMap<IDL>;
       const capName = name.at(0)!.toUpperCase() + name.slice(1);
 
       return [
         utils.sha256.hash(`account:${capName}`).slice(0, 8),
         {
-          decoder: (buffer: Buffer) =>
-            program.coder.accounts.decode(name, buffer),
+          decoder: (buffer: Buffer) => coder.accounts.decode(name, buffer),
           name,
         },
       ];
