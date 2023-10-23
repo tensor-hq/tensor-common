@@ -31,7 +31,7 @@ export const makeMEBuyTx = async ({
 }> => {
   const price = new Big(priceLamports).div(LAMPORTS_PER_SOL).toNumber();
 
-  const { data } = await axios({
+  const { data } = await axios({''
     url: `${ME_URL}/v2/instructions/buy_now`,
     method: 'GET',
     params: {
