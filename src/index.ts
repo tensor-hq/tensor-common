@@ -7,3 +7,4 @@ export * from './tensor';
 export * from './time';
 export * from './utils';
 export * as test_utils from './test_utils';
+export * from './lambdas';

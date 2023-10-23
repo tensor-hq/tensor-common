@@ -191,3 +191,34 @@ export const snakeCaseAttributes = (
     trait_type: a.traitType,
     value: a.value,
   }));
+
+export const hasMatchingTraits = (
+  requiredTraits: Attribute[],
+  nftTraits: Attribute[],
+): boolean => {
+  const requiredTraitsMap: Record<string, string[]> = {};
+
+  for (const item of requiredTraits) {
+    requiredTraitsMap[item.trait_type] ??= [];
+    requiredTraitsMap[item.trait_type].push(item.value);
+  }
+
+  //AND'ing (all traitTypes have to match)
+  for (const traitType in requiredTraitsMap) {
+    const acceptedValues = requiredTraitsMap[traitType];
+
+    //OR'ing (only one value has to match)
+    const match = nftTraits.some(
+      (item) =>
+        item.trait_type === traitType && acceptedValues.includes(item.value),
+    );
+
+    // If there's a trait type without a matching value, return false
+    if (!match) {
+      return false;
+    }
+  }
+
+  // If all trait types have a matching value, return true
+  return true;
+};
