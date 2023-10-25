@@ -1,5 +1,5 @@
 import BN from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Creator, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
 import { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
 import { Attribute } from '../tensor';
@@ -13,6 +13,42 @@ enum Field {
 enum Target {
   AssetId = 'AssetId',
   Whitelist = 'Whitelist',
+}
+
+// --------------------------------------- ixs
+
+type SerializedInstruction = {
+  programId: string;
+  keys: Array<{
+    pubkey: string;
+    isSigner: boolean;
+    isWritable: boolean;
+  }>;
+  data: number[];
+};
+
+function serializeInstruction(instruction: TransactionInstruction) {
+  return {
+    programId: instruction.programId.toString(),
+    keys: instruction.keys.map((keyObj) => ({
+      pubkey: keyObj.pubkey.toString(),
+      isSigner: keyObj.isSigner,
+      isWritable: keyObj.isWritable,
+    })),
+    data: Array.from(instruction.data),
+  };
+}
+
+function deserializeInstruction(serialized: SerializedInstruction) {
+  return {
+    programId: new PublicKey(serialized.programId),
+    keys: serialized.keys.map((keyObj) => ({
+      pubkey: new PublicKey(keyObj.pubkey),
+      isSigner: keyObj.isSigner,
+      isWritable: keyObj.isWritable,
+    })),
+    data: Buffer.from(serialized.data),
+  };
 }
 
 // --------------------------------------- metadata
@@ -426,7 +462,7 @@ export function deserializeTakeLegacyArgs(
 
 export type PlaceBidArgs = {
   traits: Attribute[];
-  otherIxs: string; //JSON serialized
+  otherIxs: TransactionInstruction[];
   target: Target;
   targetId: PublicKey;
   bidId: PublicKey;
@@ -447,7 +483,7 @@ export type PlaceBidArgs = {
 
 export type PlaceBidArgsSerialized = {
   traits: Attribute[];
-  otherIxs: string; //JSON serialized
+  otherIxs: SerializedInstruction[];
   target: Target;
   targetId: string;
   bidId: string;
@@ -471,7 +507,7 @@ export function serializePlaceBidArgs(
 ): PlaceBidArgsSerialized {
   return {
     traits: args.traits, // Assuming Attribute[] doesn't need any transformation
-    otherIxs: args.otherIxs, // JSON serialized as per your type definition
+    otherIxs: args.otherIxs.map(serializeInstruction),
     target: args.target, // Assuming Target doesn't need any transformation
     targetId: args.targetId.toString(),
     bidId: args.bidId.toString(),
@@ -496,7 +532,7 @@ export function deserializePlaceBidArgs(
 ): PlaceBidArgs {
   return {
     traits: serialized.traits,
-    otherIxs: serialized.otherIxs,
+    otherIxs: serialized.otherIxs.map(deserializeInstruction),
     target: serialized.target,
     targetId: new PublicKey(serialized.targetId),
     bidId: new PublicKey(serialized.bidId),
