@@ -132,6 +132,7 @@ export const parseAnchorEvents = <IDL extends Idl>(
     return [];
   }
 
+  console.log(logs);
   const parsedLogsIter = eventParser.parseLogs(logs);
   let parsedEvent = parsedLogsIter.next();
 

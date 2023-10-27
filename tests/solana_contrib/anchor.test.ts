@@ -203,7 +203,7 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses troll commit w/ noop inside', () => {
+    it('parses troll commit w/ weird struct', () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/troll_commit_tx_v0_1_0.json'),
       );
@@ -234,6 +234,29 @@ describe('Anchor Tests', () => {
       expect(ixs[0].noopIxs).length(1);
       expect(ixs[0].noopIxs![0].data).eq(
         'rP6bFeNhjSkJBrmfghrwR4mnsHusgcgNrfoxkS5jnho1tcMz5aajRqydKCe1tPcSoqqKD2JAGNbbuGmvJfcmpD2zfXbmeDgGyruB7MKb8McuvM9iHU4wgCYB6ToHD85LHN8p1r6fpnfS4YMwRkkMfRNY3QkCmdvxxANCdzmw1fiUmoobcmr3CnLjPeSMuz5dVEP9HrPZVJ2A6b82MNrqzzT3vtPa1ZuWcnXLEMLftYVM8f1xFiG83Z2tYHWKqVqefFnF3wG6WQAsjqVDuhE24cJT4QeT4U9aB6T5vb3kbrf915Z5pPNmHxLBqna9PX4tJEitKQYyVZk4KzYMQDG9QcaT5AXNABwBF4rD6ywV22Dr1hJXqeoeWzpG4A6v881woTvk6KqA8Ex9RdvaaZJMiQZr7KQBq4nZVHtj3Ks97rsULHJN7466bRGMRNLvLi3Pz8nG8W8dhbH1NuujGbpAuP4LAvJovzpMKiRy3J6pN6P4L1KaFqt5JGGCRkRNKUBCpvEk9WEteqBogwAHSeJzyCNJgZDYe5ACf6mBfxv6fNPfJqw9ANpSp2oBYGn5cFsmGa7obsWeggv7dh',
+      );
+    });
+
+    it('parses troll fulfill tswap listing w/ other events', () => {
+      const tx: TransactionResponse = convertTxToLegacy(
+        require('./test_data/troll_fulfill_tswap_listing_v0_1_0.json'),
+      );
+      const discs = genIxDiscHexMap(IDL_TRoll);
+
+      const ixs = parseAnchorIxs({
+        coder: trollCoder,
+        tx,
+        programId: troll,
+        eventParser: undefined,
+        noopIxDiscHex: discs.trollNoop,
+      });
+      expect(ixs).length(1);
+      expect(ixs[0].ix.name).eq('fulfillTswapListing');
+      expect(ixs[0].events).length(0);
+      expect(ixs[0].innerIxs).length(20);
+      expect(ixs[0].noopIxs).length(1);
+      expect(ixs[0].noopIxs![0].data).eq(
+        'bQmCgkmMVK81QTnA4ZMhkwts8vGd1iQoPMwyW2racAuSmrfBvybyJ5YG2iUEUDY6w5sjwq2zfTiRbGeUkTg9jYQpgM8teH68kQBCaW16zS36T63WyM2ZSntjHwd8VdbCvgpYoCEBvWP3xWdfFBmwWbjBXxwNMHAUYaP5YRv7azDquUML21vRGo5sqbHH3pUe3fYHeeHkoB2stozHZWJ6kM5te2Qu4Rx5TDwbNYMYMj2fJLELUaX9toME2qzDsEHTzQHXcvTd962Zv6yL4pdEBRGpJAocVssX6y3qYAnDXuq4As16Fargd8SpnaAe1rsckzma4yJuFJNsC5UXtuFo3ULr71haJp2WRdzZJwh9TGMjUjAKisiCptwPaLgZABeCTzs5hbqQsHBTRzRfkoyjNEa4rETmzwmXJQpDBe8KeJWTTBwca6qk7npXjepBjgSbDc7u6Zj7JBhczqJbFUaDjVFpzXRSN2iFdWx4f9wUt2WjD7cKqEvaVA8HvuYw1QuvMwEsSCC8NtqT18sKfW',
       );
     });
   });
