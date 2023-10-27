@@ -6,6 +6,7 @@ import {
   parseAnchorIxs,
 } from '../../src/solana_contrib/anchor';
 import { IDL as IDL_TComp } from './test_data/tcomp';
+import { IDL as IDL_TRoll } from './test_data/troll';
 import { IDL, Tensorswap } from './test_data/tswap';
 import {
   IDL as IDL_v1_6_0,
@@ -17,11 +18,13 @@ import { stringifyPKsAndBNs } from '../../src/utils';
 import {
   TransactionResponseJSON,
   castTxResponse,
+  convertTxToLegacy,
 } from '../../src/solana_contrib/transaction';
 
 describe('Anchor Tests', () => {
   const tswap = new PublicKey('TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN');
   const tcomp = new PublicKey('TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp');
+  const troll = new PublicKey('TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ');
 
   const coder = new BorshCoder(IDL);
   const eventParser = new EventParser(tswap, coder);
@@ -30,6 +33,9 @@ describe('Anchor Tests', () => {
 
   const tcmpCoder = new BorshCoder(IDL_TComp);
   const tcmpEventParser = new EventParser(tcomp, tcmpCoder);
+
+  const trollCoder = new BorshCoder(IDL_TRoll);
+  const trollEventParser = new EventParser(troll, trollCoder);
 
   const expectBuyTx = (event: ParsedAnchorEvent<Tensorswap>) => {
     expect(event.ixName).eq('buySingleListing');
@@ -105,6 +111,19 @@ describe('Anchor Tests', () => {
       );
       expect(events).length(2);
       expectBuySellTx(events[0], events[1]);
+    });
+
+    // Regression: event parser failed before.
+    it('parses 0 events in weird logs', () => {
+      const tx: TransactionResponse = convertTxToLegacy(
+        require('./test_data/troll_commit_tx_v0_1_0.json'),
+      );
+      const events = parseAnchorEvents(
+        trollEventParser,
+        troll,
+        tx.meta?.logMessages,
+      );
+      expect(events).length(0);
     });
   });
 

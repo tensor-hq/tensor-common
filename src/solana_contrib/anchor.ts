@@ -115,7 +115,8 @@ export const getIxDiscHex = (bs58Data: string): string =>
 
 const invokeRegex = /^Program ([A-Za-z0-9]{32,44}) invoke \[\d+\]$/;
 const ixNameRegex = /^Program log: Instruction: ([A-Za-z0-9]+)$/;
-const eventRegex = /^Program data:/;
+const eventRegex = /^Program data: /;
+const userLogRegex = /^Program log: /;
 
 /// Adapted from https://github.com/saber-hq/saber-common/blob/4b533d77af8ad5c26f033fd5e69bace96b0e1840/packages/anchor-contrib/src/utils/coder.ts#L171-L185
 export const parseAnchorEvents = <IDL extends Idl>(
@@ -123,9 +124,14 @@ export const parseAnchorEvents = <IDL extends Idl>(
   programId: PublicKey,
   logs: string[] | undefined | null,
 ): ParsedAnchorEvent<IDL>[] => {
-  if (!logs) {
+  // Prevents certain log messages from breaking the event parser.
+  logs = logs?.filter((l) => !l.match(userLogRegex) || l.match(ixNameRegex));
+
+  // Saves us from parsing if no events are present.
+  if (!logs?.some((l) => l.match(eventRegex))) {
     return [];
   }
+
   const parsedLogsIter = eventParser.parseLogs(logs);
   let parsedEvent = parsedLogsIter.next();
 

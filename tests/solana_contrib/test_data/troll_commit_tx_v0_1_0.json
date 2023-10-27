@@ -1,0 +1,168 @@
+{
+  "blockTime": 1698429243,
+  "meta": {
+    "computeUnitsConsumed": 60957,
+    "err": null,
+    "fee": 170000,
+    "innerInstructions": [
+      {
+        "index": 2,
+        "instructions": [
+          {
+            "accounts": [0, 2],
+            "data": "11113P9xoomDBZNnAHdSkXWAxfNffvnzBUsru6FdMmiE3BnwJHhcP41RHVJPJY17CWebtm",
+            "programIdIndex": 8,
+            "stackHeight": 2
+          },
+          {
+            "accounts": [0, 3],
+            "data": "11115its2AbyQUye1BBNzZ1yRyFjnoXWcYXnMCo2ndPvaFEYShHqgmrpNELaQGKKxreuBo",
+            "programIdIndex": 8,
+            "stackHeight": 2
+          },
+          {
+            "accounts": [4, 0],
+            "data": "3Bxs4BicMXzmz8Yw",
+            "programIdIndex": 8,
+            "stackHeight": 2
+          },
+          {
+            "accounts": [0, 4],
+            "data": "3Bxs4T3acR2pXzw1",
+            "programIdIndex": 8,
+            "stackHeight": 2
+          },
+          {
+            "accounts": [2],
+            "data": "rP6bFeNhjSkJBrmfghrwR4mnsHusgcgNrfoxkS5jnho1tcMz5aajRqydKCe1tPcSoqqKD2JAGNbbuGmvJfcmpD2zfXbmeDgGyruB7MKb8McuvM9iHU4wgCYB6ToHD85LHN8p1r6fpnfS4YMwRkkMfRNY3QkCmdvxxANCdzmw1fiUmoobcmr3CnLjPeSMuz5dVEP9HrPZVJ2A6b82MNrqzzT3vtPa1ZuWcnXLEMLftYVM8f1xFiG83Z2tYHWKqVqefFnF3wG6WQAsjqVDuhE24cJT4QeT4U9aB6T5vb3kbrf915Z5pPNmHxLBqna9PX4tJEitKQYyVZk4KzYMQDG9QcaT5AXNABwBF4rD6ywV22Dr1hJXqeoeWzpG4A6v881woTvk6KqA8Ex9RdvaaZJMiQZr7KQBq4nZVHtj3Ks97rsULHJN7466bRGMRNLvLi3Pz8nG8W8dhbH1NuujGbpAuP4LAvJovzpMKiRy3J6pN6P4L1KaFqt5JGGCRkRNKUBCpvEk9WEteqBogwAHSeJzyCNJgZDYe5ACf6mBfxv6fNPfJqw9ANpSp2oBYGn5cFsmGa7obsWeggv7dh",
+            "programIdIndex": 6,
+            "stackHeight": 2
+          }
+        ]
+      }
+    ],
+    "loadedAddresses": {
+      "readonly": [],
+      "writable": []
+    },
+    "logMessages": [
+      "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+      "Program ComputeBudget111111111111111111111111111111 success",
+      "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+      "Program ComputeBudget111111111111111111111111111111 success",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ invoke [1]",
+      "Program log: Instruction: Commit",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program log: odds_bps 500",
+      "Program log: post_market_fees_amount 61731000",
+      "Program log: lister_fee 925965",
+      "Program log: creator_fee 617310",
+      "Program log: token_account_fee 0",
+      "Program log: token_record_fee 0",
+      "Program log: tensor_fee 10925965",
+      "Program log: post_fees_amount 74200240",
+      "Program log: wager 3710012",
+      "Program log: odds_bps 9500",
+      "Program log: post_market_fees_amount 0",
+      "Program log: lister_fee 0",
+      "Program log: creator_fee 0",
+      "Program log: token_account_fee 0",
+      "Program log: token_record_fee 0",
+      "Program log: tensor_fee 10000000",
+      "Program log: post_fees_amount 10000000",
+      "Program log: wager 9500000",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ invoke [2]",
+      "Program log: Instruction: TrollNoop",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ consumed 1218 of 743951 compute units",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ success",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ consumed 60957 of 800000 compute units",
+      "Program TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ success"
+    ],
+    "postBalances": [
+      9946072442, 0, 5762880, 1948800, 10007447132, 1, 1141440, 0, 1
+    ],
+    "postTokenBalances": [],
+    "preBalances": [9961401254, 0, 0, 0, 10000000000, 1, 1141440, 0, 1],
+    "preTokenBalances": [],
+    "rewards": [],
+    "status": {
+      "Ok": null
+    }
+  },
+  "slot": 226341850,
+  "transaction": {
+    "message": {
+      "header": {
+        "numReadonlySignedAccounts": 1,
+        "numReadonlyUnsignedAccounts": 4,
+        "numRequiredSignatures": 2
+      },
+      "staticAccountKeys": [
+        "3e2A1hrt33rBfzRupkeECYSPUPL44A3wLXtF6dSoEhnn",
+        "5qGy8rknMjt1S6V2YMGVidtuHpj1BVs6chzpjCDb47sB",
+        "FA9bMerSzS6Z9y4CkDzghzTa6Kw5qDfpVkNfqSxd25cC",
+        "7rSUq6KcG8GNBEhxo5obKm9nuVDe46ts4szofTmDvfUo",
+        "HATUHhpGy5moXuwTZKr1qZREmKANcLy3kRiMQZvUseLE",
+        "ComputeBudget111111111111111111111111111111",
+        "TRoLL7U1qTaqv2FFQ4jneZx5SetannKmrYCR778AkQZ",
+        "9dgCss5GPH92qZtg3q4kLm4hGC7iZR1sBAjVfCrzbHtU",
+        "11111111111111111111111111111111"
+      ],
+      "recentBlockhash": "HMSgnQpMR7fm6yXeC1DtaCv2K9Ldk2C6e6rSD7tNPRtg",
+      "compiledInstructions": [
+        {
+          "programIdIndex": 5,
+          "accountKeyIndexes": [],
+          "data": {
+            "type": "Buffer",
+            "data": [2, 0, 53, 12, 0]
+          }
+        },
+        {
+          "programIdIndex": 5,
+          "accountKeyIndexes": [],
+          "data": {
+            "type": "Buffer",
+            "data": [3, 64, 13, 3, 0, 0, 0, 0, 0]
+          }
+        },
+        {
+          "programIdIndex": 6,
+          "accountKeyIndexes": [1, 0, 2, 7, 3, 4, 6, 8],
+          "data": {
+            "type": "Buffer",
+            "data": [
+              223, 140, 142, 165, 229, 208, 156, 74, 29, 8, 119, 175, 81, 247,
+              46, 254, 103, 0, 225, 179, 130, 253, 19, 199, 137, 79, 218, 61,
+              89, 223, 85, 74, 44, 162, 223, 94, 159, 122, 148, 121, 146, 39,
+              249, 111, 72, 245, 111, 50, 61, 240, 222, 73, 32, 10, 237, 214,
+              183, 167, 84, 98, 47, 188, 56, 52, 46, 30, 21, 79, 2, 223, 58,
+              113, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 244, 1, 1, 161,
+              35, 132, 170, 169, 119, 83, 40, 66, 219, 90, 164, 104, 154, 64,
+              69, 160, 64, 163, 199, 54, 149, 12, 235, 139, 148, 226, 41, 114,
+              91, 86, 76, 176, 200, 171, 246, 157, 194, 44, 134, 108, 132, 131,
+              144, 49, 95, 230, 174, 83, 229, 228, 206, 33, 54, 174, 222, 94,
+              139, 174, 41, 60, 233, 201, 173, 169, 209, 221, 90, 162, 203, 199,
+              104, 95, 188, 110, 2, 186, 186, 51, 76, 199, 7, 241, 14, 91, 177,
+              95, 199, 126, 78, 77, 58, 16, 209, 147, 18, 0, 1, 0, 64, 192, 101,
+              3, 0, 0, 0, 0, 178, 2, 28, 37, 0
+            ]
+          }
+        }
+      ],
+      "addressTableLookups": []
+    },
+    "signatures": [
+      "5Xq1yr2cd587pAVm41dqfbx9qcMbvzaEzyHkhLZbgcHNmiXuh44aRe7SVtcjwxg82kdBa28LNXkwP14Cx64PKFUh",
+      "5uRCNmHWmyqZ7cGtw9MvyhZykemn3C8fSmD6WdUakpuvKUnX7keWQrq7oSdiRqMCs2AY2HRJiR1WF8z2p6jkMbVP"
+    ]
+  },
+  "version": 0
+}
