@@ -202,5 +202,39 @@ describe('Anchor Tests', () => {
         '2EQNXBMggnvDnxGF1BTyEigonCNLCaoDoX6H6szBmh98jLzmzQxRV813acQxXyZnevaz2h8LJbGwCnKnMHHmQ1AEGwAuvxzS34BYuu37szNwntAEvAeqcHdodWC1AVHm2KE7s59Fnseo61UoQstyeJPVjzgjoih9LZB3hCzZkSuc8dbHhspji',
       );
     });
+
+    it('parses troll commit w/ noop inside', () => {
+      const tx: TransactionResponse = convertTxToLegacy(
+        require('./test_data/troll_commit_tx_v0_1_0.json'),
+      );
+      const discs = genIxDiscHexMap(IDL_TRoll);
+
+      const ixs = parseAnchorIxs({
+        coder: trollCoder,
+        tx,
+        programId: troll,
+        eventParser: trollEventParser,
+        noopIxDiscHex: discs.trollNoop,
+        formatIxPreprocess: (ix) => {
+          return {
+            ...ix,
+            data: {
+              ...ix.data,
+              // Nasty user type.
+              rewards: [],
+            },
+          };
+        },
+      });
+      expect(ixs).length(1);
+      expect(ixs[0].ix.name).eq('commit');
+      expect((ixs[0].ix.data as any).rewards).length(2); // Ensure this didn't get removed.
+      expect(ixs[0].events).length(0);
+      expect(ixs[0].innerIxs).length(5);
+      expect(ixs[0].noopIxs).length(1);
+      expect(ixs[0].noopIxs![0].data).eq(
+        'rP6bFeNhjSkJBrmfghrwR4mnsHusgcgNrfoxkS5jnho1tcMz5aajRqydKCe1tPcSoqqKD2JAGNbbuGmvJfcmpD2zfXbmeDgGyruB7MKb8McuvM9iHU4wgCYB6ToHD85LHN8p1r6fpnfS4YMwRkkMfRNY3QkCmdvxxANCdzmw1fiUmoobcmr3CnLjPeSMuz5dVEP9HrPZVJ2A6b82MNrqzzT3vtPa1ZuWcnXLEMLftYVM8f1xFiG83Z2tYHWKqVqefFnF3wG6WQAsjqVDuhE24cJT4QeT4U9aB6T5vb3kbrf915Z5pPNmHxLBqna9PX4tJEitKQYyVZk4KzYMQDG9QcaT5AXNABwBF4rD6ywV22Dr1hJXqeoeWzpG4A6v881woTvk6KqA8Ex9RdvaaZJMiQZr7KQBq4nZVHtj3Ks97rsULHJN7466bRGMRNLvLi3Pz8nG8W8dhbH1NuujGbpAuP4LAvJovzpMKiRy3J6pN6P4L1KaFqt5JGGCRkRNKUBCpvEk9WEteqBogwAHSeJzyCNJgZDYe5ACf6mBfxv6fNPfJqw9ANpSp2oBYGn5cFsmGa7obsWeggv7dh',
+      );
+    });
   });
 });

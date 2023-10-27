@@ -173,14 +173,17 @@ export const parseAnchorIxs = <IDL extends Idl>({
   programId,
   noopIxDiscHex,
   eventParser,
+  formatIxPreprocess,
 }: {
   coder: BorshCoder;
   tx: TransactionResponse;
   programId: PublicKey;
+  /** If passed, will match noopIxs to its parent ix and omits it in the top-level output */
   noopIxDiscHex?: string;
-  /// If provided, will try to parse events.
-  /// Do not initialize if there are no events defined!
+  /** If provided, will try to parse events. Do not initialize if there are no events defined! */
   eventParser?: EventParser;
+  /** Useful if ix parser can't handle a complex defined arg type: removing the arg before formatter is called helps */
+  formatIxPreprocess?: (ix: Instruction) => Instruction;
 }): ParsedAnchorIx<IDL>[] => {
   const message = tx.transaction.message;
   const logs = tx.meta?.logMessages;
@@ -192,6 +195,9 @@ export const parseAnchorIxs = <IDL extends Idl>({
   const ixs: ParsedAnchorIx<IDL>[] = [];
   extractAllIxs({ tx, programId, noopIxDiscHex }).forEach(
     ({ rawIx, ixIdx, innerIxs, noopIxs }) => {
+      // Skip noopIxs.
+      if (noopIxDiscHex && getIxDiscHex(rawIx.data) === noopIxDiscHex) return;
+
       // Instruction data.
       const ix = coder.instruction.decode(rawIx.data, 'base58');
       if (!ix) return;
@@ -214,22 +220,19 @@ export const parseAnchorIxs = <IDL extends Idl>({
         }
       }
 
-      try {
-        const formatted = coder.instruction.format(ix, accountMetas);
-        ixs.push({
-          ixIdx,
-          ix,
-          innerIxs,
-          noopIxs,
-          events,
-          formatted,
-          accountKeys: message.accountKeys,
-        });
-      } catch (err: any) {
-        // Catch any ixs whose arg data can't be decoded (eg complex self-noop ixs).
-        if (err.message === 'Unable to find variant') return;
-        throw err;
-      }
+      const formatted = coder.instruction.format(
+        formatIxPreprocess ? formatIxPreprocess(ix) : ix,
+        accountMetas,
+      );
+      ixs.push({
+        ixIdx,
+        ix,
+        innerIxs,
+        noopIxs,
+        events,
+        formatted,
+        accountKeys: message.accountKeys,
+      });
     },
   );
 
