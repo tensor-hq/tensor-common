@@ -34,6 +34,7 @@ import { Buffer } from 'buffer';
 import { backOff } from 'exponential-backoff';
 import { sleep, waitMS } from '../time';
 import {
+  Maybe,
   filterNullLike,
   isNullLike,
   makeBatches,
@@ -969,11 +970,12 @@ const MAX_COMPUTE_UNITS = 1_400_000;
 /** Adds (1) increase compute + (2) priority fees */
 export const prependComputeIxs = (
   ixs: TransactionInstruction[],
-  compute: number,
-  priorityMicroLamports?: number,
+  compute?: Maybe<number>,
+  priorityMicroLamports?: Maybe<number>,
 ): TransactionInstruction[] => {
   const out = [...ixs];
   if (
+    compute &&
     !ixs.some(
       (ix) =>
         ix.programId.equals(ComputeBudgetProgram.programId) &&
