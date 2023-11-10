@@ -669,9 +669,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tensor-hq/tensor-common@workspace:.":
+"@tensor-hq/tensor-common-alpha@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@tensor-hq/tensor-common@workspace:."
+  resolution: "@tensor-hq/tensor-common-alpha@workspace:."
   dependencies:
     "@coral-xyz/anchor": ^0.26.0
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
