@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common-alpha",
-  "version": "0.19.0-alpha.7",
+  "version": "0.19.0-alpha.8",
   "description": "Common utility methods used by Tensor.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
@@ -32,7 +32,6 @@
     "bn.js": "^5.2.1",
     "bs58": "^5.0.0",
     "exponential-backoff": "^3.1.1",
-    "hadeswap-sdk": "^0.8.25",
     "js-sha3": "^0.8.0",
     "semaphore": "^1.1.0"
   },

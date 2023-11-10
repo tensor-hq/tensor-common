@@ -1,9 +1,59 @@
-import { hadeswap } from 'hadeswap-sdk';
 import Big from 'big.js';
-const {
-  types: { OrderType, BondingCurveType },
-  helpers: { calculateNextSpotPrice },
-} = hadeswap;
+import { HadeswapBondingCurveType, HadeswapOrderType } from './constants';
+
+// NB: copied from hadeswap-sdk
+export const calculateNextSpotPrice = ({
+  orderType,
+  spotPrice,
+  delta,
+  bondingCurveType,
+  counter,
+}: {
+  orderType: HadeswapOrderType;
+  spotPrice: number;
+  delta: number;
+  bondingCurveType: HadeswapBondingCurveType;
+  counter: number;
+}): number => {
+  if (bondingCurveType === HadeswapBondingCurveType.Linear) {
+    let current_price = spotPrice; // 1
+
+    const targetCounter =
+      counter + (orderType === HadeswapOrderType.Buy ? 1 : -1);
+    if (targetCounter >= 0) {
+      // 0
+      for (let i = 0; i < Math.abs(targetCounter); i++) {
+        current_price += delta;
+      }
+    } else {
+      for (let i = 0; i < Math.abs(targetCounter); i++) {
+        current_price -= delta;
+      }
+    }
+    return current_price;
+  } else if (bondingCurveType === HadeswapBondingCurveType.Exponential) {
+    const newCounter =
+      orderType === HadeswapOrderType.Buy ? counter + 1 : counter - 1;
+    let newDelta =
+      newCounter > 0 ? (delta + 1e4) / 1e4 : 1 / ((delta + 1e4) / 1e4);
+
+    return spotPrice * Math.pow(newDelta, Math.abs(newCounter));
+  } else if (bondingCurveType === HadeswapBondingCurveType.XYK) {
+    // const deltaCorrected = delta - counter;
+
+    const nftTokensBalance = delta * spotPrice;
+    const counterUpdated =
+      orderType === HadeswapOrderType.Buy ? counter : counter - 1;
+    const currentDelta = delta + 1 - counterUpdated;
+    const diffAmount = (counterUpdated * nftTokensBalance) / currentDelta;
+    const newNftTokensBalance = nftTokensBalance + diffAmount;
+
+    return orderType === HadeswapOrderType.Buy
+      ? newNftTokensBalance / (currentDelta - 1)
+      : newNftTokensBalance / (currentDelta + 1);
+  }
+  return 0;
+};
 
 export const computeHswapTakerPrice = ({
   takerSide,
@@ -21,15 +71,16 @@ export const computeHswapTakerPrice = ({
   extraNFTsSelected: number;
 }): Big | null => {
   const price = calculateNextSpotPrice({
-    orderType: takerSide === 'Buy' ? OrderType.Buy : OrderType.Sell,
+    orderType:
+      takerSide === 'Buy' ? HadeswapOrderType.Buy : HadeswapOrderType.Sell,
     spotPrice: config.baseSpotPrice,
     delta: config.delta,
     bondingCurveType:
       config.curveType === 'linear'
-        ? BondingCurveType.Linear
+        ? HadeswapBondingCurveType.Linear
         : config.curveType === 'exponential'
-        ? BondingCurveType.Exponential
-        : BondingCurveType.XYK,
+        ? HadeswapBondingCurveType.Exponential
+        : HadeswapBondingCurveType.XYK,
     counter:
       config.mathCounter +
       // Gotta add 1 to counter for sells lol.
