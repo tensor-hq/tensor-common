@@ -10,7 +10,7 @@ export enum HadeswapOrderType {
   Sell = 'sell',
 }
 
-export declare enum HadeswapBondingCurveType {
+export enum HadeswapBondingCurveType {
   Linear = 'linear',
   Exponential = 'exponential',
   XYK = 'xyk',
