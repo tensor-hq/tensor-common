@@ -326,7 +326,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/spl-token@npm:^0.3.5, @solana/spl-token@npm:^0.3.6":
+"@solana/spl-token@npm:^0.3.5, @solana/spl-token@npm:^0.3.6, @solana/spl-token@npm:^0.3.7":
   version: 0.3.7
   resolution: "@solana/spl-token@npm:0.3.7"
   dependencies:
@@ -419,7 +419,7 @@ __metadata:
     "@metaplex-foundation/mpl-bubblegum": ^0.7.0
     "@metaplex-foundation/mpl-token-auth-rules": ^2.0.0
     "@metaplex-foundation/mpl-token-metadata": ^2.13.0
-    "@solana/spl-token": ^0.3.6
+    "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.73.0
     "@types/big.js": ^6.1.5
     "@types/bn.js": ^5.1.0
