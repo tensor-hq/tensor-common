@@ -196,7 +196,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metaplex-foundation/mpl-token-metadata@npm:^2.13.0, @metaplex-foundation/mpl-token-metadata@npm:^2.5.2":
+"@metaplex-foundation/mpl-token-metadata@npm:^2.5.2":
   version: 2.13.0
   resolution: "@metaplex-foundation/mpl-token-metadata@npm:2.13.0"
   dependencies:
@@ -418,7 +418,6 @@ __metadata:
     "@metaplex-foundation/mpl-auction-house": ^2.1.1
     "@metaplex-foundation/mpl-bubblegum": ^0.7.0
     "@metaplex-foundation/mpl-token-auth-rules": ^2.0.0
-    "@metaplex-foundation/mpl-token-metadata": ^2.13.0
     "@solana/spl-token": ^0.3.7
     "@solana/web3.js": ^1.73.0
     "@types/big.js": ^6.1.5

@@ -1,7 +1,7 @@
 import BN from 'bn.js';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Creator, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
-import { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
+import type { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
 import { Attribute } from '../tensor';
 
 // TODO: imported from tcomp-ts, since we dont have it in tensor-common
