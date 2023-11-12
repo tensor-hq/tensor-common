@@ -1,7 +1,7 @@
 import Big from 'big.js';
 import { HadeswapBondingCurveType, HadeswapOrderType } from './constants';
 
-// NB: copied from hadeswap-sdk
+// NB: copied from https://github.com/hadeswap-solana/hadeswap-sdk-public/blob/66ab430a7a11bd014804d48a7f5d2e7fd906f9ac/src/hadeswap-core/helpers.ts#L86
 export const calculateNextSpotPrice = ({
   orderType,
   spotPrice,
