@@ -326,7 +326,7 @@ export function deserializeTakeCompressedArgs(
 
 // --------------------------------------- legacy args
 
-type PnftArgs = {
+export type PnftArgs = {
   /** If provided, skips RPC call to fetch on-chain metadata + creators. */
   metaCreators?: {
     metadata: PublicKey;
