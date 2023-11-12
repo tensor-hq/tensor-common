@@ -1,11 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { TOKEN_METADATA_PROGRAM_ID } from 'src/programs';
 export { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
+
+export const TMETA_PROG_ID = new PublicKey(
+  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+);
 
 export const findMetadataPda = (
   mint: PublicKey,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [Buffer.from('metadata', 'utf8'), programId.toBuffer(), mint.toBuffer()],
@@ -15,7 +18,7 @@ export const findMetadataPda = (
 
 export const findMasterEditionPda = (
   mint: PublicKey,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -30,7 +33,7 @@ export const findMasterEditionPda = (
 
 export const findEditionPda = (
   mint: PublicKey,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -46,7 +49,7 @@ export const findEditionPda = (
 export const findEditionMarkerPda = (
   mint: PublicKey,
   edition: BN,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -63,7 +66,7 @@ export const findEditionMarkerPda = (
 export const findCollectionAuthorityRecordPda = (
   mint: PublicKey,
   collectionAuthority: PublicKey,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -80,7 +83,7 @@ export const findCollectionAuthorityRecordPda = (
 export const findUseAuthorityRecordPda = (
   mint: PublicKey,
   useAuthority: PublicKey,
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -95,7 +98,7 @@ export const findUseAuthorityRecordPda = (
 };
 
 export const findProgramAsBurnerPda = (
-  programId: PublicKey = TOKEN_METADATA_PROGRAM_ID,
+  programId: PublicKey = TMETA_PROG_ID,
 ) => {
   return PublicKey.findProgramAddressSync(
     [
