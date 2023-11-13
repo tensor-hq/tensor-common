@@ -1,15 +1,18 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "0.19.9",
+  "version": "1.0.0-rc.4",
   "description": "Common utility methods used by Tensor.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "module": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
   "files": [
-    "/dist"
+    "/dist/esm/**/*",
+    "/dist/cjs/**/*"
   ],
   "scripts": {
-    "test": "yarn ts-mocha -p ./tsconfig.json tests/**/*.test.ts",
-    "build": "rm -rf ./dist && yarn tsc",
+    "test": "yarn ts-mocha -p ./tsconfig.cjs.json tests/**/*.test.ts",
+    "build": "rm -rf ./dist && yarn tsc && yarn tsc -p tsconfig.cjs.json",
     "publish:private": "yarn build && yarn npm publish",
     "publish:public": "yarn build && npm publish --access public --registry https://registry.npmjs.org",
     "publish:all": "yarn publish:private && yarn publish:public"
@@ -20,16 +23,14 @@
     "@coral-xyz/anchor": "^0.26.0",
     "@metaplex-foundation/mpl-auction-house": "^2.1.1",
     "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
-    "@metaplex-foundation/mpl-token-auth-rules": "^2.0.0",
-    "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
-    "@solana/spl-token": "^0.3.6",
+    "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.73.0",
     "axios": "^0.27.2",
     "big.js": "^6.2.1",
     "bn.js": "^5.2.1",
+    "borsh": "^0.7.0",
     "bs58": "^5.0.0",
     "exponential-backoff": "^3.1.1",
-    "hadeswap-sdk": "^0.8.25",
     "js-sha3": "^0.8.0",
     "semaphore": "^1.1.0"
   },

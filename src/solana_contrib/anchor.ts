@@ -5,21 +5,13 @@ import {
   EventParser,
   Idl,
   Instruction,
-  Wallet,
   utils,
 } from '@coral-xyz/anchor';
-import { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
-import { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
-import {
-  AccountInfo,
-  Keypair,
-  PublicKey,
-  TransactionResponse,
-} from '@solana/web3.js';
+import type { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
+import type { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
+import { AccountInfo, PublicKey, TransactionResponse } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { ExtractedIx, extractAllIxs } from './transaction';
-
-export const dummyWallet = () => new Wallet(Keypair.generate());
 
 type Decoder = (buffer: Buffer) => any;
 export type AnchorDiscMap<IDL extends Idl> = Record<

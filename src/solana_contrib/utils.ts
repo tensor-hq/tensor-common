@@ -10,15 +10,22 @@ export const validPublicKey = (input: string) => {
   }
 };
 
-export const getAccountRent = (
+export const getRent = (
   conn: Connection,
   acct: AccountClient,
 ): Promise<number> => {
   return conn.getMinimumBalanceForRentExemption(acct.size);
 };
 // based on https://docs.solana.com/developing/programming-model/accounts#:~:text=The%20current%20maximum%20size%20of,per%20account%20and%20per%20instruction.
-export const getAccountRentSync = (dataSize: number) =>
+export const getRentSync = (dataSize: number) =>
   Math.trunc(19.055441478439427 * (128 + dataSize) * 365.25);
+
+export const getLamports = async (
+  conn: Connection,
+  acct: PublicKey,
+): Promise<number | undefined> => {
+  return (await conn.getAccountInfo(acct))?.lamports;
+};
 
 export const numToi32Bytes = (num: number) => {
   // Ensure number is a 32-bit signed integer

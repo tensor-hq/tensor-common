@@ -12,6 +12,7 @@ import {
 import BN from 'bn.js';
 import {
   AUTH_PROG_ID,
+  TMETA_PROG_ID,
   fetchMetadataAcct,
   prepPnftAccounts,
 } from '../../metaplex';
@@ -27,7 +28,6 @@ import {
   SOLANART_PROGRAM_ID,
 } from './shared';
 import { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
-import { TOKEN_METADATA_PROGRAM_ID } from '..';
 
 export const makeSolanartBuyTx = async (
   connections: Array<Connection>,
@@ -198,7 +198,7 @@ export const makeSolanartBuyTx = async (
         },
 
         {
-          pubkey: TOKEN_METADATA_PROGRAM_ID,
+          pubkey: TMETA_PROG_ID,
           isSigner: false,
           isWritable: false,
         },

@@ -1,11 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
-export { PROGRAM_ID as TMETA_PROG_ID } from '@metaplex-foundation/mpl-token-metadata';
-export { PROGRAM_ID as AUTH_PROG_ID } from '@metaplex-foundation/mpl-token-auth-rules';
-import { PROGRAM_ID as TMETA_PROG_ID } from '@metaplex-foundation/mpl-token-metadata';
-import {
-  PREFIX,
-  PROGRAM_ID as AUTH_PROG_ID,
-} from '@metaplex-foundation/mpl-token-auth-rules';
+import { TMETA_PROG_ID } from './token_metadata';
+
+export const AUTH_PROG_ID = new PublicKey(
+  'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg',
+);
 
 export const findTokenRecordPda = (mint: PublicKey, token: PublicKey) => {
   return PublicKey.findProgramAddressSync(
@@ -22,7 +20,7 @@ export const findTokenRecordPda = (mint: PublicKey, token: PublicKey) => {
 
 export const findRuleSetPda = (payer: PublicKey, name: string) => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(PREFIX), payer.toBuffer(), Buffer.from(name)],
+    [Buffer.from('rule_set'), payer.toBuffer(), Buffer.from(name)],
     AUTH_PROG_ID,
   );
 };

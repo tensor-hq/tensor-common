@@ -79,7 +79,7 @@ export const makeBatches = <T>(
   items: Array<T>,
   batchSize: number,
 ): Array<Array<T>> => {
-  const out = [];
+  const out: T[][] = [];
   for (let idx = 0; idx < items.length; idx += batchSize) {
     out.push(items.slice(idx, idx + batchSize));
   }
@@ -109,7 +109,7 @@ export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
   }
 
   const seen = new Set();
-  const out = [];
+  const out: T[] = [];
   for (const item of arr) {
     const k = getKey(item);
     if (seen.has(k)) continue;
@@ -231,7 +231,7 @@ const _stringifyPKsAndBNsInObject = (o: any) => {
 };
 
 const _stringifyPKsAndBNInArray = (a: any[]): any[] => {
-  const newA = [];
+  const newA: any[] = [];
   for (const i of a) {
     if (_isPk(i)) {
       newA.push(i.toBase58());

@@ -6,9 +6,6 @@ export const AUCTION_HOUSE = 'auction_house';
 export const AUCTION_HOUSE_PROGRAM_ID = new PublicKey(
   'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk',
 );
-export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-);
 
 export const AUCTION_HOUSE_KEYS = {
   OpenSea: '3o9d13qUvEuuauhFrVom1vuCzgNsJifeaBYDPquaT73Y',
