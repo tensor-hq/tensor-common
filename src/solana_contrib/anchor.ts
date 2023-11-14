@@ -5,13 +5,16 @@ import {
   EventParser,
   Idl,
   Instruction,
-  utils,
 } from '@coral-xyz/anchor';
 import type { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
-import type { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
+import type {
+  AllAccounts,
+  AllAccountsMap,
+} from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
 import { AccountInfo, PublicKey, TransactionResponse } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { ExtractedIx, extractAllIxs } from './transaction';
+import { hex, sha256 } from './utils';
 
 type Decoder = (buffer: Buffer) => any;
 export type AnchorDiscMap<IDL extends Idl> = Record<
@@ -48,27 +51,40 @@ export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
 // =============== Decode accounts ===============
 
-export const genDiscToDecoderMap = <IDL extends Idl>({
+export const genDiscToDecoderMap = async <IDL extends Idl>({
   idl,
   coder,
 }: {
   idl: IDL;
   coder: Coder;
-}): AnchorDiscMap<IDL> => {
-  return Object.fromEntries(
-    idl.accounts?.map((acc) => {
+}): Promise<AnchorDiscMap<IDL>> => {
+  const entries: [
+    string,
+    {
+      decoder: Decoder;
+      name: AllAccounts<IDL>['name'];
+    },
+  ][] = [];
+
+  if (idl.accounts) {
+    for (const acc of idl.accounts) {
       const name = acc.name as keyof AllAccountsMap<IDL>;
       const capName = name.at(0)!.toUpperCase() + name.slice(1);
 
-      return [
-        utils.sha256.hash(`account:${capName}`).slice(0, 8),
+      const hexValue = hex(
+        await sha256(Buffer.from(`account:${capName}`)),
+      ).slice(0, 8);
+      entries.push([
+        hexValue,
         {
           decoder: (buffer: Buffer) => coder.accounts.decode(name, buffer),
           name,
         },
-      ];
-    }) ?? [],
-  );
+      ]);
+    }
+  }
+
+  return Object.fromEntries(entries);
 };
 
 export const decodeAnchorAcct = <IDL extends Idl>(
@@ -87,17 +103,22 @@ export const decodeAnchorAcct = <IDL extends Idl>(
 
 // =============== END Decode accounts ===============
 
-export const genIxDiscHexMap = <IDL extends Idl>(
+export const genIxDiscHexMap = async <IDL extends Idl>(
   idl: IDL,
-): Record<AnchorIxName<IDL>, string> => {
-  return Object.fromEntries(
-    idl.instructions.map((ix) => {
-      const name = ix.name;
-      const snakeCaseName = name.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
+): Promise<Record<AnchorIxName<IDL>, string>> => {
+  const entries: string[][] = [];
 
-      return [name, utils.sha256.hash(`global:${snakeCaseName}`).slice(0, 16)];
-    }),
-  ) as Record<AnchorIxName<IDL>, string>;
+  for (const ix of idl.instructions) {
+    const name = ix.name;
+    const snakeCaseName = name.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
+
+    const hexValue = hex(
+      await sha256(Buffer.from(`global:${snakeCaseName}`)),
+    ).slice(0, 16);
+    entries.push([name, hexValue]);
+  }
+
+  return Object.fromEntries(entries) as Record<AnchorIxName<IDL>, string>;
 };
 
 export const getIxDiscHex = (bs58Data: string): string =>

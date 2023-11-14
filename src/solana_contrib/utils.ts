@@ -1,5 +1,6 @@
 import { AccountClient } from '@coral-xyz/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { webcrypto } from 'crypto';
 
 export const validPublicKey = (input: string) => {
   try {
@@ -63,3 +64,18 @@ export const numToU8Bytes = (num: number) => {
   view.setUint8(0, num);
   return new Uint8Array(buffer);
 };
+
+export async function sha256(
+  buffer: readonly number[] | Uint8Array | Buffer,
+): Promise<number[]> {
+  const buf = await webcrypto.subtle.digest('SHA-256', Buffer.from(buffer));
+  return [...new Uint8Array(buf)];
+}
+
+export function hex(arr: readonly number[]): string {
+  let hexString = '';
+  for (let i = 0; i < arr.length; i++) {
+    hexString += arr[i].toString(16).padStart(2, '0');
+  }
+  return hexString;
+}
