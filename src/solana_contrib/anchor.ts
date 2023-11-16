@@ -53,10 +53,10 @@ export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
 export const genDiscToDecoderMap = async <IDL extends Idl>({
   idl,
-  coder,
+  coder = new BorshCoder(idl),
 }: {
   idl: IDL;
-  coder: Coder;
+  coder?: Coder;
 }): Promise<AnchorDiscMap<IDL>> => {
   const entries: [
     string,
