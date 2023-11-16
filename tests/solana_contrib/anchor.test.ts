@@ -75,15 +75,15 @@ describe('Anchor Tests', () => {
   };
 
   describe('genIxDiscHexMap', () => {
-    it('works for TCOMP', () => {
-      const ixDisc = genIxDiscHexMap(IDL_TComp);
+    it('works for TCOMP', async () => {
+      const ixDisc = await genIxDiscHexMap(IDL_TComp);
 
       expect(ixDisc.tcompNoop).eq('6aa20ae28444df15');
       expect(ixDisc.list).eq('36aec14311298426');
     });
 
-    it('works for TSWAP', () => {
-      const ixDisc = genIxDiscHexMap(IDL);
+    it('works for TSWAP', async () => {
+      const ixDisc = await genIxDiscHexMap(IDL);
 
       expect(ixDisc.buySingleListing).eq('f5dc694975624e8d');
       expect(ixDisc.delist).eq('3788cd6b6bad041f');
@@ -180,11 +180,11 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses noop ixs', () => {
+    it('parses noop ixs', async () => {
       const tx: TransactionResponse = castTxResponse(
         require('./test_data/tcomp_list_tx.json'),
       );
-      const discs = genIxDiscHexMap(IDL_TComp);
+      const discs = await genIxDiscHexMap(IDL_TComp);
 
       const ixs = parseAnchorIxs({
         coder: tcmpCoder,
@@ -203,11 +203,11 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses troll commit w/ weird struct', () => {
+    it('parses troll commit w/ weird struct', async () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/troll_commit_tx_v0_1_0.json'),
       );
-      const discs = genIxDiscHexMap(IDL_TRoll);
+      const discs = await genIxDiscHexMap(IDL_TRoll);
 
       const ixs = parseAnchorIxs({
         coder: trollCoder,
@@ -237,11 +237,11 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses troll fulfill tswap listing w/ other events', () => {
+    it('parses troll fulfill tswap listing w/ other events', async () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/troll_fulfill_tswap_listing_v0_1_0.json'),
       );
-      const discs = genIxDiscHexMap(IDL_TRoll);
+      const discs = await genIxDiscHexMap(IDL_TRoll);
 
       const ixs = parseAnchorIxs({
         coder: trollCoder,
