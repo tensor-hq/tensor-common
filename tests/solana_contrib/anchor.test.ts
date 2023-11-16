@@ -75,14 +75,14 @@ describe('Anchor Tests', () => {
   };
 
   describe('genIxDiscHexMap', () => {
-    it('works for TCOMP', async () => {
+    it('works for TCOMP', () => {
       const ixDisc = genIxDiscHexMap(IDL_TComp);
 
       expect(ixDisc.tcompNoop).eq('6aa20ae28444df15');
       expect(ixDisc.list).eq('36aec14311298426');
     });
 
-    it('works for TSWAP', async () => {
+    it('works for TSWAP', () => {
       const ixDisc = genIxDiscHexMap(IDL);
 
       expect(ixDisc.buySingleListing).eq('f5dc694975624e8d');
@@ -180,7 +180,7 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses noop ixs', async () => {
+    it('parses noop ixs', () => {
       const tx: TransactionResponse = castTxResponse(
         require('./test_data/tcomp_list_tx.json'),
       );
@@ -203,7 +203,7 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses troll commit w/ weird struct', async () => {
+    it('parses troll commit w/ weird struct', () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/troll_commit_tx_v0_1_0.json'),
       );
@@ -237,7 +237,7 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses troll fulfill tswap listing w/ other events', async () => {
+    it('parses troll fulfill tswap listing w/ other events', () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/troll_fulfill_tswap_listing_v0_1_0.json'),
       );
