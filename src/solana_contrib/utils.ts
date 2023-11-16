@@ -1,6 +1,5 @@
 import { AccountClient } from '@coral-xyz/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { webcrypto } from 'crypto';
 
 export const validPublicKey = (input: string) => {
   try {
