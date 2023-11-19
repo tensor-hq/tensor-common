@@ -189,6 +189,17 @@ export const removeNullBytes = (str: string): string => {
   return result;
 };
 
+/** Removes keys that have undefined values */
+export const removeUndefinedKeys = (obj: object) => {
+  const newObj: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      newObj[k] = v;
+    }
+  }
+  return newObj;
+};
+
 //#region Stringify function.
 
 export const stringifyPKsAndBNs = (i: any) => {
