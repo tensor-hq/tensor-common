@@ -257,6 +257,7 @@ export const createAndFundAta = async ({
   creators,
   collection,
   collectionVerified,
+  createCollection = true,
   programmable = false,
   ruleSetAddr,
 }: {
@@ -267,6 +268,7 @@ export const createAndFundAta = async ({
   royaltyBps?: number;
   creators?: CreatorInput[];
   collection?: Keypair;
+  createCollection?: boolean;
   collectionVerified?: boolean;
   programmable?: boolean;
   ruleSetAddr?: PublicKey;
@@ -276,13 +278,19 @@ export const createAndFundAta = async ({
   owner: Keypair;
   metadata: PublicKey;
   masterEdition: PublicKey;
+  collectionInfo?: {
+    mint: PublicKey;
+    metadata: PublicKey;
+    masterEdition: PublicKey;
+  };
 }> => {
   const usedOwner = owner ?? (await createFundedWallet({ conn, payer }));
   const usedMint = mint ?? Keypair.generate();
 
+  let collectionInfo;
   //create a verified collection
-  if (collection) {
-    await createNft({
+  if (createCollection && collection) {
+    collectionInfo = await createNft({
       conn,
       payer,
       owner: usedOwner,
@@ -313,6 +321,7 @@ export const createAndFundAta = async ({
     owner: usedOwner,
     metadata,
     masterEdition,
+    collectionInfo,
   };
 };
 
@@ -326,6 +335,7 @@ export const makeMintTwoAta = async ({
   creators,
   collection,
   collectionVerified,
+  createCollection,
   programmable,
   ruleSetAddr,
 }: {
@@ -337,20 +347,23 @@ export const makeMintTwoAta = async ({
   creators?: CreatorInput[];
   collection?: Keypair;
   collectionVerified?: boolean;
+  createCollection?: boolean;
   programmable?: boolean;
   ruleSetAddr?: PublicKey;
 }) => {
-  const { mint, ata, metadata, masterEdition } = await createAndFundAta({
-    conn,
-    payer,
-    owner,
-    royaltyBps,
-    creators,
-    collection,
-    collectionVerified,
-    programmable,
-    ruleSetAddr,
-  });
+  const { mint, ata, metadata, masterEdition, collectionInfo } =
+    await createAndFundAta({
+      conn,
+      payer,
+      owner,
+      royaltyBps,
+      creators,
+      collection,
+      collectionVerified,
+      createCollection,
+      programmable,
+      ruleSetAddr,
+    });
 
   const { ata: otherAta } = await createAta({
     conn,
@@ -359,5 +372,5 @@ export const makeMintTwoAta = async ({
     owner: other,
   });
 
-  return { mint, metadata, ata, otherAta, masterEdition };
+  return { mint, metadata, ata, otherAta, masterEdition, collectionInfo };
 };
