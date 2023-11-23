@@ -45,7 +45,7 @@ export type CollectionTraitsActive = Record<
 
 // NB: Make sure keys are CamelCased vs CAMELCased.
 // This is so it aligns with the generated graphql enum keys to make life easier.
-export enum ActiveListingsSortBy {
+export enum MintsSortBy {
   PriceAsc = 'PriceAsc',
   PriceDesc = 'PriceDesc',
   LastSaleAsc = 'LastSaleAsc',
@@ -59,4 +59,6 @@ export enum ActiveListingsSortBy {
   RankTeamDesc = 'RankTeamDesc',
   RankTnAsc = 'RankTnAsc',
   RankTnDesc = 'RankTnDesc',
+  OrdinalAsc = 'OrdinalAsc',
+  OrdinalDesc = 'OrdinalDesc',
 }

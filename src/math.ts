@@ -1,6 +1,6 @@
 import BN from 'bn.js';
 import { Big } from 'big.js';
-import { isNullLike } from './utils';
+import { Maybe, isNullLike } from './utils';
 
 export const sum = (arr: Array<number>) => {
   return arr.reduce((a, b) => a + b, 0);
@@ -104,6 +104,23 @@ export const sortNumberOrBig = (
   if (typeof a !== 'number') a = a.toNumber();
   if (typeof b !== 'number') b = b.toNumber();
   return a - b;
+};
+
+export const sortBigInt = (
+  a: Maybe<bigint>,
+  b: Maybe<bigint>,
+  /** If true, means nulls sort before all other non-null values.
+   * NB: sorting before other values means it will:
+   *  - come first if you're sorting in ASC order
+   *  - come last if you're sorting in DESC order
+   */
+  nullsFirst: boolean = true,
+): number => {
+  if (isNullLike(a) && isNullLike(b)) return 0;
+  if (isNullLike(a)) return nullsFirst ? -1 : 1;
+  if (isNullLike(b)) return nullsFirst ? 1 : -1;
+
+  return Number(a - b);
 };
 
 // Round in case there are decimals.

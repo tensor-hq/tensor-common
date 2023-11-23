@@ -1,4 +1,4 @@
-export * from './active_listings';
+export * from './mints';
 export * from './constants';
 export * from './explorer';
 export * from './nft';
