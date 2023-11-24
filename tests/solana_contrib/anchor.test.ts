@@ -6,6 +6,8 @@ import {
   genAcctDiscHexMap,
   genIxDiscHexMap,
   getAcctDiscHex,
+  getAcctDiscHexFromName,
+  getIxDiscHexFromName,
   parseAnchorEvents,
   parseAnchorIxs,
 } from '../../src/solana_contrib/anchor';
@@ -87,24 +89,30 @@ describe('Anchor Tests', () => {
     it('works for TSWAP', () => {
       const ixDisc = genIxDiscHexMap(IDL);
 
-      expect(ixDisc.buySingleListing).eq('f5dc694975624e8d');
+      const expBuySingleListingDisc = 'f5dc694975624e8d';
+      expect(ixDisc.buySingleListing).eq(expBuySingleListingDisc);
       expect(ixDisc.delist).eq('3788cd6b6bad041f');
+
+      expect(getIxDiscHexFromName('buy_single_listing')).eq(
+        expBuySingleListingDisc,
+      );
     });
   });
 
-  describe('genAcctDiscHexMap & getAcctDiscHex', () => {
+  describe('genAcctDiscHexMap & getAcctDiscHex && getAcctDiscHexFromName', () => {
     it('works for TCOMP', () => {
       const acctDisc = genAcctDiscHexMap<Tcomp>(IDL_TComp);
       const expListStateDisc = '4ef2598aa1ddb04b';
       expect(acctDisc[expListStateDisc].name).eq('listState');
       expect(acctDisc['9bc50561bd3c08b7'].name).eq('bidState');
+      expect(getAcctDiscHexFromName('ListState')).eq(expListStateDisc);
 
       const data = Buffer.from(
         'TvJZiqHdsEsB/8soQq+gp90hYFh4zne09OnVtmvjPUSWvcpHUE+vJdqhylPvMnwZYltR7FF3G/RV88yKtBQFBgKsazTf9M0JVjSwrQEAAAAAAABFVkJnAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
         'base64',
       );
       const actualListStateDisc = getAcctDiscHex(data);
-      expect(expListStateDisc).eq(actualListStateDisc);
+      expect(actualListStateDisc).eq(expListStateDisc);
       const res = acctDisc[actualListStateDisc];
       expect(res.name).eq('listState');
       const decoded = res.decoder(data);

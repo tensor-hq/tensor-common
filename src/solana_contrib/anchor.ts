@@ -1,20 +1,16 @@
 import {
   BorshCoder,
-  Coder,
   Event,
   EventParser,
   Idl,
   Instruction,
 } from '@coral-xyz/anchor';
 import type { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
-import type {
-  AllAccounts,
-  AllAccountsMap,
-} from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
+import type { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
 import { AccountInfo, PublicKey, TransactionResponse } from '@solana/web3.js';
 import bs58 from 'bs58';
-import { ExtractedIx, extractAllIxs } from './transaction';
 import { sha256 } from 'js-sha256';
+import { ExtractedIx, extractAllIxs } from './transaction';
 
 type Decoder = (buffer: Buffer) => any;
 export type AcctDiscHexMap<IDL extends Idl> = Record<
@@ -51,6 +47,10 @@ export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
 // =============== Decode accounts ===============
 
+/** `capName` in the format of "InscriptionV3" */
+export const getAcctDiscHexFromName = (capName: string) =>
+  sha256(`account:${capName}`).slice(0, 16);
+
 export const genAcctDiscHexMap = <IDL extends Idl>(
   idl: IDL,
 ): AcctDiscHexMap<IDL> => {
@@ -61,7 +61,7 @@ export const genAcctDiscHexMap = <IDL extends Idl>(
       const capName = name.at(0)!.toUpperCase() + name.slice(1);
 
       return [
-        sha256(`account:${capName}`).slice(0, 16),
+        getAcctDiscHexFromName(capName),
         {
           decoder: (buffer: Buffer) => coder.accounts.decode(name, buffer),
           name,
@@ -90,6 +90,10 @@ export const decodeAnchorAcct = <IDL extends Idl>(
 
 // =============== END Decode accounts ===============
 
+/** `snakeCaseName` in the format of "sell_nft_token_pool" */
+export const getIxDiscHexFromName = (snakeCaseName: string) =>
+  sha256(`global:${snakeCaseName}`).slice(0, 16);
+
 export const genIxDiscHexMap = <IDL extends Idl>(
   idl: IDL,
 ): Record<AnchorIxName<IDL>, string> => {
@@ -98,7 +102,7 @@ export const genIxDiscHexMap = <IDL extends Idl>(
       const name = ix.name;
       const snakeCaseName = name.replaceAll(/([A-Z])/g, '_$1').toLowerCase();
 
-      return [name, sha256(`global:${snakeCaseName}`).slice(0, 16)];
+      return [name, getIxDiscHexFromName(snakeCaseName)];
     }),
   ) as Record<AnchorIxName<IDL>, string>;
 };
