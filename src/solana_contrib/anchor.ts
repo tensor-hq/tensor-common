@@ -17,7 +17,7 @@ import { ExtractedIx, extractAllIxs } from './transaction';
 import { sha256 } from 'js-sha256';
 
 type Decoder = (buffer: Buffer) => any;
-export type AnchorDiscMap<IDL extends Idl> = Record<
+export type AcctDiscHexMap<IDL extends Idl> = Record<
   string,
   { decoder: Decoder; name: keyof AllAccountsMap<IDL> }
 >;
@@ -51,20 +51,17 @@ export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
 // =============== Decode accounts ===============
 
-export const genDiscToDecoderMap = <IDL extends Idl>({
-  idl,
-  coder,
-}: {
-  idl: IDL;
-  coder: Coder;
-}): AnchorDiscMap<IDL> => {
+export const genAcctDiscHexMap = <IDL extends Idl>(
+  idl: IDL,
+): AcctDiscHexMap<IDL> => {
+  const coder = new BorshCoder(idl);
   return Object.fromEntries(
     idl.accounts?.map((acc) => {
       const name = acc.name as keyof AllAccountsMap<IDL>;
       const capName = name.at(0)!.toUpperCase() + name.slice(1);
 
       return [
-        sha256(`account:${capName}`).slice(0, 8),
+        sha256(`account:${capName}`).slice(0, 16),
         {
           decoder: (buffer: Buffer) => coder.accounts.decode(name, buffer),
           name,
@@ -74,11 +71,14 @@ export const genDiscToDecoderMap = <IDL extends Idl>({
   );
 };
 
+export const getAcctDiscHex = (data: Buffer): string =>
+  data.toString('hex').slice(0, 16);
+
 export const decodeAnchorAcct = <IDL extends Idl>(
   acct: AccountInfo<Buffer>,
-  discMap: AnchorDiscMap<IDL>,
+  discMap: AcctDiscHexMap<IDL>,
 ) => {
-  const disc = acct.data.toString('hex').slice(0, 8);
+  const disc = getAcctDiscHex(acct.data);
   const meta = discMap[disc];
   if (!meta) return null;
 

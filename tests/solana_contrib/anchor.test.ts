@@ -1,25 +1,27 @@
-import { BN, BorshCoder, EventParser } from '@coral-xyz/anchor';
+import { BorshCoder, EventParser } from '@coral-xyz/anchor';
+import { PublicKey, TransactionResponse } from '@solana/web3.js';
+import { expect } from 'chai';
 import {
   ParsedAnchorEvent,
+  genAcctDiscHexMap,
   genIxDiscHexMap,
+  getAcctDiscHex,
   parseAnchorEvents,
   parseAnchorIxs,
 } from '../../src/solana_contrib/anchor';
-import { IDL as IDL_TComp } from './test_data/tcomp';
+import {
+  TransactionResponseJSON,
+  castTxResponse,
+  convertTxToLegacy,
+} from '../../src/solana_contrib/transaction';
+import { stringifyPKsAndBNs } from '../../src/utils';
+import { IDL as IDL_TComp, Tcomp } from './test_data/tcomp';
 import { IDL as IDL_TRoll } from './test_data/troll';
 import { IDL, Tensorswap } from './test_data/tswap';
 import {
   IDL as IDL_v1_6_0,
   Tensorswap as Tensorswap_v1_6_0,
 } from './test_data/tswap_v1_6_0';
-import { PublicKey, TransactionResponse } from '@solana/web3.js';
-import { expect } from 'chai';
-import { stringifyPKsAndBNs } from '../../src/utils';
-import {
-  TransactionResponseJSON,
-  castTxResponse,
-  convertTxToLegacy,
-} from '../../src/solana_contrib/transaction';
 
 describe('Anchor Tests', () => {
   const tswap = new PublicKey('TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN');
@@ -87,6 +89,30 @@ describe('Anchor Tests', () => {
 
       expect(ixDisc.buySingleListing).eq('f5dc694975624e8d');
       expect(ixDisc.delist).eq('3788cd6b6bad041f');
+    });
+  });
+
+  describe('genAcctDiscHexMap & getAcctDiscHex', () => {
+    it('works for TCOMP', () => {
+      const acctDisc = genAcctDiscHexMap<Tcomp>(IDL_TComp);
+      const expListStateDisc = '4ef2598aa1ddb04b';
+      expect(acctDisc[expListStateDisc].name).eq('listState');
+      expect(acctDisc['9bc50561bd3c08b7'].name).eq('bidState');
+
+      const data = Buffer.from(
+        'TvJZiqHdsEsB/8soQq+gp90hYFh4zne09OnVtmvjPUSWvcpHUE+vJdqhylPvMnwZYltR7FF3G/RV88yKtBQFBgKsazTf9M0JVjSwrQEAAAAAAABFVkJnAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+        'base64',
+      );
+      const actualListStateDisc = getAcctDiscHex(data);
+      expect(expListStateDisc).eq(actualListStateDisc);
+      const res = acctDisc[actualListStateDisc];
+      expect(res.name).eq('listState');
+      const decoded = res.decoder(data);
+      expect(stringifyPKsAndBNs(decoded)).includes({
+        owner: 'Eg3NR62MpdkMXmsJshzr3Qf5d7Gzy3kiZ2mtQfsGiXNG',
+        assetId: 'Ecob3R5tdh6Y34LRdHFBCQYwBhAhCtbeNnGxXyvUxkSP',
+        amount: '110000',
+      });
     });
   });
 
