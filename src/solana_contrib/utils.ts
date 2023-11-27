@@ -63,3 +63,11 @@ export const numToU8Bytes = (num: number) => {
   view.setUint8(0, num);
   return new Uint8Array(buffer);
 };
+
+export const isUserRejectedSigningError = (err: any) => {
+  return (
+    // name vs types since some wallets may return generic error.
+    err.name === 'WalletSignTransactionError' &&
+    ['User rejected the request.', 'Transaction rejected'].includes(err.message)
+  );
+};
