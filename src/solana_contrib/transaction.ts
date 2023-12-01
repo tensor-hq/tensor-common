@@ -35,6 +35,7 @@ import { backOff } from 'exponential-backoff';
 import { sleep, waitMS } from '../time';
 import {
   Maybe,
+  dedupeList,
   filterNullLike,
   isNullLike,
   makeBatches,
@@ -418,6 +419,7 @@ type BuildTxArgs = {
   feePayer: PublicKey;
   instructions: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
+  priorityMicroLamports: Maybe<number>;
 } & GetRpcMultipleConnsArgs;
 
 //(!) this should be the only function across our code used to build txs
@@ -496,9 +498,13 @@ export const buildTxsLegacyV0 = async ({
     throw new Error('must pass at least one instruction');
   }
 
-  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
-    blockhashArgs,
-  );
+  const [{ blockhash, lastValidBlockHeight }, priorityFee] = await Promise.all([
+    getLatestBlockhashMultConns(blockhashArgs),
+    prepPriorityFeeMultiConns({
+      instructions,
+      ...blockhashArgs,
+    }),
+  ]);
 
   const msg = new TransactionMessage({
     payerKey: feePayer,
@@ -523,6 +529,60 @@ export const buildTxsLegacyV0 = async ({
   }
 
   return { tx, txV0, blockhash, lastValidBlockHeight };
+};
+
+const percentile = (numbers: number[], percentile: number) => {
+  // Ensure the array is sorted
+  numbers.sort((a, b) => a - b);
+
+  const index = (numbers.length - 1) * percentile;
+
+  // If the index is an integer, return the value at that index
+  if (Math.floor(index) === index) {
+    return numbers[index];
+  }
+
+  // If the index is not an integer, interpolate
+  const lowerIndex = Math.floor(index);
+  const upperIndex = Math.ceil(index);
+  const weight = index - lowerIndex;
+
+  return numbers[lowerIndex] * (1 - weight) + numbers[upperIndex] * weight;
+};
+
+const MAX_PRIORITY_MICRO_LAMPORTS = 1_000_000;
+/** When priorityMicroLamports is -1: dynamic gets the 95th percentile priority fee over 150 slots */
+const prepPriorityFeeMultiConns = async ({
+  priorityMicroLamports,
+  instructions,
+  connections,
+  commitment = 'confirmed',
+  maxRetries = 5,
+  startTimeoutMs = 100,
+  maxTimeoutMs = 2000,
+}: {
+  priorityMicroLamports: Maybe<number>;
+  instructions: TransactionInstruction[];
+} & GetRpcMultipleConnsArgs): Promise<Maybe<number>> => {
+  if (priorityMicroLamports !== -1) {
+    return priorityMicroLamports;
+  }
+  const writableKeys = instructions
+    .flatMap((ix) => ix.keys)
+    .filter((k) => k.isWritable)
+    .map((k) => k.pubkey.toBase58());
+  const lockedWritableAccounts = dedupeList(writableKeys).map(
+    (pk) => new PublicKey(pk),
+  );
+  const slots = await Promise.race(
+    connections.map((conn) =>
+      conn.getRecentPrioritizationFees({ lockedWritableAccounts }),
+    ),
+  );
+  const fees = slots.map((slot) => slot.prioritizationFee);
+  // take the 95th percentile
+  const p95 = percentile(fees, 0.95);
+  return Math.min(MAX_PRIORITY_MICRO_LAMPORTS, p95);
 };
 
 type GetRpcMultipleConnsArgs = {
@@ -970,22 +1030,30 @@ const MAX_COMPUTE_UNITS = 1_400_000;
 /** Adds (1) increase compute + (2) priority fees */
 export const prependComputeIxs = (
   ixs: TransactionInstruction[],
+  conn: Connection,
   compute?: Maybe<number>,
   priorityMicroLamports?: Maybe<number>,
 ): TransactionInstruction[] => {
   const out = [...ixs];
-  if (
-    compute &&
-    !ixs.some(
-      (ix) =>
-        ix.programId.equals(ComputeBudgetProgram.programId) &&
-        ComputeBudgetInstruction.decodeInstructionType(ix) ===
-          'SetComputeUnitLimit',
-    )
-  ) {
-    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-      units: Math.min(MAX_COMPUTE_UNITS, compute),
-    });
+  let modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+    units: compute
+      ? Math.min(MAX_COMPUTE_UNITS, compute)
+      : DEFAULT_COMPUTE_UNITS, // Use a default value if compute is undefined or null
+  });
+
+  // Check if the relevant instruction exists
+  const ixIndex = ixs.findIndex(
+    (ix) =>
+      ix.programId.equals(ComputeBudgetProgram.programId) &&
+      ComputeBudgetInstruction.decodeInstructionType(ix) ===
+        'SetComputeUnitLimit',
+  );
+
+  if (ixIndex !== -1) {
+    // Replace the element if it's found
+    out[ixIndex] = modifyComputeUnits;
+  } else if (compute) {
+    // Prepend modifyComputeUnits if it's not found and compute is defined and not null
     out.splice(0, 0, modifyComputeUnits);
   }
   if (
@@ -1003,4 +1071,28 @@ export const prependComputeIxs = (
     out.splice(0, 0, addPriorityFee);
   }
   return out;
+};
+
+export const getTotalComputeIxs = async (
+  compute: number | null,
+  priorityMicroLamports: number | null,
+) => {
+  const finalIxs: TransactionInstruction[] = [];
+  //optionally include extra compute]
+  if (!isNullLike(compute)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitLimit({
+        units: compute,
+      }),
+    );
+  }
+  //optionally include priority fee
+  if (!isNullLike(priorityMicroLamports)) {
+    finalIxs.push(
+      ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityMicroLamports,
+      }),
+    );
+  }
+  return finalIxs;
 };
