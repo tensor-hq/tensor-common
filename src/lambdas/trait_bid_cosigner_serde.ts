@@ -352,10 +352,11 @@ export type TakeLegacyArgs = {
   seller: PublicKey;
   minAmount: BN;
   currency?: PublicKey | null;
-  makerBroker?: PublicKey | null;
+  makerBroker: PublicKey | null;
   optionalRoyaltyPct?: number | null;
   margin?: PublicKey | null;
   takerBroker?: PublicKey | null;
+  rentDest: PublicKey;
   whitelist?: PublicKey | null;
   cosigner?: PublicKey | null;
 } & PnftArgs;
@@ -382,10 +383,11 @@ export type TakeLegacyArgsSerialized = {
   seller: string;
   minAmount: string;
   currency?: string | null;
-  makerBroker?: string | null;
+  makerBroker: string | null;
   optionalRoyaltyPct?: number | null;
   margin?: string | null;
   takerBroker?: string | null;
+  rentDest: string;
   whitelist?: string | null;
   cosigner?: string | null;
 } & PnftArgsSerialized;
@@ -405,6 +407,7 @@ export function serializeTakeLegacyArgs(
     optionalRoyaltyPct: args.optionalRoyaltyPct,
     margin: args.margin ? args.margin.toString() : null,
     takerBroker: args.takerBroker ? args.takerBroker.toString() : null,
+    rentDest: args.rentDest.toString(),
     whitelist: args.whitelist ? args.whitelist.toString() : null,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
     // PnftArgs fields:
@@ -442,6 +445,7 @@ export function deserializeTakeLegacyArgs(
     takerBroker: serialized.takerBroker
       ? new PublicKey(serialized.takerBroker)
       : null,
+    rentDest: new PublicKey(serialized.rentDest),
     whitelist: serialized.whitelist
       ? new PublicKey(serialized.whitelist)
       : null,
