@@ -167,13 +167,14 @@ export type TakeCompressedArgs = {
   index: number;
   minAmount: BN;
   currency?: PublicKey | null;
-  makerBroker?: PublicKey | null;
+  makerBroker: PublicKey | null;
   optionalRoyaltyPct?: number | null;
   owner: PublicKey;
   seller: PublicKey;
   delegate?: PublicKey;
   margin?: PublicKey | null;
   takerBroker?: PublicKey | null;
+  rentDest: PublicKey;
   compute?: number | null;
   priorityMicroLamports?: number | null;
   canopyDepth?: number;
@@ -202,13 +203,14 @@ export type TakeCompressedArgsSerialized = {
   index: number;
   minAmount: string;
   currency?: string | null;
-  makerBroker?: string | null;
+  makerBroker: string | null;
   optionalRoyaltyPct?: number | null;
   owner: string;
   seller: string;
   delegate?: string;
   margin?: string | null;
   takerBroker?: string | null;
+  rentDest: string;
   compute?: number | null;
   priorityMicroLamports?: number | null;
   canopyDepth?: number;
@@ -256,6 +258,7 @@ export function serializeTakeCompressedArgs(
     delegate: args.delegate ? args.delegate.toString() : undefined,
     margin: args.margin ? args.margin.toString() : null,
     takerBroker: args.takerBroker ? args.takerBroker.toString() : null,
+    rentDest: args.rentDest.toString(),
     compute: args.compute,
     priorityMicroLamports: args.priorityMicroLamports,
     canopyDepth: args.canopyDepth,
@@ -313,6 +316,7 @@ export function deserializeTakeCompressedArgs(
     takerBroker: serialized.takerBroker
       ? new PublicKey(serialized.takerBroker)
       : null,
+    rentDest: new PublicKey(serialized.rentDest),
     compute: serialized.compute,
     priorityMicroLamports: serialized.priorityMicroLamports,
     canopyDepth: serialized.canopyDepth,
