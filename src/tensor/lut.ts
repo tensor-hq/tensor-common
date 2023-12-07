@@ -1,0 +1,64 @@
+import {
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID,
+} from '@solana/spl-account-compression';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import {
+  PublicKey,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+} from '@solana/web3.js';
+import {
+  AUTH_PROGRAM_ID,
+  BUBBLEGUM_PROGRAM_ID,
+  TMETA_PROGRAM_ID,
+} from '../metaplex';
+import {
+  TBID_PROGRAM_ID,
+  TCOMP_PDA_ADDR,
+  TCOMP_PROGRAM_ID,
+  TLIST_PROGRAM_ID,
+  TLOCK_PDA_ADDR,
+  TLOCK_PROGRAM_ID,
+  TROLL_PROGRAM_ID,
+  TSWAP_PDA_ADDR,
+  TSWAP_PROGRAM_ID,
+} from './constants';
+
+export const TENSOR_LUT_ADDR = new PublicKey(
+  '3vaYdNYGKurpgp8mMvd84Q5pgeBLWw7qB5zHqfm7AqpC',
+);
+
+export const TENSOR_LUT_STORED_ADDRS: PublicKey[] = [
+  //compression
+  SPL_NOOP_PROGRAM_ID,
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  //solana
+  SystemProgram.programId,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  SYSVAR_RENT_PUBKEY,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
+  //mplex
+  BUBBLEGUM_PROGRAM_ID,
+  AUTH_PROGRAM_ID,
+  TMETA_PROGRAM_ID,
+  //tensor
+  TSWAP_PROGRAM_ID,
+  TLIST_PROGRAM_ID,
+  TBID_PROGRAM_ID,
+  TCOMP_PROGRAM_ID,
+  // TDROP_PROGRAM_ID,
+  // TGARD_PROGRAM_ID,
+  // TSTKE_PROGRAM_ID,
+  // SWAPSORIAN_PROGRAM_ID,
+  TROLL_PROGRAM_ID,
+  TLOCK_PROGRAM_ID,
+  TSWAP_PDA_ADDR,
+  TCOMP_PDA_ADDR,
+  TLOCK_PDA_ADDR,
+];

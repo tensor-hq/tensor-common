@@ -18,7 +18,7 @@ import {
   SYSVAR_INSTRUCTIONS_PUBKEY,
 } from '@solana/web3.js';
 import { fetchMetadataAcct } from './token_metadata';
-import { AUTH_PROG_ID, findEditionPda, findTokenRecordPda } from './pdas';
+import { AUTH_PROGRAM_ID, findEditionPda, findTokenRecordPda } from './pdas';
 
 export const prepPnftAccounts = async ({
   connection,
@@ -134,7 +134,7 @@ export const makePnftTransferIx = async ({
     systemProgram: SystemProgram.programId,
     sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
     authorizationRules: ruleSet,
-    authorizationRulesProgram: AUTH_PROG_ID,
+    authorizationRulesProgram: AUTH_PROGRAM_ID,
     ownerTokenRecord: ownerTokenRecordPda,
     destinationTokenRecord: destTokenRecordPda,
   };
