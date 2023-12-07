@@ -18,20 +18,20 @@ import { TENSOR_LUT_ADDR, TENSOR_LUT_STORED_ADDRS } from '../lut';
   const lutMode = process.env.LUT_MODE;
   if (!kpFile) throw new Error('KEYPAIR_FILE env var not set');
   if (!lutMode) throw new Error('LUT_MODE env var not set');
-  const kp = Keypair.fromSecretKey(
+  const payer = Keypair.fromSecretKey(
     Buffer.from(JSON.parse(readFileSync(kpFile).toString())),
   );
 
   if (lutMode === 'create') {
     await createLUT({
-      kp,
+      payer,
       conn,
       addresses: TENSOR_LUT_STORED_ADDRS,
     });
   } else if (lutMode === 'upsert') {
     console.log(`upserting LUT ${TENSOR_LUT_ADDR.toBase58()}`);
     await upsertLUT({
-      kp,
+      payer,
       conn,
       lookupTableAddress: TENSOR_LUT_ADDR,
       addresses: TENSOR_LUT_STORED_ADDRS,

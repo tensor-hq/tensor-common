@@ -10,11 +10,11 @@ import { waitMS } from '../time';
 import { isNullLike } from '../utils';
 
 export const createLUT = async ({
-  kp,
+  payer,
   conn,
   addresses,
 }: {
-  kp: Keypair;
+  payer: Keypair;
   conn: Connection;
   addresses: PublicKey[];
 }): Promise<AddressLookupTableAccount> => {
@@ -24,8 +24,8 @@ export const createLUT = async ({
   //create
   const [lookupTableInst, lookupTableAddress] =
     AddressLookupTableProgram.createLookupTable({
-      authority: kp.publicKey,
-      payer: kp.publicKey,
+      authority: payer.publicKey,
+      payer: payer.publicKey,
       recentSlot: slot,
     });
 
@@ -42,17 +42,17 @@ export const createLUT = async ({
 
   //add addresses
   const extendInstruction = AddressLookupTableProgram.extendLookupTable({
-    payer: kp.publicKey,
-    authority: kp.publicKey,
+    payer: payer.publicKey,
+    authority: payer.publicKey,
     lookupTable: lookupTableAddress,
     addresses,
   });
 
   const tx = await buildTxV0({
     connections: [conn],
-    feePayer: kp.publicKey,
+    feePayer: payer.publicKey,
     instructions: [lookupTableInst, extendInstruction],
-    additionalSigners: [kp],
+    additionalSigners: [payer],
     addressLookupTableAccs: [],
   });
   const sig = await conn.sendTransaction(tx.tx, { skipPreflight: true });
@@ -72,13 +72,13 @@ export const createLUT = async ({
 };
 
 export const upsertLUT = async ({
-  kp,
+  payer,
   conn,
   lookupTableAddress,
   addresses,
   keepRetryingBlockhash = false,
 }: {
-  kp: Keypair;
+  payer: Keypair;
   conn: Connection;
   lookupTableAddress: PublicKey;
   addresses: PublicKey[];
@@ -87,7 +87,7 @@ export const upsertLUT = async ({
   let exist = (await conn.getAddressLookupTable(lookupTableAddress)).value;
   if (isNullLike(exist)) {
     console.debug('LUT missing, creating: ', lookupTableAddress.toBase58());
-    return createLUT({ kp, conn, addresses });
+    return createLUT({ payer: payer, conn, addresses });
   }
 
   // Filter out only new adresses.
@@ -101,17 +101,17 @@ export const upsertLUT = async ({
   }
 
   const extendInstruction = AddressLookupTableProgram.extendLookupTable({
-    payer: kp.publicKey,
-    authority: kp.publicKey,
+    payer: payer.publicKey,
+    authority: payer.publicKey,
     lookupTable: lookupTableAddress,
     addresses,
   });
 
   const tx = await buildTxV0({
     connections: [conn],
-    feePayer: kp.publicKey,
+    feePayer: payer.publicKey,
     instructions: [extendInstruction],
-    additionalSigners: [kp],
+    additionalSigners: [payer],
     addressLookupTableAccs: [],
   });
 
