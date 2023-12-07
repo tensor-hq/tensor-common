@@ -1,4 +1,5 @@
 import {
+  AddressLookupTableAccount,
   AddressLookupTableProgram,
   Connection,
   Keypair,
@@ -6,6 +7,7 @@ import {
 } from '@solana/web3.js';
 import { buildTxV0, confirmTransactionMultConns } from './transaction';
 import { waitMS } from '../time';
+import { isNullLike } from '../utils';
 
 export const createLUT = async ({
   kp,
@@ -15,9 +17,9 @@ export const createLUT = async ({
   kp: Keypair;
   conn: Connection;
   addresses: PublicKey[];
-}) => {
+}): Promise<AddressLookupTableAccount> => {
   //use finalized, otherwise get "is not a recent slot err"
-  const slot = await conn.getSlot();
+  const slot = await conn.getSlot('finalized');
 
   //create
   const [lookupTableInst, lookupTableAddress] =
@@ -53,7 +55,7 @@ export const createLUT = async ({
     additionalSigners: [kp],
     addressLookupTableAccs: [],
   });
-  const sig = await conn.sendTransaction(tx.tx);
+  const sig = await conn.sendTransaction(tx.tx, { skipPreflight: true });
   await confirmTransactionMultConns({
     conns: [conn],
     sig,
@@ -66,10 +68,10 @@ export const createLUT = async ({
   lookupTableAccount = (await conn.getAddressLookupTable(lookupTableAddress))
     .value;
 
-  return lookupTableAccount;
+  return lookupTableAccount!;
 };
 
-export const updateLUT = async ({
+export const upsertLUT = async ({
   kp,
   conn,
   lookupTableAddress,
@@ -79,10 +81,25 @@ export const updateLUT = async ({
   kp: Keypair;
   conn: Connection;
   lookupTableAddress: PublicKey;
-  /** Add NEW addresses only */
   addresses: PublicKey[];
   keepRetryingBlockhash?: boolean;
-}) => {
+}): Promise<AddressLookupTableAccount> => {
+  let exist = (await conn.getAddressLookupTable(lookupTableAddress)).value;
+  if (isNullLike(exist)) {
+    console.debug('LUT missing, creating: ', lookupTableAddress.toBase58());
+    return createLUT({ kp, conn, addresses });
+  }
+
+  // Filter out only new adresses.
+  addresses = addresses.filter(
+    (a) => !exist!.state.addresses.some((a2) => a2.equals(a)),
+  );
+
+  if (!addresses.length) {
+    console.debug('no new addresses for', lookupTableAddress.toBase58());
+    return exist;
+  }
+
   const extendInstruction = AddressLookupTableProgram.extendLookupTable({
     payer: kp.publicKey,
     authority: kp.publicKey,
@@ -101,7 +118,7 @@ export const updateLUT = async ({
   let done = false;
   while (!done) {
     try {
-      const sig = await conn.sendTransaction(tx.tx);
+      const sig = await conn.sendTransaction(tx.tx, { skipPreflight: true });
       await confirmTransactionMultConns({
         conns: [conn],
         sig,
@@ -120,9 +137,7 @@ export const updateLUT = async ({
   console.debug('updated LUT', lookupTableAddress.toBase58());
 
   //fetch (this will actually show wrong the first time, need to rerun)
-  const lookupTableAccount = (
-    await conn.getAddressLookupTable(lookupTableAddress)
-  ).value;
+  const table = (await conn.getAddressLookupTable(lookupTableAddress)).value;
 
-  return lookupTableAccount;
+  return table!;
 };

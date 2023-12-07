@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-import { TMETA_PROG_ID } from './token_metadata';
+import { TMETA_PROGRAM_ID } from './token_metadata';
 
-export const AUTH_PROG_ID = new PublicKey(
+export const AUTH_PROGRAM_ID = new PublicKey(
   'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg',
 );
 
@@ -9,18 +9,18 @@ export const findTokenRecordPda = (mint: PublicKey, token: PublicKey) => {
   return PublicKey.findProgramAddressSync(
     [
       Buffer.from('metadata'),
-      TMETA_PROG_ID.toBuffer(),
+      TMETA_PROGRAM_ID.toBuffer(),
       mint.toBuffer(),
       Buffer.from('token_record'),
       token.toBuffer(),
     ],
-    TMETA_PROG_ID,
+    TMETA_PROGRAM_ID,
   );
 };
 
 export const findRuleSetPda = (payer: PublicKey, name: string) => {
   return PublicKey.findProgramAddressSync(
     [Buffer.from('rule_set'), payer.toBuffer(), Buffer.from(name)],
-    AUTH_PROG_ID,
+    AUTH_PROGRAM_ID,
   );
 };

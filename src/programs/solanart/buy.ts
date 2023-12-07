@@ -11,8 +11,8 @@ import {
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
-  AUTH_PROG_ID,
-  TMETA_PROG_ID,
+  AUTH_PROGRAM_ID,
+  TMETA_PROGRAM_ID,
   fetchMetadataAcct,
   prepPnftAccounts,
 } from '../../metaplex';
@@ -198,7 +198,7 @@ export const makeSolanartBuyTx = async (
         },
 
         {
-          pubkey: TMETA_PROG_ID,
+          pubkey: TMETA_PROGRAM_ID,
           isSigner: false,
           isWritable: false,
         },
@@ -218,7 +218,7 @@ export const makeSolanartBuyTx = async (
           isWritable: true,
         },
         {
-          pubkey: AUTH_PROG_ID,
+          pubkey: AUTH_PROGRAM_ID,
           isSigner: false,
           isWritable: false,
         },
