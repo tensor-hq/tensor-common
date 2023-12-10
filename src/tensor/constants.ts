@@ -16,12 +16,6 @@ export const TBID_PROGRAM_ID = new PublicKey(
 export const TCOMP_PROGRAM_ID = new PublicKey(
   'TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp',
 );
-export const TDROP_PROGRAM_ID = new PublicKey(
-  'TDRoPy8i5G8AMzuaGPb98fxDRevS81kfhVeaipyWGbN',
-);
-export const TGARD_PROGRAM_ID = new PublicKey(
-  'TGARDaEzs7px1tEUssCCZ9ewhTW7oCA1MnY5y7rQk9n',
-);
 export const TSTKE_PROGRAM_ID = new PublicKey(
   'TSTKEiz9sqJRypokAkRhaW29rnDYDSxqWxmdv9brkp2',
 );
@@ -33,6 +27,16 @@ export const TROLL_PROGRAM_ID = new PublicKey(
 );
 export const TLOCK_PROGRAM_ID = new PublicKey(
   'TLoCKic2wGJm7VhZKumih4Lc35fUhYqVMgA4j389Buk',
+);
+
+export const TDROP_PROGRAM_ID = new PublicKey(
+  'TDRoPy8i5G8AMzuaGPb98fxDRevS81kfhVeaipyWGbN',
+);
+export const TGARD_PROGRAM_ID = new PublicKey(
+  'TGARDaEzs7px1tEUssCCZ9ewhTW7oCA1MnY5y7rQk9n',
+);
+export const TPAIR_PROGRAM_ID = new PublicKey(
+  'TPA1R3GSAgUcZRcJXz5EU8Z7Y7w9XxoXz5fguY3anvM',
 );
 
 // --------------------------------------- tswap
