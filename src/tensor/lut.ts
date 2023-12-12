@@ -38,6 +38,7 @@ import {
 } from './constants';
 import { HADESWAP_ADDR } from '../programs/hadeswap/constants';
 import { findAta } from '../solana_contrib/spl_token';
+import { dedupeList } from '../utils';
 
 const BROKER_CURRENCY_ATAS = BROKER_ADDRS.flatMap((broker) =>
   CURRENCY_ADDRS.map((currency) => findAta(currency, broker)),
@@ -79,8 +80,9 @@ export const TENSOR_LUT_STORED_ADDRS: PublicKey[] = [
   ...CURRENCY_ADDRS,
   ...BROKER_CURRENCY_ATAS,
 
-  ...[
+  ...dedupeList([
     // legacy addresses carried over from a previous TCOMP lut
+    // TODO: separate out these cNFT creator addresses. (max of 256 accounts)
     'GNsnin9c2nDGp78E69tGXyMScWfysnu2PuxQxXy1jh3R',
     'FmXTDjK4sKciGwxomWMh7bRjGuYfrmHKLhCvDp67ihBg',
     'CVB1bV8dd5gEktXrP6cEvfVjuNnieQADGomWvdv8Yh1n',
@@ -106,5 +108,5 @@ export const TENSOR_LUT_STORED_ADDRS: PublicKey[] = [
     '2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH',
     '5qGy8rknMjt1S6V2YMGVidtuHpj1BVs6chzpjCDb47sB',
     'C6v1Mb5K9gV1c7iYjEP5YWfQ2VLh1wjkmZ7bA3cJdKP8',
-  ].map((addr) => new PublicKey(addr)),
+  ]).map((addr) => new PublicKey(addr)),
 ];
