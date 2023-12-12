@@ -1,8 +1,12 @@
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import {
   createAssociatedTokenAccountInstruction,
-  getAssociatedTokenAddress,
+  getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
+
+export const findAta = (mint: PublicKey, owner: PublicKey): PublicKey => {
+  return getAssociatedTokenAddressSync(mint, owner, true);
+};
 
 export const getOrCreateAtaForMint = async ({
   connection,
@@ -18,7 +22,7 @@ export const getOrCreateAtaForMint = async ({
 }> => {
   const instructions: TransactionInstruction[] = [];
 
-  const tokenAccount = await getAssociatedTokenAddress(mint, owner);
+  const tokenAccount = findAta(mint, owner);
 
   const accInfo = await connection.getAccountInfo(tokenAccount);
 

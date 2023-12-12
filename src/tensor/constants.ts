@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-// (!) KEEP IN SYNC WIHT RESPECTIVE PROTOCOLS
+// (!) KEEP IN SYNC WITH RESPECTIVE PROTOCOLS
 
 // --------------------------------------- program IDs
 
@@ -39,6 +39,25 @@ export const TPAIR_PROGRAM_ID = new PublicKey(
   'TPA1R3GSAgUcZRcJXz5EU8Z7Y7w9XxoXz5fguY3anvM',
 );
 
+// --------------------------------------- address lookup table
+
+export const TENSOR_LUT_ADDR = new PublicKey(
+  '4NYENhRXdSq1ek7mvJyzMUvdn2aN3JeAr6huzfL7869j',
+);
+
+// Differs due to a recent slot being used in the derivation path.
+export const TENSOR_LUT_DEVNET_ADDR = new PublicKey(
+  '5z3YFrEgVqoTG8Eq1oCBggWSpLzTrofbsZBuytJTvUy6',
+);
+
+// --------------------------------------- SPL currencies
+
+export const USDC_ADDR = new PublicKey(
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+);
+
+export const CURRENCY_ADDRS = [USDC_ADDR];
+
 // --------------------------------------- tswap
 
 export const TSWAP_PDA_ADDR = PublicKey.findProgramAddressSync(
@@ -52,10 +71,6 @@ export const TSWAP_COSIGNER = new PublicKey(
 
 export const TSWAP_OWNER = new PublicKey(
   '99cmWwQMqMFzMPx85rvZYKwusGSjZUDsu6mqYV4iisiz',
-);
-
-export const TSWAP_CORE_LUT = new PublicKey(
-  '9Ses4wW9Mj3nemRJmcZgF81RgLENC6yGUFiMQBPDp5Uk',
 );
 
 // --------------------------------------- tlist
@@ -74,6 +89,18 @@ export const TCOMP_PDA_ADDR = PublicKey.findProgramAddressSync(
   [],
   TCOMP_PROGRAM_ID,
 )[0];
+
+export const GS_BROKER_ADDR = new PublicKey(
+  '3g2nyraTXqEKke3sTtZw9JtfjCo8Hzw6qhKe8K2hrYuf',
+);
+
+export const BROKER_ADDRS = [TCOMP_PDA_ADDR, GS_BROKER_ADDR];
+
+// --------------------------------------- troll
+
+export const TROLL_TREASURY_ADDR = new PublicKey(
+  'HATUHhpGy5moXuwTZKr1qZREmKANcLy3kRiMQZvUseLE',
+);
 
 // --------------------------------------- tlock
 
