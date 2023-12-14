@@ -1,6 +1,12 @@
 import { Connection } from '@solana/web3.js';
 import { rejectAfterDelay, TimeoutError } from '../utils';
 
+export enum Cluster {
+  // Add SVM chains as necessary
+  Mainnet = 'mainnet',
+  Devnet = 'devnet',
+}
+
 // Need to whitelist methods o/w we may return an async method for a non-async method.
 export const FAILOVER_ASYNC_METHODS = [
   'getBalanceAndContext',
