@@ -90,6 +90,10 @@ export const TCOMP_PDA_ADDR = PublicKey.findProgramAddressSync(
   TCOMP_PROGRAM_ID,
 )[0];
 
+export const TCOMP_TRAIT_BID_COSIGNER = new PublicKey(
+  '2C1skPhbfCW4q91WBEnbxuwEz4JBLtBwfmLXL1Wwy4MH',
+);
+
 export const GS_BROKER_ADDR = new PublicKey(
   '3g2nyraTXqEKke3sTtZw9JtfjCo8Hzw6qhKe8K2hrYuf',
 );
@@ -100,6 +104,14 @@ export const BROKER_ADDRS = [TCOMP_PDA_ADDR, GS_BROKER_ADDR];
 
 export const TROLL_TREASURY_ADDR = new PublicKey(
   'HATUHhpGy5moXuwTZKr1qZREmKANcLy3kRiMQZvUseLE',
+);
+
+export const TROLL_COSIGNER_ADDR = new PublicKey(
+  '5qGy8rknMjt1S6V2YMGVidtuHpj1BVs6chzpjCDb47sB',
+);
+
+export const TROLL_WITHDRAW_COSIGNER_ADDR = new PublicKey(
+  'C6v1Mb5K9gV1c7iYjEP5YWfQ2VLh1wjkmZ7bA3cJdKP8',
 );
 
 // --------------------------------------- tlock
