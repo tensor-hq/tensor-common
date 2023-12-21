@@ -112,7 +112,8 @@ export const partitionByKeySingle = <T>(
   arr.forEach((item) => {
     const k = getKey(item);
     if (isNullLike(k)) return;
-    out[k] = item;
+    // first semantics: earlier items get priority
+    out[k] ??= item;
   });
   return out;
 };
