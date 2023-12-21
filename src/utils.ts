@@ -89,13 +89,13 @@ export const makeBatches = <T>(
 export function partitionByKey<T>(
   arr: Array<T>,
   getKey: (item: T) => string,
-): Record<string, T>;
+): Record<string, T[]>;
 export function partitionByKey<T>(
   arr: Array<T>,
   getKey: (item: T) => Maybe<string>,
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
-): Partial<Record<string, T>>;
+): Partial<Record<string, T[]>>;
 export function partitionByKey<T>(
   arr: Array<T>,
   getKey: (item: T) => Maybe<string>,
