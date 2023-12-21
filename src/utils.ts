@@ -102,6 +102,22 @@ export const partitionByKey = <T>(
   return out;
 };
 
+export const partitionByKeySingle = <T>(
+  arr: Array<T>,
+  getKey: (item: T) => Maybe<string>,
+) => {
+  // Important to make partial to denote that for any arbitrary key
+  // there may not be a value.
+  const out: Partial<Record<string, T>> = {};
+  arr.forEach((item) => {
+    const k = getKey(item);
+    if (isNullLike(k)) return;
+    // first semantics: earlier items get priority
+    out[k] ??= item;
+  });
+  return out;
+};
+
 /** Earlier items take precedence IF `getKey` is specified. */
 export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
   if (!getKey) {
