@@ -167,7 +167,7 @@ export class RetryTxSender {
           `🔁 [${this.txSig?.substring(
             0,
             5,
-          )}] begin new retry loop (sleeping for ${DEFAULT_RETRY_MS / 1000}s)`,
+          )}] begin new retry loop (sleeping for ${this.retrySleep / 1000}s)`,
         );
         await this._sleep();
         if (!this.done) {
