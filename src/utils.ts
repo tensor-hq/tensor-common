@@ -86,12 +86,20 @@ export const makeBatches = <T>(
   return out;
 };
 
-export const partitionByKey = <T>(
+export function partitionByKey<T>(
+  arr: Array<T>,
+  getKey: (item: T) => string,
+): Record<string, T>;
+export function partitionByKey<T>(
   arr: Array<T>,
   getKey: (item: T) => Maybe<string>,
-) => {
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
+): Partial<Record<string, T>>;
+export function partitionByKey<T>(
+  arr: Array<T>,
+  getKey: (item: T) => Maybe<string>,
+): Partial<Record<string, T[]>> {
   const out: Partial<Record<string, T[]>> = {};
   arr.forEach((item) => {
     const k = getKey(item);
@@ -100,14 +108,22 @@ export const partitionByKey = <T>(
     out[k]!.push(item);
   });
   return out;
-};
+}
 
-export const partitionByKeySingle = <T>(
+export function partitionByKeySingle<T>(
+  arr: Array<T>,
+  getKey: (item: T) => string,
+): Record<string, T>;
+export function partitionByKeySingle<T>(
   arr: Array<T>,
   getKey: (item: T) => Maybe<string>,
-) => {
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
+): Partial<Record<string, T>>;
+export function partitionByKeySingle<T>(
+  arr: Array<T>,
+  getKey: (item: T) => Maybe<string>,
+): Partial<Record<string, T>> {
   const out: Partial<Record<string, T>> = {};
   arr.forEach((item) => {
     const k = getKey(item);
@@ -116,7 +132,7 @@ export const partitionByKeySingle = <T>(
     out[k] ??= item;
   });
   return out;
-};
+}
 
 /** Earlier items take precedence IF `getKey` is specified. */
 export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
