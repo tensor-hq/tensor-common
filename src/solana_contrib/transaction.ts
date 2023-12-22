@@ -102,6 +102,13 @@ export type TransactionResponseAugmented = TransactionResponse & {
   };
 };
 
+export type TransactionResponseAugmentedJSON = Overwrite<
+  TransactionResponseAugmented,
+  {
+    transaction: TransactionJSON;
+  }
+>;
+
 export const castTxResponseJSON = <T extends TransactionResponse>(
   tx: T,
 ): Overwrite<T, { transaction: TransactionJSON }> => {
@@ -983,7 +990,7 @@ export const getTransactionConvertedToLegacy = async (
 };
 
 // Current max compute per tx.
-const MAX_COMPUTE_UNITS = 1_400_000;
+export const MAX_COMPUTE_UNITS = 1_400_000;
 /** Adds (1) increase compute + (2) priority fees */
 export const prependComputeIxs = (
   ixs: TransactionInstruction[],

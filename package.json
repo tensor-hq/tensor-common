@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-common",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Common utility methods used by Tensor.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
