@@ -35,6 +35,7 @@ import { backOff } from 'exponential-backoff';
 import { sleep, waitMS } from '../time';
 import {
   Maybe,
+  Overwrite,
   filterNullLike,
   isNullLike,
   makeBatches,
@@ -80,18 +81,30 @@ export type TransactionMessageJSON = {
   instructions: CompiledInstruction[];
 };
 
-export type TransactionResponseJSON = Omit<
-  TransactionResponse,
-  'transaction'
-> & {
-  transaction: Omit<TransactionResponse['transaction'], 'message'> & {
+export type TransactionJSON = Overwrite<
+  TransactionResponse['transaction'],
+  {
     message: TransactionMessageJSON;
+  }
+>;
+
+export type TransactionResponseJSON = Overwrite<
+  TransactionResponse,
+  {
+    transaction: TransactionJSON;
+  }
+>;
+
+export type TransactionResponseAugmented = TransactionResponse & {
+  v0LoadedAddresses?: {
+    numWritableAccounts: number;
+    numReadonlyAccounts: number;
   };
 };
 
-export const castTxResponseJSON = (
-  tx: TransactionResponse,
-): TransactionResponseJSON => {
+export const castTxResponseJSON = <T extends TransactionResponse>(
+  tx: T,
+): Overwrite<T, { transaction: TransactionJSON }> => {
   return {
     ...tx,
     transaction: {
@@ -101,9 +114,9 @@ export const castTxResponseJSON = (
   };
 };
 
-export const castTxResponse = (
-  tx: TransactionResponseJSON,
-): TransactionResponse => {
+export const castTxResponse = <T extends TransactionResponseJSON>(
+  tx: T,
+): Overwrite<T, { transaction: TransactionResponse['transaction'] }> => {
   return {
     ...tx,
     transaction: {
@@ -894,7 +907,7 @@ export const getAccountKeys = (tx: VersionedTransactionResponse) => {
 /** converts the new v0 tx type to legacy so that our downstream parser works as expected */
 export const convertTxToLegacy = (
   tx: VersionedTransactionResponse,
-): TransactionResponse => {
+): TransactionResponseAugmented => {
   // Okay this is really fucking weird, but here is the observed behavior:
   // JSON RPC getTransaction:
   // - legacy: in TransactionResponse format
@@ -944,6 +957,10 @@ export const convertTxToLegacy = (
     transaction: {
       ...tx.transaction,
       message: legacyMsg,
+    },
+    v0LoadedAddresses: {
+      numReadonlyAccounts: tx.meta?.loadedAddresses?.readonly?.length ?? 0,
+      numWritableAccounts: tx.meta?.loadedAddresses?.writable?.length ?? 0,
     },
   };
 };
