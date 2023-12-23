@@ -237,4 +237,14 @@ export const parseAnchorIxs = <IDL extends Idl>({
 
   return ixs;
 };
+
+export const getAnchorAcctByName = <
+  AccountSuffix extends string,
+  IDL extends Idl,
+>(
+  ix: ParsedAnchorIx<IDL>,
+  suffix: AccountSuffix,
+) => {
+  return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(suffix));
+};
 // =============== END Parse ixs/events ===============

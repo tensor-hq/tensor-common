@@ -7,6 +7,7 @@ import {
   genIxDiscHexMap,
   getAcctDiscHex,
   getAcctDiscHexFromName,
+  getAnchorAcctByName,
   getIxDiscHexFromName,
   parseAnchorEvents,
   parseAnchorIxs,
@@ -16,6 +17,7 @@ import {
   castTxResponse,
   convertTxToLegacy,
 } from '../../src/solana_contrib/transaction';
+import { AUTH_PROGRAM_ID } from '../../src/metaplex';
 import { stringifyPKsAndBNs } from '../../src/utils';
 import { IDL as IDL_TComp, Tcomp } from './test_data/tcomp';
 import { IDL as IDL_TRoll } from './test_data/troll';
@@ -292,6 +294,37 @@ describe('Anchor Tests', () => {
       expect(ixs[0].noopIxs![0].data).eq(
         'bQmCgkmMVK81QTnA4ZMhkwts8vGd1iQoPMwyW2racAuSmrfBvybyJ5YG2iUEUDY6w5sjwq2zfTiRbGeUkTg9jYQpgM8teH68kQBCaW16zS36T63WyM2ZSntjHwd8VdbCvgpYoCEBvWP3xWdfFBmwWbjBXxwNMHAUYaP5YRv7azDquUML21vRGo5sqbHH3pUe3fYHeeHkoB2stozHZWJ6kM5te2Qu4Rx5TDwbNYMYMj2fJLELUaX9toME2qzDsEHTzQHXcvTd962Zv6yL4pdEBRGpJAocVssX6y3qYAnDXuq4As16Fargd8SpnaAe1rsckzma4yJuFJNsC5UXtuFo3ULr71haJp2WRdzZJwh9TGMjUjAKisiCptwPaLgZABeCTzs5hbqQsHBTRzRfkoyjNEa4rETmzwmXJQpDBe8KeJWTTBwca6qk7npXjepBjgSbDc7u6Zj7JBhczqJbFUaDjVFpzXRSN2iFdWx4f9wUt2WjD7cKqEvaVA8HvuYw1QuvMwEsSCC8NtqT18sKfW',
       );
+    });
+  });
+
+  describe('getAnchorAcctByName', () => {
+    it('works', () => {
+      const tx: TransactionResponse = castTxResponse(
+        require('./test_data/tswap_buy_tx.json'),
+      );
+      const ixs = parseAnchorIxs<Tensorswap>({
+        coder,
+        tx,
+        programId: tswap,
+        eventParser,
+      });
+      const ix = ixs[0];
+      // One word.
+      expect(getAnchorAcctByName(ix, 'Buyer')?.pubkey.toBase58()).eq(
+        '9iQZfHNWFxKDD5zmxpqhCaTyXisinC1Wp2drww4fM9Bt',
+      );
+      // Two words.
+      expect(getAnchorAcctByName(ix, 'Nft Mint')?.pubkey.toBase58()).eq(
+        '5qk6NyddkpVErRZJFPFkVGZpvMC6sx5ie5LHAUdYQTqy',
+      );
+      // Nested account.
+      expect(
+        getAnchorAcctByName(
+          ix,
+          'Authorization Rules Program',
+        )?.pubkey.toBase58(),
+      ).eq(AUTH_PROGRAM_ID.toBase58());
+      expect(getAnchorAcctByName(ix, 'Nonexistent')).undefined;
     });
   });
 });
