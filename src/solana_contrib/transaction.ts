@@ -434,11 +434,32 @@ export class RetryTxSender {
   }
 }
 
+type MaybeBlockhash =
+  | { type: 'blockhash'; blockhash: string }
+  | { type: 'blockhashArgs'; args: GetRpcMultipleConnsArgs };
 type BuildTxArgs = {
   feePayer: PublicKey;
   instructions: TransactionInstruction[];
   additionalSigners?: Array<Signer>;
-} & GetRpcMultipleConnsArgs;
+  maybeBlockhash: MaybeBlockhash;
+};
+
+const maybeFetchBlockhash = async (maybeBlockhash: MaybeBlockhash) => {
+  let blockhash;
+  let lastValidBlockHeight;
+  if (maybeBlockhash.type === 'blockhash') {
+    blockhash = maybeBlockhash.blockhash;
+    lastValidBlockHeight = null;
+  } else {
+    const {
+      blockhash: blockhash_,
+      lastValidBlockHeight: lastValidBlockHeight_,
+    } = await getLatestBlockhashMultConns(maybeBlockhash.args);
+    blockhash = blockhash_;
+    lastValidBlockHeight = lastValidBlockHeight_;
+  }
+  return { blockhash, lastValidBlockHeight };
+};
 
 //(!) this should be the only function across our code used to build txs
 // reason: we want to control how blockchash is constructed to minimize tx failures
@@ -446,7 +467,7 @@ export const buildTx = async ({
   feePayer,
   instructions,
   additionalSigners,
-  ...blockhashArgs
+  maybeBlockhash,
 }: BuildTxArgs): Promise<TxWithHeight> => {
   if (!instructions.length) {
     throw new Error('must pass at least one instruction');
@@ -456,10 +477,13 @@ export const buildTx = async ({
   tx.add(...instructions);
   tx.feePayer = feePayer;
 
-  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
-    blockhashArgs,
+  const { blockhash, lastValidBlockHeight } = await maybeFetchBlockhash(
+    maybeBlockhash,
   );
   tx.recentBlockhash = blockhash;
+  if (!!lastValidBlockHeight) {
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+  }
 
   if (additionalSigners) {
     additionalSigners
@@ -477,7 +501,7 @@ export const buildTxV0 = async ({
   instructions,
   additionalSigners,
   addressLookupTableAccs,
-  ...blockhashArgs
+  maybeBlockhash,
 }: {
   addressLookupTableAccs: AddressLookupTableAccount[];
 } & BuildTxArgs): Promise<TxV0WithHeight> => {
@@ -485,8 +509,8 @@ export const buildTxV0 = async ({
     throw new Error('must pass at least one instruction');
   }
 
-  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
-    blockhashArgs,
+  const { blockhash, lastValidBlockHeight } = await maybeFetchBlockhash(
+    maybeBlockhash,
   );
 
   const msg = new TransactionMessage({
@@ -508,7 +532,7 @@ export const buildTxsLegacyV0 = async ({
   instructions,
   additionalSigners,
   addressLookupTableAccs,
-  ...blockhashArgs
+  maybeBlockhash,
 }: {
   addressLookupTableAccs: AddressLookupTableAccount[];
 } & BuildTxArgs) => {
@@ -516,8 +540,8 @@ export const buildTxsLegacyV0 = async ({
     throw new Error('must pass at least one instruction');
   }
 
-  const { blockhash, lastValidBlockHeight } = await getLatestBlockhashMultConns(
-    blockhashArgs,
+  const { blockhash, lastValidBlockHeight } = await maybeFetchBlockhash(
+    maybeBlockhash,
   );
 
   const msg = new TransactionMessage({
@@ -525,11 +549,12 @@ export const buildTxsLegacyV0 = async ({
     recentBlockhash: blockhash,
     instructions,
   });
-  const tx = new Transaction({
-    blockhash,
-    lastValidBlockHeight,
-    feePayer,
-  }).add(...instructions);
+  const tx = new Transaction().add(...instructions);
+  tx.recentBlockhash = blockhash;
+  tx.feePayer = feePayer;
+  if (lastValidBlockHeight) {
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+  }
   const txV0 = new VersionedTransaction(
     msg.compileToV0Message(addressLookupTableAccs),
   );
