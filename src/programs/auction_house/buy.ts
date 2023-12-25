@@ -224,7 +224,12 @@ export const makeAHBuyTx = async (
 
   return {
     ...(await buildTx({
-      connections,
+      maybeBlockhash: {
+        type: 'blockhashArgs',
+        args: {
+          connections,
+        },
+      },
       instructions,
       additionalSigners,
       feePayer: buyerKey,

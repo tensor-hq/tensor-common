@@ -49,7 +49,12 @@ export const createLUT = async ({
   });
 
   const tx = await buildTxV0({
-    connections: [conn],
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections: [conn],
+      },
+    },
     feePayer: payer.publicKey,
     instructions: [lookupTableInst, extendInstruction],
     additionalSigners: [payer],
@@ -108,7 +113,12 @@ export const upsertLUT = async ({
   });
 
   const tx = await buildTxV0({
-    connections: [conn],
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections: [conn],
+      },
+    },
     feePayer: payer.publicKey,
     instructions: [extendInstruction],
     additionalSigners: [payer],

@@ -41,7 +41,12 @@ export const buildAndSendTx = async ({
   const { tx, blockhash, lastValidBlockHeight } = await backOff(
     () =>
       buildTxV0({
-        connections: [conn],
+        maybeBlockhash: {
+          type: 'blockhashArgs',
+          args: {
+            connections: [conn],
+          },
+        },
         instructions: ixs,
         //have to add TEST_KEYPAIR here instead of wallet.signTx() since partialSign not impl on v0 txs
         additionalSigners: [payer, ...(extraSigners ?? [])],

@@ -99,7 +99,12 @@ export const makeAHListTx = async (
   instructions.push(sellIx);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     additionalSigners,
     feePayer: ownerKey,

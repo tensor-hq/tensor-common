@@ -73,7 +73,12 @@ export const makeAHDepositWithdrawTx = async (
   instructions.push(ix);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     additionalSigners,
     feePayer: ownerKey,

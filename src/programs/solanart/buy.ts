@@ -246,7 +246,12 @@ export const makeSolanartBuyTx = async (
   instructions.push(transactionInstruction);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     feePayer: buyerAcc,
   });

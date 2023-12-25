@@ -188,7 +188,12 @@ export const makeAHAcceptBidTx = async (
   instructions.push(execSaleIx);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     additionalSigners,
     feePayer: sellerKey,

@@ -118,7 +118,12 @@ export const makeAHBidTx = async (
   instructions.push(buyIx);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     additionalSigners,
     feePayer: bidderKey,

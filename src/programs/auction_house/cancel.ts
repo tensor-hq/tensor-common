@@ -114,7 +114,12 @@ export const makeAHCancelBidTx = async (
   instructions.push(cancelIx);
 
   return buildTx({
-    connections,
+    maybeBlockhash: {
+      type: 'blockhashArgs',
+      args: {
+        connections,
+      },
+    },
     instructions,
     additionalSigners,
     feePayer: ownerKey,
