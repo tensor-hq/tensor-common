@@ -29,13 +29,21 @@ import {
 } from './shared';
 import { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
 
-export const makeSolanartBuyTx = async (
-  connections: Array<Connection>,
-  buyer: string,
-  seller: string,
-  tokenMint: string,
-  priceLamports: BN,
-): Promise<TxWithHeight> => {
+export const makeSolanartBuyTx = async ({
+  connections,
+  buyer,
+  seller,
+  tokenMint,
+  priceLamports,
+  blockhash,
+}: {
+  connections: Array<Connection>;
+  buyer: string;
+  seller: string;
+  tokenMint: string;
+  priceLamports: BN;
+  blockhash?: string;
+}): Promise<TxWithHeight> => {
   const connection = connections[0];
   const instructions: TransactionInstruction[] = [];
 
@@ -246,12 +254,17 @@ export const makeSolanartBuyTx = async (
   instructions.push(transactionInstruction);
 
   return buildTx({
-    maybeBlockhash: {
-      type: 'blockhashArgs',
-      args: {
-        connections,
-      },
-    },
+    maybeBlockhash: blockhash
+      ? {
+          type: 'blockhash',
+          blockhash,
+        }
+      : {
+          type: 'blockhashArgs',
+          args: {
+            connections,
+          },
+        },
     instructions,
     feePayer: buyerAcc,
   });

@@ -181,6 +181,7 @@ export type TakeCompressedArgs = {
   whitelist?: PublicKey | null;
   delegateSigner?: boolean;
   cosigner?: PublicKey | null;
+  blockhash?: string;
 };
 
 export type TakeCompressedArgsSerialized = {
@@ -217,6 +218,7 @@ export type TakeCompressedArgsSerialized = {
   whitelist?: string | null;
   delegateSigner?: boolean;
   cosigner?: string | null;
+  blockhash?: string;
 };
 
 export function serializeTakeCompressedArgs(
@@ -265,6 +267,7 @@ export function serializeTakeCompressedArgs(
     whitelist: args.whitelist ? args.whitelist.toString() : null,
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
+    blockhash: args.blockhash,
   };
 }
 
@@ -325,6 +328,7 @@ export function deserializeTakeCompressedArgs(
       : null,
     delegateSigner: serialized.delegateSigner,
     cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
+    blockhash: serialized.blockhash,
   };
 }
 
@@ -359,6 +363,7 @@ export type TakeLegacyArgs = {
   rentDest: PublicKey;
   whitelist?: PublicKey | null;
   cosigner?: PublicKey | null;
+  blockhash?: string;
 } & PnftArgs;
 
 export type PnftArgsSerialized = {
@@ -390,6 +395,7 @@ export type TakeLegacyArgsSerialized = {
   rentDest: string;
   whitelist?: string | null;
   cosigner?: string | null;
+  blockhash?: string;
 } & PnftArgsSerialized;
 
 export function serializeTakeLegacyArgs(
@@ -423,6 +429,7 @@ export function serializeTakeLegacyArgs(
     compute: args.compute,
     ruleSetAddnCompute: args.ruleSetAddnCompute,
     priorityMicroLamports: args.priorityMicroLamports,
+    blockhash: args.blockhash,
   };
 }
 
@@ -463,6 +470,7 @@ export function deserializeTakeLegacyArgs(
     compute: serialized.compute,
     ruleSetAddnCompute: serialized.ruleSetAddnCompute,
     priorityMicroLamports: serialized.priorityMicroLamports,
+    blockhash: serialized.blockhash,
   };
 }
 
@@ -487,6 +495,7 @@ export type PlaceBidArgs = {
   priorityMicroLamports?: number | null;
   margin?: PublicKey | null;
   cosigner?: PublicKey | null;
+  blockhash?: string;
 };
 
 export type PlaceBidArgsSerialized = {
@@ -508,6 +517,7 @@ export type PlaceBidArgsSerialized = {
   priorityMicroLamports?: number | null;
   margin?: string | null;
   cosigner?: string | null;
+  blockhash?: string;
 };
 
 export function serializePlaceBidArgs(
@@ -532,6 +542,7 @@ export function serializePlaceBidArgs(
     priorityMicroLamports: args.priorityMicroLamports,
     margin: args.margin ? args.margin.toString() : null,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
+    blockhash: args.blockhash,
   };
 }
 
@@ -561,6 +572,7 @@ export function deserializePlaceBidArgs(
     priorityMicroLamports: serialized.priorityMicroLamports,
     margin: serialized.margin ? new PublicKey(serialized.margin) : null,
     cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
+    blockhash: serialized.blockhash,
   };
 }
 
