@@ -32,7 +32,7 @@ import assert from 'assert';
 import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 import { backOff } from 'exponential-backoff';
-import { sleep, waitMS } from '../time';
+import { SECONDS, sleep, waitMS } from '../time';
 import {
   Maybe,
   Overwrite,
@@ -153,7 +153,7 @@ export class RetryTxSender {
     readonly connection: Connection,
     readonly additionalConnections = new Array<Connection>(),
     //pass an optional logger object (can be console, can be winston) if you want verbose logs
-    readonly logger?: Logger,
+    readonly logger: Logger = console,
     readonly opts = DEFAULT_CONFIRM_OPTS,
     readonly timeout = DEFAULT_TIMEOUT_MS,
     readonly retrySleep = DEFAULT_RETRY_MS,
@@ -257,33 +257,83 @@ export class RetryTxSender {
     const subscriptionIds = new Array<number | undefined>();
     const connections = [this.connection, ...this.additionalConnections];
     let response: RpcResponseAndContext<SignatureResult> | null = null;
-    const promises = connections.map((connection, i) => {
-      let subscriptionId;
-      const confirmPromise = new Promise((resolve) => {
-        try {
-          subscriptionId = connection.onSignature(
-            txSig,
-            (result: SignatureResult, context: Context) => {
-              subscriptionIds[i] = undefined;
-              response = {
-                context,
-                value: result,
-              };
-              resolve(null);
+
+    const promises = connections
+      .map((connection, i) => {
+        let subscriptionId;
+
+        const pollPromise = backOff(
+          async () => {
+            const { value, context } = await connection.getSignatureStatus(
+              decodedSignature,
+              {
+                searchTransactionHistory: true,
+              },
+            );
+            if (!value) {
+              this.logger.debug(
+                `sig status for ${decodedSignature} not found, try again in ${this.timeout}`,
+              );
+              throw new Error(`sig status for ${decodedSignature} not found`);
+            }
+            // This is possible, and the slot may != confirmed slot if minority node processed it.
+            if (value.confirmationStatus === 'processed') {
+              this.logger.debug(
+                `sig status for ${decodedSignature} still in processed state, try again in ${this.timeout}`,
+              );
+              throw new Error(
+                `sig status for ${decodedSignature} still in processed state`,
+              );
+            }
+            return {
+              value,
+              context,
+            };
+          },
+          {
+            maxDelay: this.retrySleep,
+            startingDelay: this.retrySleep,
+            numOfAttempts: Math.ceil(this.timeout / this.retrySleep),
+            retry: () => {
+              return !this.done;
             },
-            subscriptionCommitment,
-          );
-        } catch (err) {
-          this.logger?.error(
-            `[${txSig.substring(0, 5)}] error setting up onSig WS: ${err}`,
-          );
-          // Don't want this to cause everything else to fail during race.
-          resolve(null);
-        }
-      });
-      subscriptionIds.push(subscriptionId);
-      return confirmPromise;
-    });
+          },
+        )
+          .then((res) => {
+            response = res;
+          })
+          .catch((err) => {
+            this.logger?.error(
+              `[${txSig.substring(0, 5)}] error polling: ${err}`,
+            );
+          });
+
+        const wsPromise = new Promise((resolve) => {
+          try {
+            subscriptionId = connection.onSignature(
+              txSig,
+              (result: SignatureResult, context: Context) => {
+                subscriptionIds[i] = undefined;
+                response = {
+                  context,
+                  value: result,
+                };
+                resolve(null);
+              },
+              subscriptionCommitment,
+            );
+          } catch (err) {
+            this.logger?.error(
+              `[${txSig.substring(0, 5)}] error setting up onSig WS: ${err}`,
+            );
+            // Don't want this to cause everything else to fail during race.
+            resolve(null);
+          }
+        });
+        subscriptionIds.push(subscriptionId);
+        return [wsPromise, pollPromise];
+      })
+      .flat();
 
     try {
       await this._racePromises(
