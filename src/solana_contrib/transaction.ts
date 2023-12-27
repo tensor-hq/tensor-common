@@ -242,7 +242,7 @@ export class RetryTxSender {
       `⏳ [${txSig.substring(0, 5)}] begin trying to confirm tx`,
     );
 
-    let decodedSignature;
+    let decodedSignature: Uint8Array;
     try {
       decodedSignature = bs58.decode(txSig);
     } catch (err) {
@@ -264,25 +264,26 @@ export class RetryTxSender {
 
         const pollPromise = backOff(
           async () => {
+            this.logger.debug('[getSignatureStatus] Attept to get sig status');
             const { value, context } = await connection.getSignatureStatus(
-              decodedSignature,
+              txSig,
               {
                 searchTransactionHistory: true,
               },
             );
             if (!value) {
               this.logger.debug(
-                `sig status for ${decodedSignature} not found, try again in ${this.timeout}`,
+                `[getSignatureStatus] sig status for ${txSig} not found, try again in ${this.retrySleep}`,
               );
-              throw new Error(`sig status for ${decodedSignature} not found`);
+              throw new Error(`sig status for ${txSig} not found`);
             }
             // This is possible, and the slot may != confirmed slot if minority node processed it.
             if (value.confirmationStatus === 'processed') {
               this.logger.debug(
-                `sig status for ${decodedSignature} still in processed state, try again in ${this.timeout}`,
+                `[getSignatureStatus] sig status for ${txSig} still in processed state, try again in ${this.retrySleep}`,
               );
               throw new Error(
-                `sig status for ${decodedSignature} still in processed state`,
+                `sig status for ${txSig} still in processed state`,
               );
             }
             return {
@@ -294,7 +295,10 @@ export class RetryTxSender {
             maxDelay: this.retrySleep,
             startingDelay: this.retrySleep,
             numOfAttempts: Math.ceil(this.timeout / this.retrySleep),
-            retry: () => {
+            retry: (e) => {
+              console.error(
+                `[getSignatureStatus] received error, ${e} retrying`,
+              );
               return !this.done;
             },
           },
