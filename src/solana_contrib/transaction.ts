@@ -153,7 +153,7 @@ export class RetryTxSender {
     readonly connection: Connection,
     readonly additionalConnections = new Array<Connection>(),
     //pass an optional logger object (can be console, can be winston) if you want verbose logs
-    readonly logger: Logger = console,
+    readonly logger?: Logger,
     readonly opts = DEFAULT_CONFIRM_OPTS,
     readonly timeout = DEFAULT_TIMEOUT_MS,
     readonly retrySleep = DEFAULT_RETRY_MS,
@@ -264,7 +264,7 @@ export class RetryTxSender {
 
         const pollPromise = backOff(
           async () => {
-            this.logger.debug('[getSignatureStatus] Attept to get sig status');
+            this.logger?.debug('[getSignatureStatus] Attept to get sig status');
             const { value, context } = await connection.getSignatureStatus(
               txSig,
               {
@@ -272,14 +272,14 @@ export class RetryTxSender {
               },
             );
             if (!value) {
-              this.logger.debug(
+              this.logger?.debug(
                 `[getSignatureStatus] sig status for ${txSig} not found, try again in ${this.retrySleep}`,
               );
               throw new Error(`sig status for ${txSig} not found`);
             }
             // This is possible, and the slot may != confirmed slot if minority node processed it.
             if (value.confirmationStatus === 'processed') {
-              this.logger.debug(
+              this.logger?.debug(
                 `[getSignatureStatus] sig status for ${txSig} still in processed state, try again in ${this.retrySleep}`,
               );
               throw new Error(
