@@ -1,5 +1,8 @@
 // ======================== Rarities.
 
+import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+import { PublicKey } from '@solana/web3.js';
+
 // NB: Make sure keys are CamelCased vs CAMELCased.
 // This is so it aligns with the generated graphql enum keys to make life easier.
 export enum RaritySystem {
@@ -62,3 +65,20 @@ export enum MintsSortBy {
   OrdinalAsc = 'OrdinalAsc',
   OrdinalDesc = 'OrdinalDesc',
 }
+
+// ======================== SDK args.
+
+export type PnftArgs = {
+  /** If provided, skips RPC call to fetch on-chain metadata. */
+  meta?: {
+    address: PublicKey;
+    metadata: Metadata;
+  };
+  /** Ix arg params if rule set requires it. */
+  authData?: any | null;
+  /** passing in null or undefined means these ixs are NOT included */
+  compute?: number | null;
+  /** If a ruleSet is present, we add this many additional */
+  ruleSetAddnCompute?: number | null;
+  priorityMicroLamports?: number | null;
+};

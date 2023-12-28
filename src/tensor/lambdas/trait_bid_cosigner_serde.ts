@@ -2,7 +2,7 @@ import BN from 'bn.js';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Creator, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
 import type { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
-import { Attribute } from '../tensor';
+import { Attribute, PnftArgs } from '..';
 
 // TODO: imported from tcomp-ts, since we dont have it in tensor-common
 
@@ -334,20 +334,6 @@ export function deserializeTakeCompressedArgs(
 
 // --------------------------------------- legacy args
 
-export type PnftArgs = {
-  /** If provided, skips RPC call to fetch on-chain metadata + creators. */
-  metaCreators?: {
-    metadata: PublicKey;
-    creators: PublicKey[];
-  };
-  authData?: any | null; //TODO:
-  /** passing in null or undefined means these ixs are NOT included */
-  compute?: number | null;
-  /** If a ruleSet is present, we add this many additional */
-  ruleSetAddnCompute?: number | null;
-  priorityMicroLamports?: number | null;
-};
-
 export type TakeLegacyArgs = {
   bidId: PublicKey;
   nftMint: PublicKey;
@@ -367,11 +353,6 @@ export type TakeLegacyArgs = {
 } & PnftArgs;
 
 export type PnftArgsSerialized = {
-  /** If provided, skips RPC call to fetch on-chain metadata + creators. */
-  metaCreators?: {
-    metadata: string;
-    creators: string[];
-  };
   authData?: any | null; //TODO:
   /** passing in null or undefined means these ixs are NOT included */
   compute?: number | null;
@@ -416,15 +397,6 @@ export function serializeTakeLegacyArgs(
     rentDest: args.rentDest.toString(),
     whitelist: args.whitelist ? args.whitelist.toString() : null,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
-    // PnftArgs fields:
-    metaCreators: args.metaCreators
-      ? {
-          metadata: args.metaCreators.metadata.toString(),
-          creators: args.metaCreators.creators.map((creator) =>
-            creator.toString(),
-          ),
-        }
-      : undefined,
     authData: args.authData, // Assuming no transformation needed for AuthorizationData type
     compute: args.compute,
     ruleSetAddnCompute: args.ruleSetAddnCompute,
@@ -458,14 +430,6 @@ export function deserializeTakeLegacyArgs(
       : null,
     cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
     // PnftArgs fields:
-    metaCreators: serialized.metaCreators
-      ? {
-          metadata: new PublicKey(serialized.metaCreators.metadata),
-          creators: serialized.metaCreators.creators.map(
-            (creator) => new PublicKey(creator),
-          ),
-        }
-      : undefined,
     authData: serialized.authData, // Assuming no transformation needed for AuthorizationData type
     compute: serialized.compute,
     ruleSetAddnCompute: serialized.ruleSetAddnCompute,
