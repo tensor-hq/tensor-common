@@ -6,7 +6,6 @@ import {
   TransferInstructionAccounts,
   TransferInstructionArgs,
 } from '@metaplex-foundation/mpl-token-metadata';
-export { AuthorizationData } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -17,41 +16,43 @@ import {
   SystemProgram,
   SYSVAR_INSTRUCTIONS_PUBKEY,
 } from '@solana/web3.js';
-import { fetchMetadataAcct } from './token_metadata';
 import { AUTH_PROGRAM_ID, findEditionPda, findTokenRecordPda } from './pdas';
+import { fetchMetadataByMint } from './token_metadata';
+export { AuthorizationData } from '@metaplex-foundation/mpl-token-metadata';
 
 export const prepPnftAccounts = async ({
   connection,
-  metaCreators,
+  meta,
   nftMint,
   sourceAta,
   destAta,
   authData = null,
 }: {
   connection: Connection;
-  metaCreators?: {
-    metadata: PublicKey;
-    creators: PublicKey[];
+  /** If provided, skips RPC call for the the metadata account */
+  meta?: {
+    address: PublicKey;
+    metadata: Metadata;
   };
   nftMint: PublicKey;
   sourceAta: PublicKey;
   destAta: PublicKey;
   authData?: AuthorizationData | null;
 }) => {
-  let meta: PublicKey;
-  let creators: PublicKey[];
-  let ruleSet: PublicKey | undefined;
-  if (metaCreators) {
-    meta = metaCreators.metadata;
-    creators = metaCreators.creators;
-    const inflatedMeta = await Metadata.fromAccountAddress(connection, meta);
-    ruleSet = inflatedMeta.programmableConfig?.ruleSet ?? undefined;
-  } else {
-    const metadata = await fetchMetadataAcct(connection, nftMint);
-    meta = metadata.address;
-    creators = metadata.creators?.map((c) => c.address) ?? [];
-    ruleSet = metadata.account.programmableConfig?.ruleSet ?? undefined;
+  if (!meta) {
+    const { address, metadata } = await fetchMetadataByMint(
+      connection,
+      nftMint,
+    );
+    if (!metadata)
+      throw new Error(`metadata account not found for mint ${nftMint}`);
+    meta = {
+      address,
+      metadata,
+    };
   }
+  const creators = meta.metadata.data.creators ?? [];
+  const ruleSet = meta.metadata.programmableConfig?.ruleSet ?? undefined;
 
   const [ownerTokenRecordPda, ownerTokenRecordBump] = findTokenRecordPda(
     nftMint,
@@ -77,11 +78,11 @@ export const prepPnftAccounts = async ({
   return {
     meta,
     creators,
+    ruleSet,
     ownerTokenRecordBump,
     ownerTokenRecordPda,
     destTokenRecordBump,
     destTokenRecordPda,
-    ruleSet,
     nftEditionPda,
     authDataSerialized,
   };
@@ -107,9 +108,9 @@ export const makePnftTransferIx = async ({
   toAddr: PublicKey;
 }) => {
   const {
+    meta,
     ruleSet,
     nftEditionPda,
-    meta,
     ownerTokenRecordPda,
     destTokenRecordPda,
   } = await prepPnftAccounts({
@@ -124,7 +125,7 @@ export const makePnftTransferIx = async ({
     tokenOwner,
     token: fromAddr,
     mint,
-    metadata: meta,
+    metadata: meta.address,
     edition: nftEditionPda,
     destinationOwner,
     destination: toAddr,

@@ -95,12 +95,15 @@ export type TransactionResponseJSON = Overwrite<
   }
 >;
 
-export type TransactionResponseAugmented = TransactionResponse & {
+export type TransactionResponseLoadedAddresses = {
   v0LoadedAddresses?: {
     numWritableAccounts: number;
     numReadonlyAccounts: number;
   };
 };
+
+export type TransactionResponseAugmented = TransactionResponse &
+  TransactionResponseLoadedAddresses;
 
 export type TransactionResponseAugmentedJSON = Overwrite<
   TransactionResponseAugmented,
@@ -992,7 +995,7 @@ export const getAccountKeys = (tx: VersionedTransactionResponse) => {
 
 /** converts the new v0 tx type to legacy so that our downstream parser works as expected */
 export const convertTxToLegacy = (
-  tx: VersionedTransactionResponse,
+  tx: VersionedTransactionResponse & TransactionResponseLoadedAddresses,
 ): TransactionResponseAugmented => {
   // Okay this is really fucking weird, but here is the observed behavior:
   // JSON RPC getTransaction:
@@ -1044,7 +1047,7 @@ export const convertTxToLegacy = (
       ...tx.transaction,
       message: legacyMsg,
     },
-    v0LoadedAddresses: {
+    v0LoadedAddresses: tx.v0LoadedAddresses ?? {
       numReadonlyAccounts: tx.meta?.loadedAddresses?.readonly?.length ?? 0,
       numWritableAccounts: tx.meta?.loadedAddresses?.writable?.length ?? 0,
     },

@@ -1,19 +1,5 @@
-import { BN, BorshCoder, EventParser } from '@coral-xyz/anchor';
-import {
-  ParsedAnchorEvent,
-  genIxDiscHexMap,
-  parseAnchorEvents,
-  parseAnchorIxs,
-} from '../../src/solana_contrib/anchor';
-import { IDL as IDL_TComp } from './test_data/tcomp';
-import { IDL, Tensorswap } from './test_data/tswap';
-import { IDL as IDL_v1_6_0 } from './test_data/tswap_v1_6_0';
-import { PublicKey, TransactionResponse } from '@solana/web3.js';
 import { expect } from 'chai';
-import { stringifyPKsAndBNs } from '../../src/utils';
 import {
-  TransactionResponseJSON,
-  castTxResponse,
   convertTxToLegacy,
   extractAllIxs,
 } from '../../src/solana_contrib/transaction';

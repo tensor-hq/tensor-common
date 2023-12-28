@@ -1,3 +1,4 @@
+import { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -13,21 +14,20 @@ import BN from 'bn.js';
 import {
   AUTH_PROGRAM_ID,
   TMETA_PROGRAM_ID,
-  fetchMetadataAcct,
+  fetchMetadataByMint,
   prepPnftAccounts,
 } from '../../metaplex';
 import { buildTx, getOrCreateAtaForMint } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 import {
   BADGER_PROGRAM_ID,
-  findBadgerPda,
-  findDataEscrowPda,
-  findRoyaltiesPda,
   SOLANART_ESCROW_OWNER_ACCT,
   SOLANART_FEE_ACCT,
   SOLANART_PROGRAM_ID,
+  findBadgerPda,
+  findDataEscrowPda,
+  findRoyaltiesPda,
 } from './shared';
-import { TokenStandard } from '@metaplex-foundation/mpl-token-metadata';
 
 export const makeSolanartBuyTx = async ({
   connections,
@@ -66,7 +66,8 @@ export const makeSolanartBuyTx = async ({
     throw new Error(`cannot find current token account for ${tokenMint}`);
   }
 
-  const metadata = await fetchMetadataAcct(connection, mintAcc);
+  const { address, metadata } = await fetchMetadataByMint(connection, mintAcc);
+  if (!metadata) throw new Error(`cannot find metadata for ${tokenMint}`);
 
   const [escrowDataAcc] = findDataEscrowPda(mintAcc);
   const [royaltiesAcc] = findRoyaltiesPda(mintAcc, sellerAcc);
@@ -132,7 +133,7 @@ export const makeSolanartBuyTx = async ({
     },
     /// 9. [] metadata account
     {
-      pubkey: metadata.address,
+      pubkey: address,
       isSigner: false,
       isWritable: true,
     },
@@ -168,7 +169,7 @@ export const makeSolanartBuyTx = async ({
   ///  + `[writable]` Creator wallets (up to 5) - all creators
   ///
 
-  metadata.creators?.forEach((creator) => {
+  metadata.data.creators?.forEach((creator) => {
     instructionAccounts.push({
       pubkey: creator.address,
       isSigner: false,
@@ -176,21 +177,14 @@ export const makeSolanartBuyTx = async ({
     });
   });
 
-  if (
-    metadata.account.tokenStandard === TokenStandard.ProgrammableNonFungible
-  ) {
-    const {
-      ruleSet,
-      nftEditionPda,
-      meta,
-      ownerTokenRecordPda,
-      destTokenRecordPda,
-    } = await prepPnftAccounts({
-      connection,
-      nftMint: new PublicKey(tokenMint),
-      sourceAta: currTempTokenAcc.address,
-      destAta: targetTokenAccount,
-    });
+  if (metadata.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+    const { ruleSet, nftEditionPda, ownerTokenRecordPda, destTokenRecordPda } =
+      await prepPnftAccounts({
+        connection,
+        nftMint: new PublicKey(tokenMint),
+        sourceAta: currTempTokenAcc.address,
+        destAta: targetTokenAccount,
+      });
 
     instructionAccounts.push(
       ...[
