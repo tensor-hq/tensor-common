@@ -6,10 +6,7 @@ import {
   TransferInstructionAccounts,
   TransferInstructionArgs,
 } from '@metaplex-foundation/mpl-token-metadata';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
@@ -97,6 +94,7 @@ export const makePnftTransferIx = async ({
   connection,
   fromAddr,
   toAddr,
+  tokenProgram,
 }: {
   mint: PublicKey;
   tokenOwner: PublicKey;
@@ -106,6 +104,7 @@ export const makePnftTransferIx = async ({
   connection: Connection;
   fromAddr: PublicKey;
   toAddr: PublicKey;
+  tokenProgram: PublicKey;
 }) => {
   const {
     meta,
@@ -130,7 +129,7 @@ export const makePnftTransferIx = async ({
     destinationOwner,
     destination: toAddr,
     payer: tokenOwner,
-    splTokenProgram: TOKEN_PROGRAM_ID,
+    splTokenProgram: tokenProgram,
     splAtaProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     systemProgram: SystemProgram.programId,
     sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
