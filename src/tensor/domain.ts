@@ -1,11 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { Attribute } from "./types";
 
-const LETTERS_ONLY_FORMATTED = "lettersonly";
-const DIGITS_ONLY_FORMATTED = "digitsonly";
-const PALINDROME_FORMATTED = "palindrome";
-const EMOJI_FORMATTED = "emoji";
-
 // Do these really need to be constants??
 const DIGITS_ONLY = "Digits Only";
 const LETTERS_ONLY = "Letters Only";
@@ -64,27 +59,25 @@ const classifyDomainAttributes = (
   let newAttributes: Attribute[] = [];
 
   // Knowing there's no standard, formatting like this reduces chance of duplicates in the future
-  const currentTraits = new Set(
-    attributes.map((trait) => trait.trait_type.toLowerCase().replace(/[_ ]/g, ""))
-  );
+  const currentTraits = new Set(attributes.map((trait) => trait.trait_type));
 
   const letterCount = visibleLength(name);
   const letterKey = `${letterCount}letter${letterCount === 1 ? "" : "s"}`;
 
   if (isNumeric(name)) {
     // Digits only trait
-    if (!currentTraits.has(DIGITS_ONLY_FORMATTED)) {
+    if (!currentTraits.has(DIGITS_ONLY)) {
       newAttributes.push({ trait_type: DIGITS_ONLY, value: "true" });
     }
     // Number club traits
     const numberClub = determineNumberClub(name);
-    if (numberClub && !currentTraits.has(numberClub.toLowerCase().replace(/[_ ]/g, ""))) {
+    if (numberClub && !currentTraits.has(numberClub)) {
       newAttributes.push({ trait_type: numberClub, value: "true" });
     }
-  } else if (isAlpha(name) && !currentTraits.has(LETTERS_ONLY_FORMATTED)) {
+  } else if (isAlpha(name) && !currentTraits.has(LETTERS_ONLY)) {
     // Letters only trait
     newAttributes.push({ trait_type: LETTERS_ONLY, value: "true" });
-  } else if (emojiLength(name) > 0 && !currentTraits.has(EMOJI_FORMATTED)) {
+  } else if (emojiLength(name) > 0 && !currentTraits.has(EMOJI)) {
     // Emoji trait
     newAttributes.push({ trait_type: EMOJI, value: "true" });
   }
@@ -98,16 +91,14 @@ const classifyDomainAttributes = (
   }
 
   // Palindrome trait
-  if (!currentTraits.has(PALINDROME_FORMATTED) && isPalindrome(name)) {
+  if (!currentTraits.has(PALINDROME) && isPalindrome(name)) {
     newAttributes.push({ trait_type: PALINDROME, value: "true" });
   }
 
   // Language traits
   Object.entries(languageRegex).forEach(([language, regex]) => {
-    if (regex.test(name)) {
-      if (!currentTraits.has(language.toLowerCase())) {
-        newAttributes.push({ trait_type: language, value: "true" });
-      }
+    if (regex.test(name) && !currentTraits.has(language)) {
+      newAttributes.push({ trait_type: language, value: "true" });
     }
   });
 
