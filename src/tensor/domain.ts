@@ -45,14 +45,12 @@ const isPalindrome = (str: string) => str === str.split("").reverse().join("");
 
 const determineNumberClub = (name: string) => {
   const number = parseInt(name);
-  if (number <= 999) {
-    return "999 Club";
+  if (number <= 1000) {
+    return "1k Club";
   } else if (number <= 10000) {
     return "10k Club";
   } else if (number <= 100000) {
     return "100k Club";
-  } else {
-    return null;
   }
 };
 
