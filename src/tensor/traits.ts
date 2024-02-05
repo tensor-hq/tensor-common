@@ -208,7 +208,7 @@ const syntheticTraits = [
     generate: (args: SynthTraitArg) => {
       if (args.name && args.currentTraits) {
         const numberClub = determineNumberClub(args.name);
-        if (numberClub && !args.currentTraits.has(numberClub)) {
+        if (numberClub && !args.currentTraits.has(SynthTrait.CATEGORY)) {
           return {
             trait_type: SynthTrait.CATEGORY,
             value: numberClub,
