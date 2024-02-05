@@ -1,3 +1,4 @@
+import { PublicKey } from "@solana/web3.js";
 import { Maybe, isNullLike } from '../utils';
 import {
   Attribute,
@@ -60,6 +61,214 @@ export const nullLikeTraitValues = [
   'n.a.',
 ];
 export const NONE_TRAIT_VALUE = 'None';
+
+// Synth traits are not stored on-chain
+enum SynthTrait {
+  DIGITS_ONLY = "Digits Only",
+  LETTERS_ONLY = "Letters Only",
+  PALINDROME = "Palindrome",
+  EMOJI = "Emoji",
+  LANGUAGE = "Language",
+  CATEGORY = "Category",
+  LETTER_COUNT = "Letter Count",
+}
+
+enum TraitType {
+  DOMAIN = "domain",
+}
+
+interface SynthTraitArg {
+  name?: string;
+  currentTraits?: Set<string>;
+}
+
+export const DOMAIN_MCC_LIST = [
+  "E5ZnBpH9DYcxRkumKdS4ayJ3Ftb6o3E8wSbXw4N92GWg",
+  "86deDknZeDhko46gB8SqK7rYc5HnSBjKDvo6Mi7viYS9",
+  "6bsj8ybPa9xsc6pcAme4x6LvhKvtCmgA4TwwG4qtFw5Z",
+  "GYLiNNu4pqL6QvZKYHW2EMoibVFm2aVJsPHpUVLcU6pL",
+  "7yQYe84W7a5VgNvtRzsvy7mPRed5gmL9HnvJfsbPWK9J",
+];
+
+export const languageRegex = {
+  English: /[a-zA-Z]/,
+  Arabic: /[\u0600-\u06FF]/,
+  Chinese: /[\u4e00-\u9FFF]/,
+  Cyrillic: /[\u0400-\u04FF]/,
+  Hindi: /[\u0900-\u097F]/,
+  Japanese: /[\u3040-\u309F\u30A0-\u30FF]/,
+  Korean: /[\uAC00-\uD7AF]/,
+};
+
+// Use this when emojis are in strings because emojis aren't always the same size
+const visibleLength = (str: string) => [...new Intl.Segmenter().segment(str)].length;
+
+const isNumeric = (str: string) => /^\d+$/.test(str);
+const isAlpha = (str: string) => /^[a-zA-Z]+$/.test(str);
+const emojiLength = (str: string) =>
+  [...new Intl.Segmenter().segment(str)]
+    .map((emoji) => emoji.segment)
+    .filter((char) => /\p{Extended_Pictographic}/gu.test(char)).length;
+
+const isPalindrome = (str: string) =>
+  str ===
+  [...new Intl.Segmenter().segment(str)]
+    .map((emoji) => emoji.segment)
+    .reverse()
+    .join("");
+
+const determineNumberClub = (name: string) => {
+  const number = parseInt(name);
+  if (number <= 1000) {
+    return "1k Club";
+  } else if (number <= 10000) {
+    return "10k Club";
+  } else if (number <= 100000) {
+    return "100k Club";
+  }
+};
+
+const syntheticTraits = [
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (
+        args.name &&
+        args.currentTraits &&
+        isNumeric(args.name) &&
+        !args.currentTraits.has(SynthTrait.DIGITS_ONLY)
+      ) {
+        return { trait_type: SynthTrait.DIGITS_ONLY, value: "true" };
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (
+        args.name &&
+        args.currentTraits &&
+        isAlpha(args.name) &&
+        !args.currentTraits.has(SynthTrait.LETTERS_ONLY)
+      ) {
+        return { trait_type: SynthTrait.LETTERS_ONLY, value: "true" };
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (
+        args.name &&
+        args.currentTraits &&
+        emojiLength(args.name) > 0 &&
+        emojiLength(args.name) === visibleLength(args.name) &&
+        !args.currentTraits.has(SynthTrait.LANGUAGE)
+      ) {
+        return { trait_type: SynthTrait.LANGUAGE, value: SynthTrait.EMOJI };
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (
+        args.name &&
+        args.currentTraits &&
+        isPalindrome(args.name) &&
+        !args.currentTraits.has(SynthTrait.PALINDROME)
+      ) {
+        return { trait_type: SynthTrait.PALINDROME, value: "true" };
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (
+        args.name &&
+        args.currentTraits &&
+        visibleLength(args.name) >= 3 &&
+        visibleLength(args.name) <= 5 &&
+        !args.currentTraits.has(
+          `${visibleLength(args.name)} Letter${visibleLength(args.name) === 1 ? "" : "s"}`
+        )
+      ) {
+        return {
+          trait_type: `${visibleLength(args.name)} Letter${
+            visibleLength(args.name) === 1 ? "" : "s"
+          }`,
+          value: "true",
+        };
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (args.name && args.currentTraits) {
+        const numberClub = determineNumberClub(args.name);
+        if (numberClub && !args.currentTraits.has(numberClub)) {
+          return {
+            trait_type: SynthTrait.CATEGORY,
+            value: numberClub,
+          };
+        }
+      }
+    },
+  },
+  {
+    type: TraitType.DOMAIN,
+    generate: (args: SynthTraitArg) => {
+      if (args.name && args.currentTraits && !args.currentTraits.has(SynthTrait.LANGUAGE)) {
+        for (const [language, expression] of Object.entries(languageRegex)) {
+          if (expression.test(args.name) && emojiLength(args.name) == 0 ) {
+            return {
+              trait_type: SynthTrait.LANGUAGE,
+              value: language,
+            };
+          }
+        }
+      }
+    },
+  },
+];
+
+
+const createSyntheticTraits = (
+  args: SynthTraitArg,
+  traitType: TraitType,
+  currentAttributes: Attribute[]
+) => {
+  let newAttributes: Attribute[] = [];
+  const { name } = args;
+
+  // Knowing there's no standard, formatting like this reduces chance of duplicates in the future
+  const currentTraits = new Set(currentAttributes.map((trait) => trait.trait_type));
+  for (const synthTrait of syntheticTraits) {
+    if (synthTrait.type == traitType) {
+      const newTrait = synthTrait.generate({ name, currentTraits });
+      if (newTrait) {
+        newAttributes.push(newTrait);
+      }
+    }
+  }
+  return newAttributes;
+};
+
+export const generateDomainTraits = (
+  mccPk: PublicKey | undefined,
+  name: string | null,
+  currentAttributes: Attribute[] | null
+) => {
+  const mcc = mccPk?.toBase58();
+
+  if (name && mcc && DOMAIN_MCC_LIST.includes(mcc)) {
+    return createSyntheticTraits({ name }, TraitType.DOMAIN, currentAttributes ?? []);
+  }
+  return [];
+};
+
 
 export const normalizeTraitValue = (value: string) => {
   if (nullLikeTraitValues.includes(`${value}`.toLowerCase())) {
