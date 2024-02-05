@@ -190,14 +190,10 @@ const syntheticTraits = [
         args.currentTraits &&
         visibleLength(args.name) >= 3 &&
         visibleLength(args.name) <= 5 &&
-        !args.currentTraits.has(
-          `${visibleLength(args.name)} Letter${visibleLength(args.name) === 1 ? "" : "s"}`
-        )
+        !args.currentTraits.has(`${visibleLength(args.name)} Letters}`)
       ) {
         return {
-          trait_type: `${visibleLength(args.name)} Letter${
-            visibleLength(args.name) === 1 ? "" : "s"
-          }`,
+          trait_type: `${visibleLength(args.name)} Letters`,
           value: "true",
         };
       }
