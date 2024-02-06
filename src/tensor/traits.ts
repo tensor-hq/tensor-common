@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey } from '@solana/web3.js';
 import { Maybe, isNullLike } from '../utils';
 import {
   Attribute,
@@ -64,17 +64,17 @@ export const NONE_TRAIT_VALUE = 'None';
 
 // Synth traits are not stored on-chain
 enum SynthTrait {
-  DIGITS_ONLY = "Digits Only",
-  LETTERS_ONLY = "Letters Only",
-  PALINDROME = "Palindrome",
-  EMOJI = "Emoji",
-  LANGUAGE = "Language",
-  CATEGORY = "Category",
-  LETTER_COUNT = "Letter Count",
+  DIGITS_ONLY = 'Digits Only',
+  LETTERS_ONLY = 'Letters Only',
+  PALINDROME = 'Palindrome',
+  EMOJI = 'Emoji',
+  LANGUAGE = 'Language',
+  CATEGORY = 'Category',
+  LETTER_COUNT = 'Letter Count',
 }
 
 enum TraitType {
-  DOMAIN = "domain",
+  DOMAIN = 'domain',
 }
 
 interface SynthTraitArg {
@@ -83,15 +83,15 @@ interface SynthTraitArg {
 }
 
 export const DOMAIN_MCC_LIST = [
-  "E5ZnBpH9DYcxRkumKdS4ayJ3Ftb6o3E8wSbXw4N92GWg",
-  "86deDknZeDhko46gB8SqK7rYc5HnSBjKDvo6Mi7viYS9",
-  "6bsj8ybPa9xsc6pcAme4x6LvhKvtCmgA4TwwG4qtFw5Z",
-  "GYLiNNu4pqL6QvZKYHW2EMoibVFm2aVJsPHpUVLcU6pL",
-  "7yQYe84W7a5VgNvtRzsvy7mPRed5gmL9HnvJfsbPWK9J",
+  'E5ZnBpH9DYcxRkumKdS4ayJ3Ftb6o3E8wSbXw4N92GWg',
+  '86deDknZeDhko46gB8SqK7rYc5HnSBjKDvo6Mi7viYS9',
+  '6bsj8ybPa9xsc6pcAme4x6LvhKvtCmgA4TwwG4qtFw5Z',
+  'GYLiNNu4pqL6QvZKYHW2EMoibVFm2aVJsPHpUVLcU6pL',
+  '7yQYe84W7a5VgNvtRzsvy7mPRed5gmL9HnvJfsbPWK9J',
 ];
 
 export const languageRegex = {
-  English: /[a-zA-Z]/,
+  English: /[a-zA-Z0-9]/,
   Arabic: /[\u0600-\u06FF]/,
   Chinese: /[\u4e00-\u9FFF]/,
   Cyrillic: /[\u0400-\u04FF]/,
@@ -101,7 +101,8 @@ export const languageRegex = {
 };
 
 // Use this when emojis are in strings because emojis aren't always the same size
-const visibleLength = (str: string) => [...new Intl.Segmenter().segment(str)].length;
+const visibleLength = (str: string) =>
+  [...new Intl.Segmenter().segment(str)].length;
 
 const isNumeric = (str: string) => /^\d+$/.test(str);
 const isAlpha = (str: string) => /^[a-zA-Z]+$/.test(str);
@@ -115,16 +116,16 @@ const isPalindrome = (str: string) =>
   [...new Intl.Segmenter().segment(str)]
     .map((emoji) => emoji.segment)
     .reverse()
-    .join("");
+    .join('');
 
 const determineNumberClub = (name: string) => {
   const number = parseInt(name);
   if (number <= 1000) {
-    return "1k Club";
+    return '1k Club';
   } else if (number <= 10000) {
-    return "10k Club";
+    return '10k Club';
   } else if (number <= 100000) {
-    return "100k Club";
+    return '100k Club';
   }
 };
 
@@ -138,7 +139,7 @@ const syntheticTraits = [
         isNumeric(args.name) &&
         !args.currentTraits.has(SynthTrait.DIGITS_ONLY)
       ) {
-        return { trait_type: SynthTrait.DIGITS_ONLY, value: "true" };
+        return { trait_type: SynthTrait.DIGITS_ONLY, value: 'true' };
       }
     },
   },
@@ -151,7 +152,7 @@ const syntheticTraits = [
         isAlpha(args.name) &&
         !args.currentTraits.has(SynthTrait.LETTERS_ONLY)
       ) {
-        return { trait_type: SynthTrait.LETTERS_ONLY, value: "true" };
+        return { trait_type: SynthTrait.LETTERS_ONLY, value: 'true' };
       }
     },
   },
@@ -162,10 +163,13 @@ const syntheticTraits = [
         args.name &&
         args.currentTraits &&
         emojiLength(args.name) > 0 &&
-        emojiLength(args.name) === visibleLength(args.name) &&
         !args.currentTraits.has(SynthTrait.LANGUAGE)
       ) {
-        return { trait_type: SynthTrait.LANGUAGE, value: SynthTrait.EMOJI };
+        if (emojiLength(args.name) === visibleLength(args.name)) {
+          return { trait_type: SynthTrait.LANGUAGE, value: SynthTrait.EMOJI };
+        } else {
+          return { trait_type: SynthTrait.EMOJI, value: 'certified' };
+        }
       }
     },
   },
@@ -178,7 +182,7 @@ const syntheticTraits = [
         isPalindrome(args.name) &&
         !args.currentTraits.has(SynthTrait.PALINDROME)
       ) {
-        return { trait_type: SynthTrait.PALINDROME, value: "true" };
+        return { trait_type: SynthTrait.PALINDROME, value: 'true' };
       }
     },
   },
@@ -194,7 +198,7 @@ const syntheticTraits = [
       ) {
         return {
           trait_type: `${visibleLength(args.name)} Letters`,
-          value: "true",
+          value: 'true',
         };
       }
     },
@@ -202,7 +206,7 @@ const syntheticTraits = [
   {
     type: TraitType.DOMAIN,
     generate: (args: SynthTraitArg) => {
-      if (args.name && args.currentTraits) {
+      if (args.name && args.currentTraits && isNumeric(args.name)) {
         const numberClub = determineNumberClub(args.name);
         if (numberClub && !args.currentTraits.has(SynthTrait.CATEGORY)) {
           return {
@@ -216,31 +220,40 @@ const syntheticTraits = [
   {
     type: TraitType.DOMAIN,
     generate: (args: SynthTraitArg) => {
-      if (args.name && args.currentTraits && !args.currentTraits.has(SynthTrait.LANGUAGE)) {
+      if (
+        args.name &&
+        args.currentTraits &&
+        !args.currentTraits.has(SynthTrait.LANGUAGE)
+      ) {
+        let matchingLanguages: Attribute[] = [];
         for (const [language, expression] of Object.entries(languageRegex)) {
-          if (expression.test(args.name) && emojiLength(args.name) == 0 ) {
-            return {
+          if (expression.test(args.name) && emojiLength(args.name) == 0) {
+            matchingLanguages.push({
               trait_type: SynthTrait.LANGUAGE,
               value: language,
-            };
+            });
           }
         }
+        return matchingLanguages.length === 1 ? matchingLanguages[0] : null;
       }
+      return null;
     },
   },
 ];
 
-
 const createSyntheticTraits = (
   args: SynthTraitArg,
   traitType: TraitType,
-  currentAttributes: Attribute[]
+  currentAttributes: Attribute[],
 ) => {
   let newAttributes: Attribute[] = [];
   const { name } = args;
 
   // Knowing there's no standard, formatting like this reduces chance of duplicates in the future
-  const currentTraits = new Set(currentAttributes.map((trait) => trait.trait_type));
+  const currentTraits = new Set(
+    currentAttributes.map((trait) => trait.trait_type),
+  );
+
   for (const synthTrait of syntheticTraits) {
     if (synthTrait.type == traitType) {
       const newTrait = synthTrait.generate({ name, currentTraits });
@@ -253,18 +266,19 @@ const createSyntheticTraits = (
 };
 
 export const generateDomainTraits = (
-  mccPk: PublicKey | undefined,
+  mccPk: PublicKey,
   name: string | null,
-  currentAttributes: Attribute[] | null
+  currentAttributes: Attribute[] | null,
 ) => {
-  const mcc = mccPk?.toBase58();
-
-  if (name && mcc && DOMAIN_MCC_LIST.includes(mcc)) {
-    return createSyntheticTraits({ name }, TraitType.DOMAIN, currentAttributes ?? []);
+  if (name && DOMAIN_MCC_LIST.includes(mccPk.toBase58())) {
+    return createSyntheticTraits(
+      { name },
+      TraitType.DOMAIN,
+      currentAttributes ?? [],
+    );
   }
   return [];
 };
-
 
 export const normalizeTraitValue = (value: string) => {
   if (nullLikeTraitValues.includes(`${value}`.toLowerCase())) {
