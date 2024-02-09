@@ -20,9 +20,14 @@ export const fetchMetadataByMint = async (
 export enum MetadataErrType {
   Malformed = 'Malformed',
   Unknown = 'Unknown',
+  Missing = 'Missing',
 }
 
 export const getMetadataErrType = (err: any) => {
+  if (err.message?.startsWith('Unable to find Metadata account')) {
+    return MetadataErrType.Missing;
+  }
+
   if (
     (err.code === 'ERR_ASSERTION' && err.message?.startsWith('Expected')) ||
     (err instanceof RangeError &&
@@ -57,6 +62,36 @@ export const fetchMetadata = async (
     switch (errType) {
       case MetadataErrType.Malformed:
         console.warn(`metadata acct ${address} malformed, skipping: ${err}`);
+        return null;
+    }
+    throw err;
+  }
+};
+
+// Returns if Metadata account no longer exists.
+// Safe to retry all other errors w/o suffering from infinite loop.
+export const fetchMetadataAcct = async (
+  conn: Connection,
+  metadataAddr: PublicKey,
+): Promise<Metadata | null> => {
+  try {
+    const acct = await conn.getAccountInfo(metadataAddr);
+    if (!acct) {
+      return null;
+    }
+    return deserializeMeta(acct.data);
+  } catch (err: any) {
+    const errType = getMetadataErrType(err);
+    switch (errType) {
+      case MetadataErrType.Missing:
+        console.warn(
+          `metadata acct ${metadataAddr} does not exist, skipping: ${err}`,
+        );
+        return null;
+      case MetadataErrType.Malformed:
+        console.warn(
+          `metadata acct ${metadataAddr} malformed, skipping: ${err}`,
+        );
         return null;
     }
     throw err;
