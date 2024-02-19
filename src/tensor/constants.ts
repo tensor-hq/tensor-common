@@ -120,3 +120,9 @@ export const TLOCK_PDA_ADDR = PublicKey.findProgramAddressSync(
   [],
   TLOCK_PROGRAM_ID,
 )[0];
+
+// --------------------------------------- transfer hooks
+
+export const WNS_PROGRAM_ID = new PublicKey(
+  'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
+);
