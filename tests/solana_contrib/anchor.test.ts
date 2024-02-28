@@ -288,12 +288,31 @@ describe('Anchor Tests', () => {
       });
       expect(ixs).length(1);
       expect(ixs[0].ix.name).eq('fulfillTswapListing');
+      expect(ixs[0].subIxIdx).undefined;
       expect(ixs[0].events).length(0);
       expect(ixs[0].innerIxs).length(20);
       expect(ixs[0].noopIxs).length(1);
       expect(ixs[0].noopIxs![0].data).eq(
         'bQmCgkmMVK81QTnA4ZMhkwts8vGd1iQoPMwyW2racAuSmrfBvybyJ5YG2iUEUDY6w5sjwq2zfTiRbGeUkTg9jYQpgM8teH68kQBCaW16zS36T63WyM2ZSntjHwd8VdbCvgpYoCEBvWP3xWdfFBmwWbjBXxwNMHAUYaP5YRv7azDquUML21vRGo5sqbHH3pUe3fYHeeHkoB2stozHZWJ6kM5te2Qu4Rx5TDwbNYMYMj2fJLELUaX9toME2qzDsEHTzQHXcvTd962Zv6yL4pdEBRGpJAocVssX6y3qYAnDXuq4As16Fargd8SpnaAe1rsckzma4yJuFJNsC5UXtuFo3ULr71haJp2WRdzZJwh9TGMjUjAKisiCptwPaLgZABeCTzs5hbqQsHBTRzRfkoyjNEa4rETmzwmXJQpDBe8KeJWTTBwca6qk7npXjepBjgSbDc7u6Zj7JBhczqJbFUaDjVFpzXRSN2iFdWx4f9wUt2WjD7cKqEvaVA8HvuYw1QuvMwEsSCC8NtqT18sKfW',
       );
+    });
+
+    it('parses tswap BuySingleListing inside TRoll CPI with subIxIdx', () => {
+      const tx: TransactionResponse = convertTxToLegacy(
+        require('./test_data/troll_fulfill_tswap_listing_v0_1_0.json'),
+      );
+      const ixs = parseAnchorIxs({
+        coder,
+        tx,
+        programId: tswap,
+        eventParser: undefined,
+      });
+      expect(ixs).length(1);
+      expect(ixs[0].ix.name).eq('buySingleListing');
+      expect(ixs[0].subIxIdx).eq(7);
+      expect(ixs[0].events).length(0);
+      expect(ixs[0].innerIxs).undefined;
+      expect(ixs[0].noopIxs).undefined;
     });
   });
 

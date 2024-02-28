@@ -796,6 +796,8 @@ export type ExtractedIx = {
   rawIx: CompiledInstruction;
   /** Index of top-level instruction. */
   ixIdx: number;
+  /** If this is an inner instruction, the index within its parent top-level instruction. */
+  subIxIdx?: number;
   /** Presence of field = it's a top-level ix; absence = inner ix itself. */
   innerIxs?: CompiledInstruction[];
   noopIxs?: CompiledInstruction[];
@@ -831,6 +833,7 @@ export const extractAllIxs = ({
   const addIx = (
     ix: CompiledInstruction,
     ixIdx: number,
+    subIxIdx: number | undefined,
     innerIxs: CompiledInstruction[] | undefined,
   ) => {
     if (!isNullLike(programIdIndex) && programIdIndex !== ix.programIdIndex)
@@ -840,6 +843,7 @@ export const extractAllIxs = ({
     outIxs.push({
       rawIx: ix,
       ixIdx,
+      subIxIdx,
       innerIxs,
     });
   };
@@ -849,10 +853,10 @@ export const extractAllIxs = ({
       tx.meta?.innerInstructions?.find((inner) => inner.index === ixIdx)
         ?.instructions ?? [];
 
-    addIx(ix, ixIdx, innerIxs);
+    addIx(ix, ixIdx, undefined, innerIxs);
 
-    innerIxs.forEach((innerIx) => {
-      addIx(innerIx, ixIdx, undefined);
+    innerIxs.forEach((innerIx, subIxIdx) => {
+      addIx(innerIx, ixIdx, subIxIdx, undefined);
     });
   });
 

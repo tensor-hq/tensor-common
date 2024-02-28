@@ -41,7 +41,7 @@ export type ParsedAnchorIx<IDL extends Idl> = {
   formatted: InstructionDisplay | null;
   /// Needed to be able to figure out correct programs for sub-ixs
   accountKeys: PublicKey[];
-} & Pick<ExtractedIx, 'ixIdx' | 'innerIxs' | 'noopIxs'>;
+} & Pick<ExtractedIx, 'ixIdx' | 'subIxIdx' | 'innerIxs' | 'noopIxs'>;
 
 export type ParsedAnchorAccount = InstructionDisplay['accounts'][number];
 
@@ -193,7 +193,7 @@ export const parseAnchorIxs = <IDL extends Idl>({
   let eventsIdx = 0;
   const ixs: ParsedAnchorIx<IDL>[] = [];
   extractAllIxs({ tx, programId, noopIxDiscHex }).forEach(
-    ({ rawIx, ixIdx, innerIxs, noopIxs }) => {
+    ({ rawIx, ixIdx, subIxIdx, innerIxs, noopIxs }) => {
       // Skip noopIxs.
       if (noopIxDiscHex && getIxDiscHex(rawIx.data) === noopIxDiscHex) return;
 
@@ -225,6 +225,7 @@ export const parseAnchorIxs = <IDL extends Idl>({
       );
       ixs.push({
         ixIdx,
+        subIxIdx,
         ix,
         innerIxs,
         noopIxs,
