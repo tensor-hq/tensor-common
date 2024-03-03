@@ -177,6 +177,23 @@ describe('traits tests', () => {
         ],
       },
       {
+        name: 'bob',
+        original: [{ trait_type: 'palindrome', value: 'true' }],
+        expected: [
+          { trait_type: 'Language', value: 'English' },
+          { trait_type: '3 Letters', value: 'true' },
+          { trait_type: 'Letters Only', value: 'true' },
+        ],
+      },
+      {
+        name: 'foo',
+        original: [{ trait_type: 'LettersOnly', value: 'true' }],
+        expected: [
+          { trait_type: 'Language', value: 'English' },
+          { trait_type: '3 Letters', value: 'true' },
+        ],
+      },
+      {
         name: 'abc123你好',
         original: [],
         expected: [],

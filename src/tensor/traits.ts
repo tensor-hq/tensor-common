@@ -118,6 +118,9 @@ const isPalindrome = (str: string) =>
     .reverse()
     .join('');
 
+const serializeTraitType = (traitType: string) =>
+  traitType.toLowerCase().replace(/[_\s]/g, '');
+
 const determineNumberClub = (name: string) => {
   const number = parseInt(name);
   if (number <= 1000) {
@@ -137,7 +140,7 @@ const syntheticTraits = [
         args.name &&
         args.currentTraits &&
         isNumeric(args.name) &&
-        !args.currentTraits.has(SynthTrait.DIGITS_ONLY)
+        !args.currentTraits.has(serializeTraitType(SynthTrait.DIGITS_ONLY))
       ) {
         return { trait_type: SynthTrait.DIGITS_ONLY, value: 'true' };
       }
@@ -150,7 +153,7 @@ const syntheticTraits = [
         args.name &&
         args.currentTraits &&
         isAlpha(args.name) &&
-        !args.currentTraits.has(SynthTrait.LETTERS_ONLY)
+        !args.currentTraits.has(serializeTraitType(SynthTrait.LETTERS_ONLY))
       ) {
         return { trait_type: SynthTrait.LETTERS_ONLY, value: 'true' };
       }
@@ -163,7 +166,7 @@ const syntheticTraits = [
         args.name &&
         args.currentTraits &&
         emojiLength(args.name) > 0 &&
-        !args.currentTraits.has(SynthTrait.LANGUAGE)
+        !args.currentTraits.has(serializeTraitType(SynthTrait.LANGUAGE))
       ) {
         if (emojiLength(args.name) === visibleLength(args.name)) {
           return { trait_type: SynthTrait.LANGUAGE, value: SynthTrait.EMOJI };
@@ -180,7 +183,7 @@ const syntheticTraits = [
         args.name &&
         args.currentTraits &&
         isPalindrome(args.name) &&
-        !args.currentTraits.has(SynthTrait.PALINDROME)
+        !args.currentTraits.has(serializeTraitType(SynthTrait.PALINDROME))
       ) {
         return { trait_type: SynthTrait.PALINDROME, value: 'true' };
       }
@@ -194,7 +197,9 @@ const syntheticTraits = [
         args.currentTraits &&
         visibleLength(args.name) >= 3 &&
         visibleLength(args.name) <= 5 &&
-        !args.currentTraits.has(`${visibleLength(args.name)} Letters}`)
+        !args.currentTraits.has(
+          serializeTraitType(`${visibleLength(args.name)} Letters}`),
+        )
       ) {
         return {
           trait_type: `${visibleLength(args.name)} Letters`,
@@ -208,7 +213,10 @@ const syntheticTraits = [
     generate: (args: SynthTraitArg) => {
       if (args.name && args.currentTraits && isNumeric(args.name)) {
         const numberClub = determineNumberClub(args.name);
-        if (numberClub && !args.currentTraits.has(SynthTrait.CATEGORY)) {
+        if (
+          numberClub &&
+          !args.currentTraits.has(serializeTraitType(SynthTrait.CATEGORY))
+        ) {
           return {
             trait_type: SynthTrait.CATEGORY,
             value: numberClub,
@@ -223,7 +231,7 @@ const syntheticTraits = [
       if (
         args.name &&
         args.currentTraits &&
-        !args.currentTraits.has(SynthTrait.LANGUAGE)
+        !args.currentTraits.has(serializeTraitType(SynthTrait.LANGUAGE))
       ) {
         let matchingLanguages: Attribute[] = [];
         for (const [language, expression] of Object.entries(languageRegex)) {
@@ -251,7 +259,7 @@ const createSyntheticTraits = (
 
   // Knowing there's no standard, formatting like this reduces chance of duplicates in the future
   const currentTraits = new Set(
-    currentAttributes.map((trait) => trait.trait_type),
+    currentAttributes.map((trait) => serializeTraitType(trait.trait_type)),
   );
 
   for (const synthTrait of syntheticTraits) {
