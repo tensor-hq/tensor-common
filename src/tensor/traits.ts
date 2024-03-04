@@ -118,6 +118,7 @@ const isPalindrome = (str: string) =>
     .reverse()
     .join('');
 
+// Remove underscores and spaces, and make it lowercase
 const serializeTraitType = (traitType: string) =>
   traitType.toLowerCase().replace(/[_\s]/g, '');
 
