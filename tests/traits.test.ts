@@ -178,7 +178,7 @@ describe('traits tests', () => {
       },
       {
         name: 'bob',
-        original: [{ trait_type: 'palindrome', value: 'true' }],
+        original: [{ trait_type: 'palindrome', value: 'true' }], // Most collections use lowercase palindrome
         expected: [
           { trait_type: 'Language', value: 'English' },
           { trait_type: '3 Letters', value: 'true' },
@@ -186,8 +186,16 @@ describe('traits tests', () => {
         ],
       },
       {
+        name: 'test',
+        original: [{ trait_type: 'language', value: 'English' }], // Most collections use lowercase language
+        expected: [
+          { trait_type: '4 Letters', value: 'true' },
+          { trait_type: 'Letters Only', value: 'true' },
+        ],
+      },
+      {
         name: 'foo',
-        original: [{ trait_type: 'LettersOnly', value: 'true' }],
+        original: [{ trait_type: 'LettersOnly', value: 'true' }],  // Some collections use this casing
         expected: [
           { trait_type: 'Language', value: 'English' },
           { trait_type: '3 Letters', value: 'true' },
