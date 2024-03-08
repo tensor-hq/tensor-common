@@ -184,10 +184,10 @@ export type TakeCompressedArgs = {
   cosigner?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
-  metadata: {
+  extMeta: {
     name: Maybe<string>;
-    attributes: Attribute[];
-  };
+    attributes: Maybe<Attribute[]>;
+  } | null;
 };
 
 export type TakeCompressedArgsSerialized = {
@@ -226,10 +226,10 @@ export type TakeCompressedArgsSerialized = {
   cosigner?: string | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
-  metadata: {
+  extMeta: {
     name: Maybe<string>;
-    attributes: Attribute[];
-  };
+    attributes: Maybe<Attribute[]>;
+  } | null;
 };
 
 export function serializeTakeCompressedArgs(
@@ -279,7 +279,7 @@ export function serializeTakeCompressedArgs(
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
     blockhash: args.blockhash,
-    metadata: args.metadata,
+    extMeta: args.extMeta,
   };
 }
 
@@ -330,7 +330,7 @@ export function deserializeTakeCompressedArgs(
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? new PublicKey(args.cosigner) : null,
     blockhash: args.blockhash,
-    metadata: args.metadata,
+    extMeta: args.extMeta,
   };
 }
 
@@ -353,9 +353,9 @@ export type TakeLegacyArgs = {
   cosigner?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
-  metadata: {
+  extMeta: {
     name: Maybe<string>;
-    attributes: Attribute[];
+    attributes: Maybe<Attribute[]>;
   };
 } & PnftArgs;
 
@@ -384,9 +384,9 @@ export type TakeLegacyArgsSerialized = {
   whitelist?: string | null;
   cosigner?: string | null;
   blockhash?: string;
-  metadata: {
+  extMeta: {
     name: Maybe<string>;
-    attributes: Attribute[];
+    attributes: Maybe<Attribute[]>;
   };
 } & PnftArgsSerialized;
 
@@ -413,7 +413,7 @@ export function serializeTakeLegacyArgs(
     ruleSetAddnCompute: args.ruleSetAddnCompute,
     priorityMicroLamports: args.priorityMicroLamports,
     blockhash: args.blockhash,
-    metadata: args.metadata,
+    extMeta: args.extMeta,
   };
 }
 
@@ -441,7 +441,7 @@ export function deserializeTakeLegacyArgs(
     ruleSetAddnCompute: args.ruleSetAddnCompute,
     priorityMicroLamports: args.priorityMicroLamports,
     blockhash: args.blockhash,
-    metadata: args.metadata,
+    extMeta: args.extMeta,
   };
 }
 
