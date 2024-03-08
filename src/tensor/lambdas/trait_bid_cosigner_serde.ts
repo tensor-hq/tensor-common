@@ -185,8 +185,8 @@ export type TakeCompressedArgs = {
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
-    name: Maybe<string>;
-    attributes: Maybe<Attribute[]>;
+    name?: Maybe<string>;
+    attributes?: Maybe<Attribute[]>;
   } | null;
 };
 
@@ -227,8 +227,8 @@ export type TakeCompressedArgsSerialized = {
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
-    name: Maybe<string>;
-    attributes: Maybe<Attribute[]>;
+    name?: Maybe<string>;
+    attributes?: Maybe<Attribute[]>;
   } | null;
 };
 
@@ -354,8 +354,8 @@ export type TakeLegacyArgs = {
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
-    name: Maybe<string>;
-    attributes: Maybe<Attribute[]>;
+    name?: Maybe<string>;
+    attributes?: Maybe<Attribute[]>;
   } | null;
 } & PnftArgs;
 
@@ -385,8 +385,8 @@ export type TakeLegacyArgsSerialized = {
   cosigner?: string | null;
   blockhash?: string;
   extMeta: {
-    name: Maybe<string>;
-    attributes: Maybe<Attribute[]>;
+    name?: Maybe<string>;
+    attributes?: Maybe<Attribute[]>;
   } | null;
 } & PnftArgsSerialized;
 
