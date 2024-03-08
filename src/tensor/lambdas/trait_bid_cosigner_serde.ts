@@ -356,7 +356,7 @@ export type TakeLegacyArgs = {
   extMeta: {
     name: Maybe<string>;
     attributes: Maybe<Attribute[]>;
-  };
+  } | null;
 } & PnftArgs;
 
 export type PnftArgsSerialized = {
@@ -387,7 +387,7 @@ export type TakeLegacyArgsSerialized = {
   extMeta: {
     name: Maybe<string>;
     attributes: Maybe<Attribute[]>;
-  };
+  } | null;
 } & PnftArgsSerialized;
 
 export function serializeTakeLegacyArgs(
