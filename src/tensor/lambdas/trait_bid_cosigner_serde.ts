@@ -162,7 +162,7 @@ export type TakeCompressedArgs = {
   merkleTree: PublicKey;
   proof: Buffer[];
   root: number[];
-  //in most cases nonce == index and doesn't need to passed in separately
+  /** in most cases nonce == index and doesn't need to passed in separately */
   nonce?: BN;
   index: number;
   minAmount: BN;
@@ -182,6 +182,8 @@ export type TakeCompressedArgs = {
   delegateSigner?: boolean;
   cosigner?: PublicKey | null;
   blockhash?: string;
+  /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
+  traits: Attribute[];
 };
 
 export type TakeCompressedArgsSerialized = {
@@ -219,6 +221,7 @@ export type TakeCompressedArgsSerialized = {
   delegateSigner?: boolean;
   cosigner?: string | null;
   blockhash?: string;
+  traits: Attribute[];
 };
 
 export function serializeTakeCompressedArgs(
@@ -268,6 +271,7 @@ export function serializeTakeCompressedArgs(
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
     blockhash: args.blockhash,
+    traits: args.traits,
   };
 }
 
@@ -329,6 +333,7 @@ export function deserializeTakeCompressedArgs(
     delegateSigner: serialized.delegateSigner,
     cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
     blockhash: serialized.blockhash,
+    traits: serialized.traits,
   };
 }
 
@@ -350,6 +355,8 @@ export type TakeLegacyArgs = {
   whitelist?: PublicKey | null;
   cosigner?: PublicKey | null;
   blockhash?: string;
+  /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
+  traits: Attribute[];
 } & PnftArgs;
 
 export type PnftArgsSerialized = {
@@ -377,6 +384,7 @@ export type TakeLegacyArgsSerialized = {
   whitelist?: string | null;
   cosigner?: string | null;
   blockhash?: string;
+  traits: Attribute[];
 } & PnftArgsSerialized;
 
 export function serializeTakeLegacyArgs(
@@ -402,6 +410,7 @@ export function serializeTakeLegacyArgs(
     ruleSetAddnCompute: args.ruleSetAddnCompute,
     priorityMicroLamports: args.priorityMicroLamports,
     blockhash: args.blockhash,
+    traits: args.traits,
   };
 }
 
@@ -435,6 +444,7 @@ export function deserializeTakeLegacyArgs(
     ruleSetAddnCompute: serialized.ruleSetAddnCompute,
     priorityMicroLamports: serialized.priorityMicroLamports,
     blockhash: serialized.blockhash,
+    traits: serialized.traits,
   };
 }
 
