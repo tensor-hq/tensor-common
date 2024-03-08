@@ -3,6 +3,7 @@ import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Creator, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
 import type { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
 import { Attribute, PnftArgs } from '..';
+import { Maybe } from '../..';
 
 // TODO: imported from tcomp-ts, since we dont have it in tensor-common
 
@@ -183,7 +184,10 @@ export type TakeCompressedArgs = {
   cosigner?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
-  traits: Attribute[];
+  metadata: {
+    name: Maybe<string>;
+    traits: Attribute[];
+  };
 };
 
 export type TakeCompressedArgsSerialized = {
@@ -221,7 +225,11 @@ export type TakeCompressedArgsSerialized = {
   delegateSigner?: boolean;
   cosigner?: string | null;
   blockhash?: string;
-  traits: Attribute[];
+  /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
+  metadata: {
+    name: Maybe<string>;
+    traits: Attribute[];
+  };
 };
 
 export function serializeTakeCompressedArgs(
@@ -271,69 +279,58 @@ export function serializeTakeCompressedArgs(
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
     blockhash: args.blockhash,
-    traits: args.traits,
+    metadata: args.metadata,
   };
 }
 
 export function deserializeTakeCompressedArgs(
-  serialized: TakeCompressedArgsSerialized,
+  args: TakeCompressedArgsSerialized,
 ): TakeCompressedArgs {
   return {
     targetData:
-      serialized.targetData.target === 'assetIdOrFvcWithoutField'
+      args.targetData.target === 'assetIdOrFvcWithoutField'
         ? {
-            target: serialized.targetData.target,
+            target: args.targetData.target,
             data: {
-              metaHash: Buffer.from(serialized.targetData.data.metaHash),
-              creators: serialized.targetData.data.creators.map((creator) => ({
+              metaHash: Buffer.from(args.targetData.data.metaHash),
+              creators: args.targetData.data.creators.map((creator) => ({
                 address: new PublicKey(creator.address),
                 verified: creator.verified,
                 share: creator.share,
               })),
-              sellerFeeBasisPoints:
-                serialized.targetData.data.sellerFeeBasisPoints,
+              sellerFeeBasisPoints: args.targetData.data.sellerFeeBasisPoints,
             },
           }
         : {
-            target: serialized.targetData.target,
+            target: args.targetData.target,
             data: {
-              metadata: deserializeMetadataArgs(
-                serialized.targetData.data.metadata,
-              ),
+              metadata: deserializeMetadataArgs(args.targetData.data.metadata),
             },
           },
-    bidId: new PublicKey(serialized.bidId),
-    merkleTree: new PublicKey(serialized.merkleTree),
-    proof: serialized.proof.map((p) => Buffer.from(p)),
-    root: serialized.root,
-    nonce: serialized.nonce ? new BN(serialized.nonce) : undefined,
-    index: serialized.index,
-    minAmount: new BN(serialized.minAmount),
-    currency: serialized.currency ? new PublicKey(serialized.currency) : null,
-    makerBroker: serialized.makerBroker
-      ? new PublicKey(serialized.makerBroker)
-      : null,
-    optionalRoyaltyPct: serialized.optionalRoyaltyPct,
-    owner: new PublicKey(serialized.owner),
-    seller: new PublicKey(serialized.seller),
-    delegate: serialized.delegate
-      ? new PublicKey(serialized.delegate)
-      : undefined,
-    margin: serialized.margin ? new PublicKey(serialized.margin) : null,
-    takerBroker: serialized.takerBroker
-      ? new PublicKey(serialized.takerBroker)
-      : null,
-    rentDest: new PublicKey(serialized.rentDest),
-    compute: serialized.compute,
-    priorityMicroLamports: serialized.priorityMicroLamports,
-    canopyDepth: serialized.canopyDepth,
-    whitelist: serialized.whitelist
-      ? new PublicKey(serialized.whitelist)
-      : null,
-    delegateSigner: serialized.delegateSigner,
-    cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
-    blockhash: serialized.blockhash,
-    traits: serialized.traits,
+    bidId: new PublicKey(args.bidId),
+    merkleTree: new PublicKey(args.merkleTree),
+    proof: args.proof.map((p) => Buffer.from(p)),
+    root: args.root,
+    nonce: args.nonce ? new BN(args.nonce) : undefined,
+    index: args.index,
+    minAmount: new BN(args.minAmount),
+    currency: args.currency ? new PublicKey(args.currency) : null,
+    makerBroker: args.makerBroker ? new PublicKey(args.makerBroker) : null,
+    optionalRoyaltyPct: args.optionalRoyaltyPct,
+    owner: new PublicKey(args.owner),
+    seller: new PublicKey(args.seller),
+    delegate: args.delegate ? new PublicKey(args.delegate) : undefined,
+    margin: args.margin ? new PublicKey(args.margin) : null,
+    takerBroker: args.takerBroker ? new PublicKey(args.takerBroker) : null,
+    rentDest: new PublicKey(args.rentDest),
+    compute: args.compute,
+    priorityMicroLamports: args.priorityMicroLamports,
+    canopyDepth: args.canopyDepth,
+    whitelist: args.whitelist ? new PublicKey(args.whitelist) : null,
+    delegateSigner: args.delegateSigner,
+    cosigner: args.cosigner ? new PublicKey(args.cosigner) : null,
+    blockhash: args.blockhash,
+    metadata: args.metadata,
   };
 }
 
@@ -356,7 +353,10 @@ export type TakeLegacyArgs = {
   cosigner?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
-  traits: Attribute[];
+  metadata: {
+    name: Maybe<string>;
+    traits: Attribute[];
+  };
 } & PnftArgs;
 
 export type PnftArgsSerialized = {
@@ -384,7 +384,10 @@ export type TakeLegacyArgsSerialized = {
   whitelist?: string | null;
   cosigner?: string | null;
   blockhash?: string;
-  traits: Attribute[];
+  metadata: {
+    name: Maybe<string>;
+    traits: Attribute[];
+  };
 } & PnftArgsSerialized;
 
 export function serializeTakeLegacyArgs(
@@ -410,41 +413,35 @@ export function serializeTakeLegacyArgs(
     ruleSetAddnCompute: args.ruleSetAddnCompute,
     priorityMicroLamports: args.priorityMicroLamports,
     blockhash: args.blockhash,
-    traits: args.traits,
+    metadata: args.metadata,
   };
 }
 
 export function deserializeTakeLegacyArgs(
-  serialized: TakeLegacyArgsSerialized,
+  args: TakeLegacyArgsSerialized,
 ): TakeLegacyArgs {
   return {
-    bidId: new PublicKey(serialized.bidId),
-    nftMint: new PublicKey(serialized.nftMint),
-    nftSellerAcc: new PublicKey(serialized.nftSellerAcc),
-    owner: new PublicKey(serialized.owner),
-    seller: new PublicKey(serialized.seller),
-    minAmount: new BN(serialized.minAmount),
-    currency: serialized.currency ? new PublicKey(serialized.currency) : null,
-    makerBroker: serialized.makerBroker
-      ? new PublicKey(serialized.makerBroker)
-      : null,
-    optionalRoyaltyPct: serialized.optionalRoyaltyPct,
-    margin: serialized.margin ? new PublicKey(serialized.margin) : null,
-    takerBroker: serialized.takerBroker
-      ? new PublicKey(serialized.takerBroker)
-      : null,
-    rentDest: new PublicKey(serialized.rentDest),
-    whitelist: serialized.whitelist
-      ? new PublicKey(serialized.whitelist)
-      : null,
-    cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
+    bidId: new PublicKey(args.bidId),
+    nftMint: new PublicKey(args.nftMint),
+    nftSellerAcc: new PublicKey(args.nftSellerAcc),
+    owner: new PublicKey(args.owner),
+    seller: new PublicKey(args.seller),
+    minAmount: new BN(args.minAmount),
+    currency: args.currency ? new PublicKey(args.currency) : null,
+    makerBroker: args.makerBroker ? new PublicKey(args.makerBroker) : null,
+    optionalRoyaltyPct: args.optionalRoyaltyPct,
+    margin: args.margin ? new PublicKey(args.margin) : null,
+    takerBroker: args.takerBroker ? new PublicKey(args.takerBroker) : null,
+    rentDest: new PublicKey(args.rentDest),
+    whitelist: args.whitelist ? new PublicKey(args.whitelist) : null,
+    cosigner: args.cosigner ? new PublicKey(args.cosigner) : null,
     // PnftArgs fields:
-    authData: serialized.authData, // Assuming no transformation needed for AuthorizationData type
-    compute: serialized.compute,
-    ruleSetAddnCompute: serialized.ruleSetAddnCompute,
-    priorityMicroLamports: serialized.priorityMicroLamports,
-    blockhash: serialized.blockhash,
-    traits: serialized.traits,
+    authData: args.authData, // Assuming no transformation needed for AuthorizationData type
+    compute: args.compute,
+    ruleSetAddnCompute: args.ruleSetAddnCompute,
+    priorityMicroLamports: args.priorityMicroLamports,
+    blockhash: args.blockhash,
+    metadata: args.metadata,
   };
 }
 
