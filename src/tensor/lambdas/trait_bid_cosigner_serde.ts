@@ -336,7 +336,7 @@ export function deserializeTakeCompressedArgs(
 
 // --------------------------------------- legacy args
 
-export type TakeLegacyArgs = {
+export type TakeNonCompressedArgs = {
   bidId: PublicKey;
   nftMint: PublicKey;
   nftSellerAcc: PublicKey;
@@ -368,7 +368,7 @@ export type PnftArgsSerialized = {
   priorityMicroLamports?: number | null;
 };
 
-export type TakeLegacyArgsSerialized = {
+export type TakeNonCompressedArgsSerialized = {
   bidId: string;
   nftMint: string;
   nftSellerAcc: string;
@@ -390,9 +390,9 @@ export type TakeLegacyArgsSerialized = {
   } | null;
 } & PnftArgsSerialized;
 
-export function serializeTakeLegacyArgs(
-  args: TakeLegacyArgs,
-): TakeLegacyArgsSerialized {
+export function serializeTakeNonCompressedArgs(
+  args: TakeNonCompressedArgs,
+): TakeNonCompressedArgsSerialized {
   return {
     bidId: args.bidId.toString(),
     nftMint: args.nftMint.toString(),
@@ -417,9 +417,9 @@ export function serializeTakeLegacyArgs(
   };
 }
 
-export function deserializeTakeLegacyArgs(
-  args: TakeLegacyArgsSerialized,
-): TakeLegacyArgs {
+export function deserializeTakeNonCompressedArgs(
+  args: TakeNonCompressedArgsSerialized,
+): TakeNonCompressedArgs {
   return {
     bidId: new PublicKey(args.bidId),
     nftMint: new PublicKey(args.nftMint),
@@ -550,6 +550,8 @@ export function deserializePlaceBidArgs(
 export enum TraitBidRequestType {
   TakeCompressed = 'TAKE_COMPRESSED',
   TakeLegacy = 'TAKE_LEGACY',
+  TakeT22 = 'TAKE_T22',
+  TakeWns = 'TAKE_WNS',
   PlaceBid = 'PLACE_BID',
 }
 
@@ -559,8 +561,11 @@ export type TraitBidsRequest =
       args: TakeCompressedArgsSerialized;
     }
   | {
-      type: TraitBidRequestType.TakeLegacy;
-      args: TakeLegacyArgsSerialized;
+      type:
+        | TraitBidRequestType.TakeLegacy
+        | TraitBidRequestType.TakeT22
+        | TraitBidRequestType.TakeWns;
+      args: TakeNonCompressedArgsSerialized;
     }
   | {
       type: TraitBidRequestType.PlaceBid;
