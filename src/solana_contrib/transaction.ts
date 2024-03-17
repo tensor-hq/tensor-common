@@ -74,6 +74,10 @@ type Logger = {
   debug: (msg: string) => void;
 };
 
+type ConfirmOpts = {
+  disableWs?: boolean;
+};
+
 export type TransactionMessageJSON = {
   header: MessageHeader;
   accountKeys: string[];
@@ -151,16 +155,36 @@ export class RetryTxSender {
   private start?: number;
   private txSig?: TransactionSignature;
   private confirmedTx?: ConfirmedTx;
+  readonly connection: Connection;
+  readonly additionalConnections: Connection[];
+  readonly logger?: Logger;
+  readonly opts: ConfirmOptions;
+  readonly timeout: number;
+  readonly retrySleep: number;
 
-  constructor(
-    readonly connection: Connection,
-    readonly additionalConnections = new Array<Connection>(),
+  constructor({
+    connection,
+    additionalConnections = new Array<Connection>(),
     //pass an optional logger object (can be console, can be winston) if you want verbose logs
-    readonly logger?: Logger,
-    readonly opts = DEFAULT_CONFIRM_OPTS,
-    readonly timeout = DEFAULT_TIMEOUT_MS,
-    readonly retrySleep = DEFAULT_RETRY_MS,
-  ) {}
+    logger,
+    opts = DEFAULT_CONFIRM_OPTS,
+    timeout = DEFAULT_TIMEOUT_MS,
+    retrySleep = DEFAULT_RETRY_MS,
+  }: {
+    connection: Connection;
+    additionalConnections?: Connection[];
+    logger?: Logger;
+    opts?: typeof DEFAULT_CONFIRM_OPTS;
+    timeout?: number;
+    retrySleep?: number;
+  }) {
+    this.connection = connection;
+    this.additionalConnections = additionalConnections;
+    this.logger = logger;
+    this.opts = opts;
+    this.timeout = timeout;
+    this.retrySleep = retrySleep;
+  }
 
   async send(
     tx: Transaction | VersionedTransaction,
@@ -208,7 +232,10 @@ export class RetryTxSender {
     return this.txSig;
   }
 
-  async tryConfirm(lastValidBlockHeight?: number): Promise<ConfirmedTx> {
+  async tryConfirm(
+    lastValidBlockHeight?: number,
+    opts?: ConfirmOpts,
+  ): Promise<ConfirmedTx> {
     if (this.confirmedTx) {
       this.logger?.info('✅ Tx already confirmed');
       return this.confirmedTx;
@@ -222,6 +249,7 @@ export class RetryTxSender {
       const result = await this._confirmTransaction(
         this.txSig,
         lastValidBlockHeight,
+        opts,
       );
       this.confirmedTx = {
         txSig: this.txSig,
@@ -240,6 +268,7 @@ export class RetryTxSender {
   private async _confirmTransaction(
     txSig: TransactionSignature,
     lastValidBlockHeight?: number,
+    opts?: ConfirmOpts,
   ): Promise<RpcResponseAndContext<SignatureResult>> {
     this.logger?.info(
       `⏳ [${txSig.substring(0, 5)}] begin trying to confirm tx`,
@@ -314,6 +343,8 @@ export class RetryTxSender {
               `[${txSig.substring(0, 5)}] error polling: ${err}`,
             );
           });
+
+        if (opts?.disableWs) return [pollPromise];
 
         const wsPromise = new Promise((resolve) => {
           try {
