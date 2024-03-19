@@ -64,6 +64,8 @@ export enum MintsSortBy {
   RankTnDesc = 'RankTnDesc',
   OrdinalAsc = 'OrdinalAsc',
   OrdinalDesc = 'OrdinalDesc',
+  NormalizedPriceAsc = 'NormalizedPriceAsc',
+  NormalizedPriceDesc = 'NormalizedPriceDesc',
 }
 
 // ======================== SDK args.

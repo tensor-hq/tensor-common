@@ -13,6 +13,8 @@ export const getMintRank = (
     | 'LastSaleDesc'
     | 'OrdinalAsc'
     | 'OrdinalDesc'
+    | 'NormalizedPriceAsc'
+    | 'NormalizedPriceDesc'
   >,
   ranks: RarityRanks,
 ): number | null => {
@@ -41,6 +43,7 @@ export const getSortSign = (sortBy: MintsSortBy): 1 | -1 => {
     case MintsSortBy.RankTeamAsc:
     case MintsSortBy.RankTnAsc:
     case MintsSortBy.OrdinalAsc:
+    case MintsSortBy.NormalizedPriceAsc:
       return 1;
     case MintsSortBy.PriceDesc:
     case MintsSortBy.LastSaleDesc:
@@ -50,6 +53,7 @@ export const getSortSign = (sortBy: MintsSortBy): 1 | -1 => {
     case MintsSortBy.RankTeamDesc:
     case MintsSortBy.RankTnDesc:
     case MintsSortBy.OrdinalDesc:
+    case MintsSortBy.NormalizedPriceDesc:
       return -1;
   }
 };
@@ -60,6 +64,7 @@ type Mint = {
   ordinal?: string | null;
   ranks: RarityRanks;
   txAt: number;
+  normalizedPrice?: string | null;
 };
 
 type SortFunction = (a: Mint, b: Mint) => number;
@@ -100,6 +105,16 @@ export const makeMintsSortFn = (sortBy: MintsSortBy): SortFunction => {
           sortBigInt(
             a.ordinal ? BigInt(a.ordinal) : null,
             b.ordinal ? BigInt(b.ordinal) : null,
+            nullsFirst,
+          )
+        );
+      case MintsSortBy.NormalizedPriceAsc:
+      case MintsSortBy.NormalizedPriceDesc:
+        return (
+          sign *
+          sortNumberOrBig(
+            a.normalizedPrice ? new Big(a.normalizedPrice) : null,
+            b.normalizedPrice ? new Big(b.normalizedPrice) : null,
             nullsFirst,
           )
         );
