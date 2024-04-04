@@ -22,9 +22,7 @@ export const makeMEListTx = async ({
     new PublicKey(tokenOwner),
   );
 
-  const { data } = await axios({
-    url: `${ME_URL}/v2/instructions/sell`,
-    method: 'GET',
+  const { data } = await axios.get(`${ME_URL}/v2/instructions/sell`, {
     params: {
       seller: tokenOwner,
       auctionHouseAddress: ME_AH_ADDRESS,

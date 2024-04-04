@@ -20,9 +20,7 @@ export const makeMEDelistTx = async ({
 }): Promise<METxSigned> => {
   const price = new Big(priceLamports).div(LAMPORTS_PER_SOL).toNumber();
 
-  const { data } = await axios({
-    url: `${ME_URL}/v2/instructions/sell_cancel`,
-    method: 'GET',
+  const { data } = await axios.get(`${ME_URL}/v2/instructions/sell_cancel`, {
     params: {
       seller: tokenOwner,
       auctionHouseAddress: ME_AH_ADDRESS,

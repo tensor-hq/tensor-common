@@ -434,19 +434,20 @@ export const requestOSOfferOrListingTx = async (
 ): Promise<OSReceivedOrderData> => {
   console.debug(`Requesting OS ${type} tx...`);
 
-  const { data } = await axios({
-    method: 'POST',
-    url: `${OS_BASE_PATH}/api/v2/nfts/solana/${tokenMint}/${type}-action`,
-    data: {
-      maker_address: maker,
-      price_lamports: priceLamports.toNumber(),
-      order_type: 'basic',
+  const { data } = await axios.post(
+    `${OS_BASE_PATH}/api/v2/nfts/solana/${tokenMint}/${type}-action`,
+    {
+      data: {
+        maker_address: maker,
+        price_lamports: priceLamports.toNumber(),
+        order_type: 'basic',
+      },
+      headers: {
+        'x-api-key': apiKey,
+        'content-type': 'application/json',
+      },
     },
-    headers: {
-      'x-api-key': apiKey,
-      'content-type': 'application/json',
-    },
-  });
+  );
 
   return data;
 };
@@ -464,18 +465,19 @@ export const requestOSFulfillmentTx = async ({
 }): Promise<OSReceivedOrderData> => {
   console.debug('Requesting OS fulfillment tx...');
 
-  const { data } = await axios({
-    method: 'POST',
-    url: `${OS_BASE_PATH}/api/v2/orders/${relayId}/fulfillment-action`,
-    data: {
-      taker_address: taker,
-      taker_fill_amount: 1,
+  const { data } = await axios.post(
+    `${OS_BASE_PATH}/api/v2/orders/${relayId}/fulfillment-action`,
+    {
+      data: {
+        taker_address: taker,
+        taker_fill_amount: 1,
+      },
+      headers: {
+        'x-api-key': apiKey,
+        'content-type': 'application/json',
+      },
     },
-    headers: {
-      'x-api-key': apiKey,
-      'content-type': 'application/json',
-    },
-  });
+  );
 
   return data;
 };
