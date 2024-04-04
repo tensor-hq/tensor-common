@@ -31,9 +31,7 @@ export const makeMECancelBidTx = async ({
     }
   }
 
-  const { data } = await axios({
-    url: `${ME_URL}/v2/instructions/buy_cancel`,
-    method: 'GET',
+  const { data } = await axios.get(`${ME_URL}/v2/instructions/buy_cancel`, {
     params: {
       buyer,
       auctionHouseAddress: ME_AH_ADDRESS,

@@ -16,9 +16,7 @@ export const makeMEBidTx = async ({
 }): Promise<METxSigned> => {
   const price = priceLamports.div(LAMPORTS_PER_SOL).toNumber();
 
-  const { data } = await axios({
-    url: `${ME_URL}/v2/instructions/buy`,
-    method: 'GET',
+  const { data } = await axios.get(`${ME_URL}/v2/instructions/buy`, {
     params: {
       buyer,
       auctionHouseAddress: ME_AH_ADDRESS,

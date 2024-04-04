@@ -27,9 +27,7 @@ export const makeMEAcceptBidTx = async ({
     new PublicKey(seller),
   );
 
-  const { data } = await axios({
-    url: `${ME_URL}/v2/instructions/sell_now`,
-    method: 'GET',
+  const { data } = await axios.get(`${ME_URL}/v2/instructions/sell_now`, {
     params: {
       buyer,
       seller,
