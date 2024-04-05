@@ -552,12 +552,15 @@ export enum TraitBidRequestType {
   TakeLegacy = 'TAKE_LEGACY',
   TakeT22 = 'TAKE_T22',
   TakeWns = 'TAKE_WNS',
+  TakeMplCore = 'TAKE_MPL_CORE',
   PlaceBid = 'PLACE_BID',
 }
 
 export type TraitBidsRequest =
   | {
-      type: TraitBidRequestType.TakeCompressed;
+      type:
+        | TraitBidRequestType.TakeCompressed
+        | TraitBidRequestType.TakeMplCore;
       args: TakeCompressedArgsSerialized;
     }
   | {
