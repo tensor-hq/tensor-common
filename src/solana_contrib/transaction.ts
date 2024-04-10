@@ -52,6 +52,7 @@ const DEFAULT_CONFIRM_OPTS: ConfirmOptions = {
   //as per https://jstarry.notion.site/Transaction-confirmation-d5b8f4e09b9c4a70a1f263f82307d7ce
   preflightCommitment: 'confirmed',
   skipPreflight: true,
+  maxRetries: 1,
 };
 const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_RETRY_MS = 2000;
@@ -167,6 +168,7 @@ export class RetryTxSender {
     additionalConnections = new Array<Connection>(),
     //pass an optional logger object (can be console, can be winston) if you want verbose logs
     logger,
+    minContextSlot,
     opts = DEFAULT_CONFIRM_OPTS,
     timeout = DEFAULT_TIMEOUT_MS,
     retrySleep = DEFAULT_RETRY_MS,
@@ -174,6 +176,8 @@ export class RetryTxSender {
     connection: Connection;
     additionalConnections?: Connection[];
     logger?: Logger;
+    /** slot from `getLatestBlockhashAndContext` */
+    minContextSlot: number;
     opts?: typeof DEFAULT_CONFIRM_OPTS;
     timeout?: number;
     retrySleep?: number;
@@ -181,7 +185,10 @@ export class RetryTxSender {
     this.connection = connection;
     this.additionalConnections = additionalConnections;
     this.logger = logger;
-    this.opts = opts;
+    this.opts = {
+      ...opts,
+      minContextSlot,
+    };
     this.timeout = timeout;
     this.retrySleep = retrySleep;
   }
