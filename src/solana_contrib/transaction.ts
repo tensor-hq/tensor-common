@@ -168,19 +168,19 @@ export class RetryTxSender {
     additionalConnections = new Array<Connection>(),
     //pass an optional logger object (can be console, can be winston) if you want verbose logs
     logger,
-    minContextSlot,
     opts = DEFAULT_CONFIRM_OPTS,
     timeout = DEFAULT_TIMEOUT_MS,
     retrySleep = DEFAULT_RETRY_MS,
+    minContextSlot = opts.minContextSlot,
   }: {
     connection: Connection;
     additionalConnections?: Connection[];
     logger?: Logger;
-    /** slot from `getLatestBlockhashAndContext` */
-    minContextSlot: number;
     opts?: typeof DEFAULT_CONFIRM_OPTS;
     timeout?: number;
     retrySleep?: number;
+    /** slot from `getLatestBlockhashAndContext` */
+    minContextSlot?: number;
   }) {
     this.connection = connection;
     this.additionalConnections = additionalConnections;
