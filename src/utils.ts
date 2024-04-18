@@ -7,6 +7,17 @@ export class TimeoutError extends Error {}
 /// Equivalent to Omit<Bob, "foo"> & {foo: string};
 export type Overwrite<T, NewT> = Omit<T, keyof NewT> & NewT;
 
+/** Overwrite the specified keys with undefined */
+type OverwriteUndefined<T, K extends keyof T> = Overwrite<
+  T,
+  Record<K, T[K]> & Partial<Record<Exclude<keyof T, K>, undefined>>
+>;
+
+/** XOR type where exactly one property must be defined and the others undefined */
+export type XOR<T> = {
+  [P in keyof T]: OverwriteUndefined<T, P>;
+}[keyof T];
+
 export const rejectAfterDelay = (ms: number) =>
   new Promise((_, reject) => {
     setTimeout(reject, ms, new TimeoutError(`timeout of ${ms}ms exceeded`));
