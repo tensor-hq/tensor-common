@@ -165,15 +165,18 @@ export class RetryTxSender {
   constructor({
     connection,
     additionalConnections = new Array<Connection>(),
-    //pass an optional logger object (can be console, can be winston) if you want verbose logs
     logger,
+    txSig,
     opts = DEFAULT_CONFIRM_OPTS,
     timeout = DEFAULT_TIMEOUT_MS,
     retrySleep = DEFAULT_RETRY_MS,
   }: {
     connection: Connection;
     additionalConnections?: Connection[];
+    /** pass an optional logger object (can be console, can be winston) if you want verbose logs */
     logger?: Logger;
+    /** pass an optional txSig if you want to confirm at signature without resending it. */
+    txSig?: string;
     opts?: typeof DEFAULT_CONFIRM_OPTS;
     timeout?: number;
     retrySleep?: number;
@@ -181,6 +184,7 @@ export class RetryTxSender {
     this.connection = connection;
     this.additionalConnections = additionalConnections;
     this.logger = logger;
+    this.txSig = txSig;
     this.opts = opts;
     this.timeout = timeout;
     this.retrySleep = retrySleep;
