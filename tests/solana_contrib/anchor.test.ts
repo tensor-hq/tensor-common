@@ -10,6 +10,7 @@ import {
 } from '../../src/solana_contrib';
 import {
   ParsedAnchorEvent,
+  extractAllIxs,
   genAcctDiscHexMap,
   genIxDiscHexMap,
   getAcctDiscHex,
@@ -344,6 +345,24 @@ describe('Anchor Tests', () => {
         )?.pubkey.toBase58(),
       ).eq(AUTH_PROGRAM_ID.toBase58());
       expect(getAnchorAcctByName(ix, 'Nonexistent')).undefined;
+    });
+  });
+
+  describe('extractAllIxs', () => {
+    it('works for complex Tensorian mint', () => {
+      const tx = convertTxToLegacy(
+        require('./test_data/tensorian_mint_tx_v0.json'),
+      );
+
+      const ixs = extractAllIxs({
+        tx,
+      });
+      expect(ixs.length).eq(40);
+      ixs.forEach((ix, ixIdx) => {
+        if (ixIdx < 2) expect(ix.innerIxs).length(0);
+        else if (ixIdx === 2) expect(ix.innerIxs).length(37);
+        else expect(ix.innerIxs).undefined;
+      });
     });
   });
 });

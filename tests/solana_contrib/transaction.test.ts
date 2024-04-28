@@ -1,8 +1,5 @@
 import { expect } from 'chai';
-import {
-  convertTxToLegacy,
-  extractAllIxs,
-} from '../../src/solana_contrib/transaction';
+import { convertTxToLegacy } from '../../src/solana_contrib/transaction';
 
 describe('Transaction Tests', () => {
   describe('convertTxToLegacy', () => {
@@ -31,24 +28,6 @@ describe('Transaction Tests', () => {
 
       // Idempotent
       expect(convertTxToLegacy(tx)).eql(tx);
-    });
-  });
-
-  describe('extractAllIxs', () => {
-    it('works for complex Tensorian mint', () => {
-      const tx = convertTxToLegacy(
-        require('./test_data/tensorian_mint_tx_v0.json'),
-      );
-
-      const ixs = extractAllIxs({
-        tx,
-      });
-      expect(ixs.length).eq(40);
-      ixs.forEach((ix, ixIdx) => {
-        if (ixIdx < 2) expect(ix.innerIxs).length(0);
-        else if (ixIdx === 2) expect(ix.innerIxs).length(37);
-        else expect(ix.innerIxs).undefined;
-      });
     });
   });
 });
