@@ -9,9 +9,9 @@ export const rejectAfterDelay = (ms: number) =>
   });
 
 export const settleAllWithTimeout = async <T>(
-  promises: Array<Promise<T>>,
+  promises: Promise<T>[],
   timeoutMs: number,
-): Promise<Array<T>> => {
+): Promise<T[]> => {
   const values: T[] = [];
 
   await Promise.allSettled(
@@ -72,9 +72,9 @@ export const toHexString = (byteArray: number[]): string => {
 export const hexCode = (decCode: number) => '0x' + decCode.toString(16);
 
 export const makeBatches = <T>(
-  items: Array<T>,
+  items: readonly T[],
   batchSize: number,
-): Array<Array<T>> => {
+): T[][] => {
   const out: T[][] = [];
   for (let idx = 0; idx < items.length; idx += batchSize) {
     out.push(items.slice(idx, idx + batchSize));
@@ -83,17 +83,17 @@ export const makeBatches = <T>(
 };
 
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => string,
 ): Record<string, T[]>;
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
 ): Partial<Record<string, T[]>>;
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
 ): Partial<Record<string, T[]>> {
   const out: Partial<Record<string, T[]>> = {};
@@ -107,17 +107,17 @@ export function partitionByKey<T>(
 }
 
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => string,
 ): Record<string, T>;
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
 ): Partial<Record<string, T>>;
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
 ): Partial<Record<string, T>> {
   const out: Partial<Record<string, T>> = {};
@@ -131,7 +131,10 @@ export function partitionByKeySingle<T>(
 }
 
 /** Earlier items take precedence IF `getKey` is specified. */
-export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
+export const dedupeList = <T, K>(
+  arr: readonly T[],
+  getKey?: (item: T) => K,
+) => {
   if (!getKey) {
     return [...new Set(arr)];
   }
@@ -201,4 +204,9 @@ export const removeUndefinedKeys = (obj: object) => {
     }
   }
   return newObj;
+};
+
+export const mainErrHandler = (err: any) => {
+  console.error(err);
+  process.kill(process.pid, 'SIGTERM');
 };
