@@ -1,5 +1,3 @@
-import semaphore from 'semaphore';
-
 export class TimeoutError extends Error {}
 
 /// Equivalent to Omit<Bob, "foo"> & {foo: string};
@@ -153,23 +151,6 @@ export const parseDate = (date: string | Date) => {
   return new Date(date);
 };
 
-export const runWithSem = <T>(
-  sem: semaphore.Semaphore,
-  fn: () => Promise<T>,
-): Promise<T> => {
-  return new Promise((res, rej) => {
-    sem.take(async () => {
-      try {
-        res(await fn());
-      } catch (err) {
-        rej(err);
-      } finally {
-        sem.leave();
-      }
-    });
-  });
-};
-
 /** Differs from lodash's capitalize since it doesn't lower case everything else. */
 export const capitalize = (str: string) => {
   if (!str.length) return str;
@@ -178,14 +159,6 @@ export const capitalize = (str: string) => {
 
 export const eqSet = <T>(xs: Set<T>, ys: Set<T>) =>
   xs.size === ys.size && [...xs].every((x) => ys.has(x));
-
-export const nameToBuffer = (name: string, bytes: number = 32) => {
-  return Buffer.from(name.padEnd(bytes, '\0')).toJSON().data.slice(0, bytes);
-};
-
-export const bufferToName = (buf: Buffer) => {
-  return buf.toString('utf8').trim().replaceAll(/\x00/g, '');
-};
 
 export function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
