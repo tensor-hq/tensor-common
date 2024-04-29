@@ -1,5 +1,6 @@
 export * from './anchor';
 export * from './connection';
+export * from './formatting';
 export * from './lut';
 export * from './spl_token';
 export * from './transaction';

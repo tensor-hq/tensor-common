@@ -1,8 +1,16 @@
 import { BorshCoder, EventParser } from '@coral-xyz/anchor';
 import { PublicKey, TransactionResponse } from '@solana/web3.js';
 import { expect } from 'chai';
+import { AUTH_PROGRAM_ID } from '../../src/metaplex';
+import {
+  TransactionResponseJSON,
+  castTxResponse,
+  convertTxToLegacy,
+  stringifyPKsAndBNs,
+} from '../../src/solana_contrib';
 import {
   ParsedAnchorEvent,
+  extractAllIxs,
   genAcctDiscHexMap,
   genIxDiscHexMap,
   getAcctDiscHex,
@@ -12,13 +20,6 @@ import {
   parseAnchorEvents,
   parseAnchorIxs,
 } from '../../src/solana_contrib/anchor';
-import {
-  TransactionResponseJSON,
-  castTxResponse,
-  convertTxToLegacy,
-} from '../../src/solana_contrib/transaction';
-import { AUTH_PROGRAM_ID } from '../../src/metaplex';
-import { stringifyPKsAndBNs } from '../../src/utils';
 import { IDL as IDL_TComp, Tcomp } from './test_data/tcomp';
 import { IDL as IDL_TRoll } from './test_data/troll';
 import { IDL, Tensorswap } from './test_data/tswap';
@@ -344,6 +345,24 @@ describe('Anchor Tests', () => {
         )?.pubkey.toBase58(),
       ).eq(AUTH_PROGRAM_ID.toBase58());
       expect(getAnchorAcctByName(ix, 'Nonexistent')).undefined;
+    });
+  });
+
+  describe('extractAllIxs', () => {
+    it('works for complex Tensorian mint', () => {
+      const tx = convertTxToLegacy(
+        require('./test_data/tensorian_mint_tx_v0.json'),
+      );
+
+      const ixs = extractAllIxs({
+        tx,
+      });
+      expect(ixs.length).eq(40);
+      ixs.forEach((ix, ixIdx) => {
+        if (ixIdx < 2) expect(ix.innerIxs).length(0);
+        else if (ixIdx === 2) expect(ix.innerIxs).length(37);
+        else expect(ix.innerIxs).undefined;
+      });
     });
   });
 });

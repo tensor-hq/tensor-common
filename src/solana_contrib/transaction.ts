@@ -32,17 +32,15 @@ import assert from 'assert';
 import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 import { backOff } from 'exponential-backoff';
-import { SECONDS, sleep, waitMS } from '../time';
+import { sleep, waitMS } from '../time';
 import {
   Maybe,
   Overwrite,
   filterNullLike,
-  isNullLike,
   makeBatches,
   settleAllWithTimeout,
 } from '../utils';
 import { TxV0WithHeight, TxWithHeight } from './types';
-import { getIxDiscHex } from './anchor';
 
 const BLOCK_TIME_MS = 400;
 
@@ -825,77 +823,6 @@ export const serializeAnyVersionTx = (
       }
     }
   }
-};
-
-export type ExtractedIx = {
-  rawIx: CompiledInstruction;
-  /** Index of top-level instruction. */
-  ixIdx: number;
-  /** If this is an inner instruction, the index within its parent top-level instruction. */
-  subIxIdx?: number;
-  /** Presence of field = it's a top-level ix; absence = inner ix itself. */
-  innerIxs?: CompiledInstruction[];
-  noopIxs?: CompiledInstruction[];
-};
-
-export const extractAllIxs = ({
-  tx,
-  programId,
-  noopIxDiscHex,
-}: {
-  tx: TransactionResponse | TransactionResponseJSON;
-  /** If passed, will filter for ixs w/ this program ID. */
-  programId?: PublicKey;
-  /** If passed WITH programId, will attach self-CPI noop ixs to corresponding programId ixs. NB: noopIxs are included in the final array too. */
-  noopIxDiscHex?: string;
-}) => {
-  const outIxs: ExtractedIx[] = [];
-  const msg = tx.transaction.message;
-  const programIdIndex = programId
-    ? msg.accountKeys.findIndex((k) => new PublicKey(k).equals(programId))
-    : null;
-
-  const maybeAttachNoopIx = (ix: CompiledInstruction) => {
-    if (isNullLike(programIdIndex || programIdIndex !== ix.programIdIndex))
-      return;
-    if (getIxDiscHex(ix.data) !== noopIxDiscHex) return;
-    const prev = outIxs.at(-1);
-    if (isNullLike(prev)) return;
-    prev.noopIxs ??= [];
-    prev.noopIxs.push(ix);
-  };
-
-  const addIx = (
-    ix: CompiledInstruction,
-    ixIdx: number,
-    subIxIdx: number | undefined,
-    innerIxs: CompiledInstruction[] | undefined,
-  ) => {
-    if (!isNullLike(programIdIndex) && programIdIndex !== ix.programIdIndex)
-      return;
-
-    maybeAttachNoopIx(ix);
-    outIxs.push({
-      rawIx: ix,
-      ixIdx,
-      subIxIdx,
-      innerIxs,
-    });
-  };
-
-  tx.transaction.message.instructions.forEach((ix, ixIdx) => {
-    const innerIxs =
-      tx.meta?.innerInstructions?.find((inner) => inner.index === ixIdx)
-        ?.instructions ?? [];
-
-    addIx(ix, ixIdx, undefined, innerIxs);
-
-    innerIxs.forEach((innerIx, subIxIdx) => {
-      addIx(innerIx, ixIdx, subIxIdx, undefined);
-    });
-  });
-
-  return outIxs;
 };
 
 export const legacyToV0Tx = (

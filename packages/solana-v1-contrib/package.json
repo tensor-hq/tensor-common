@@ -1,0 +1,42 @@
+{
+  "name": "@tensor-hq/solana-v1-contrib",
+  "version": "0.1.0",
+  "description": "Utilities for Solana web3.js v1.X.",
+  "sideEffects": false,
+  "module": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "files": [
+    "/dist/esm/**/*",
+    "/dist/cjs/**/*"
+  ],
+  "scripts": {
+    "test": "yarn ts-mocha -p ./tsconfig.cjs.json tests/**/*.test.ts",
+    "build": "rm -rf ./dist && yarn tsc && yarn tsc -p tsconfig.cjs.json",
+    "publish:private": "yarn build && yarn npm publish",
+    "publish:public": "yarn build && npm publish --access public --registry https://registry.npmjs.org",
+    "publish:all": "yarn publish:private && yarn publish:public"
+  },
+  "repository": "git@github.com:tensor-hq/tensor-common.git",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.91.1",
+    "@tensor-hq/ts-utils": "^0.1.0",
+    "bn.js": "^5.2.1",
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3",
+    "exponential-backoff": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.12.7",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "prettier": "^2.7.1",
+    "ts-mocha": "^10.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4"
+  },
+  "packageManager": "yarn@3.3.1"
+}

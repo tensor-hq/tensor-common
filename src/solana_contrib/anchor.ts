@@ -7,16 +7,33 @@ import {
 } from '@coral-xyz/anchor';
 import type { InstructionDisplay } from '@coral-xyz/anchor/dist/cjs/coder/borsh/instruction';
 import type { AllAccountsMap } from '@coral-xyz/anchor/dist/cjs/program/namespace/types';
-import { AccountInfo, PublicKey, TransactionResponse } from '@solana/web3.js';
+import {
+  AccountInfo,
+  CompiledInstruction,
+  PublicKey,
+  TransactionResponse,
+} from '@solana/web3.js';
 import bs58 from 'bs58';
 import { sha256 } from 'js-sha256';
-import { ExtractedIx, extractAllIxs } from './transaction';
+import { isNullLike } from '../utils';
+import { TransactionResponseJSON } from './transaction';
 
 type Decoder = (buffer: Buffer) => any;
 export type AcctDiscHexMap<IDL extends Idl> = Record<
   string,
   { decoder: Decoder; name: keyof AllAccountsMap<IDL> }
 >;
+
+export type ExtractedIx = {
+  rawIx: CompiledInstruction;
+  /** Index of top-level instruction. */
+  ixIdx: number;
+  /** If this is an inner instruction, the index within its parent top-level instruction. */
+  subIxIdx?: number;
+  /** Presence of field = it's a top-level ix; absence = inner ix itself. */
+  innerIxs?: CompiledInstruction[];
+  noopIxs?: CompiledInstruction[];
+};
 
 export type AnchorIxName<IDL extends Idl> = IDL['instructions'][number]['name'];
 export type AnchorIx<IDL extends Idl> = Omit<Instruction, 'name'> & {
@@ -249,3 +266,63 @@ export const getAnchorAcctByName = <
   return ix.formatted?.accounts.find((acc) => acc.name?.endsWith(suffix));
 };
 // =============== END Parse ixs/events ===============
+
+export const extractAllIxs = ({
+  tx,
+  programId,
+  noopIxDiscHex,
+}: {
+  tx: TransactionResponse | TransactionResponseJSON;
+  /** If passed, will filter for ixs w/ this program ID. */
+  programId?: PublicKey;
+  /** If passed WITH programId, will attach self-CPI noop ixs to corresponding programId ixs. NB: noopIxs are included in the final array too. */
+  noopIxDiscHex?: string;
+}) => {
+  const outIxs: ExtractedIx[] = [];
+  const msg = tx.transaction.message;
+  const programIdIndex = programId
+    ? msg.accountKeys.findIndex((k) => new PublicKey(k).equals(programId))
+    : null;
+
+  const maybeAttachNoopIx = (ix: CompiledInstruction) => {
+    if (isNullLike(programIdIndex || programIdIndex !== ix.programIdIndex))
+      return;
+    if (getIxDiscHex(ix.data) !== noopIxDiscHex) return;
+    const prev = outIxs.at(-1);
+    if (isNullLike(prev)) return;
+    prev.noopIxs ??= [];
+    prev.noopIxs.push(ix);
+  };
+
+  const addIx = (
+    ix: CompiledInstruction,
+    ixIdx: number,
+    subIxIdx: number | undefined,
+    innerIxs: CompiledInstruction[] | undefined,
+  ) => {
+    if (!isNullLike(programIdIndex) && programIdIndex !== ix.programIdIndex)
+      return;
+
+    maybeAttachNoopIx(ix);
+    outIxs.push({
+      rawIx: ix,
+      ixIdx,
+      subIxIdx,
+      innerIxs,
+    });
+  };
+
+  tx.transaction.message.instructions.forEach((ix, ixIdx) => {
+    const innerIxs =
+      tx.meta?.innerInstructions?.find((inner) => inner.index === ixIdx)
+        ?.instructions ?? [];
+
+    addIx(ix, ixIdx, undefined, innerIxs);
+
+    innerIxs.forEach((innerIx, subIxIdx) => {
+      addIx(innerIx, ixIdx, subIxIdx, undefined);
+    });
+  });
+
+  return outIxs;
+};

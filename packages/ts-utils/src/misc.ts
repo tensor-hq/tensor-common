@@ -1,5 +1,3 @@
-import semaphore from 'semaphore';
-
 export class TimeoutError extends Error {}
 
 /// Equivalent to Omit<Bob, "foo"> & {foo: string};
@@ -11,9 +9,9 @@ export const rejectAfterDelay = (ms: number) =>
   });
 
 export const settleAllWithTimeout = async <T>(
-  promises: Array<Promise<T>>,
+  promises: Promise<T>[],
   timeoutMs: number,
-): Promise<Array<T>> => {
+): Promise<T[]> => {
   const values: T[] = [];
 
   await Promise.allSettled(
@@ -36,7 +34,7 @@ export type Maybe<T> = T | null | undefined;
 export const isNullLike = <T>(v: Maybe<T>): v is null | undefined =>
   v === null || v === undefined;
 
-export const filterNullLike = <T>(arr: Maybe<T>[]) =>
+export const filterNullLike = <T>(arr: readonly Maybe<T>[]) =>
   arr.filter((v): v is T => !isNullLike(v));
 
 /**
@@ -74,9 +72,9 @@ export const toHexString = (byteArray: number[]): string => {
 export const hexCode = (decCode: number) => '0x' + decCode.toString(16);
 
 export const makeBatches = <T>(
-  items: Array<T>,
+  items: readonly T[],
   batchSize: number,
-): Array<Array<T>> => {
+): T[][] => {
   const out: T[][] = [];
   for (let idx = 0; idx < items.length; idx += batchSize) {
     out.push(items.slice(idx, idx + batchSize));
@@ -85,17 +83,17 @@ export const makeBatches = <T>(
 };
 
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => string,
 ): Record<string, T[]>;
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
 ): Partial<Record<string, T[]>>;
 export function partitionByKey<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
 ): Partial<Record<string, T[]>> {
   const out: Partial<Record<string, T[]>> = {};
@@ -109,17 +107,17 @@ export function partitionByKey<T>(
 }
 
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => string,
 ): Record<string, T>;
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
   // Important to make partial to denote that for any arbitrary key
   // there may not be a value.
 ): Partial<Record<string, T>>;
 export function partitionByKeySingle<T>(
-  arr: Array<T>,
+  arr: readonly T[],
   getKey: (item: T) => Maybe<string>,
 ): Partial<Record<string, T>> {
   const out: Partial<Record<string, T>> = {};
@@ -133,7 +131,10 @@ export function partitionByKeySingle<T>(
 }
 
 /** Earlier items take precedence IF `getKey` is specified. */
-export const dedupeList = <T, K>(arr: Array<T>, getKey?: (item: T) => K) => {
+export const dedupeList = <T, K>(
+  arr: readonly T[],
+  getKey?: (item: T) => K,
+) => {
   if (!getKey) {
     return [...new Set(arr)];
   }
@@ -153,23 +154,6 @@ export const parseDate = (date: string | Date) => {
   return new Date(date);
 };
 
-export const runWithSem = <T>(
-  sem: semaphore.Semaphore,
-  fn: () => Promise<T>,
-): Promise<T> => {
-  return new Promise((res, rej) => {
-    sem.take(async () => {
-      try {
-        res(await fn());
-      } catch (err) {
-        rej(err);
-      } finally {
-        sem.leave();
-      }
-    });
-  });
-};
-
 /** Differs from lodash's capitalize since it doesn't lower case everything else. */
 export const capitalize = (str: string) => {
   if (!str.length) return str;
@@ -178,14 +162,6 @@ export const capitalize = (str: string) => {
 
 export const eqSet = <T>(xs: Set<T>, ys: Set<T>) =>
   xs.size === ys.size && [...xs].every((x) => ys.has(x));
-
-export const nameToBuffer = (name: string, bytes: number = 32) => {
-  return Buffer.from(name.padEnd(bytes, '\0')).toJSON().data.slice(0, bytes);
-};
-
-export const bufferToName = (buf: Buffer) => {
-  return buf.toString('utf8').trim().replaceAll(/\x00/g, '');
-};
 
 export function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
@@ -228,4 +204,9 @@ export const removeUndefinedKeys = (obj: object) => {
     }
   }
   return newObj;
+};
+
+export const mainErrHandler = (err: any) => {
+  console.error(err);
+  process.kill(process.pid, 'SIGTERM');
 };
