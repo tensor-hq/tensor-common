@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/ts-utils",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "General typescript utilities & helpers.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
