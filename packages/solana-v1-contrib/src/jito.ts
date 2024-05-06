@@ -15,32 +15,15 @@ const JITO_TIP_ACCOUNTS = [
 const sampleJitoTipAccount = (): PublicKey =>
   JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)];
 
-export const makeJitoTipTx = ({
-  blockhash,
-  lastValidBlockHeight,
+export const makeJitoTipIx = ({
   payer,
   jitoTip,
 }: {
-  blockhash: string;
-  lastValidBlockHeight: number;
   payer: PublicKey;
   jitoTip: number;
 }) =>
-  new Transaction({
-    blockhash,
-    lastValidBlockHeight,
-    feePayer: payer,
-  }).add(
-    // Add compute units to prevent wallets from overriding.
-    ...prependComputeIxs(
-      [
-        SystemProgram.transfer({
-          fromPubkey: payer,
-          toPubkey: sampleJitoTipAccount(),
-          lamports: jitoTip,
-        }),
-      ],
-      1000,
-      1,
-    ),
-  );
+  SystemProgram.transfer({
+    fromPubkey: payer,
+    toPubkey: sampleJitoTipAccount(),
+    lamports: jitoTip,
+  });
