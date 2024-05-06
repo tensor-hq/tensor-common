@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/solana-v1-contrib",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Utilities for Solana web3.js v1.X.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
@@ -25,7 +25,8 @@
     "bn.js": "^5.2.1",
     "bs58": "^5.0.0",
     "buffer": "^6.0.3",
-    "exponential-backoff": "^3.1.1"
+    "exponential-backoff": "^3.1.1",
+    "rate-limiter-flexible": "^4.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",

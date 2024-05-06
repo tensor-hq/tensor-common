@@ -14,7 +14,7 @@ import {
   VersionedTransaction,
   VersionedTransactionResponse,
 } from '@solana/web3.js';
-import { Maybe, Overwrite } from '@tensor-hq/ts-utils';
+import { Maybe, Overwrite, isNullLike } from '@tensor-hq/ts-utils';
 import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 
@@ -245,4 +245,17 @@ export const legacyToV0Tx = (
   legacy: Buffer | Uint8Array | Array<number>,
 ): VersionedTransaction => {
   return new VersionedTransaction(Transaction.from(legacy).compileMessage());
+};
+
+export const txSignature = (
+  tx: VersionedTransaction | Transaction,
+): string | null => {
+  if (tx instanceof VersionedTransaction) {
+    return bs58.encode(tx.signatures[0]);
+  } else {
+    if (isNullLike(tx.signatures[0].signature)) {
+      return null;
+    }
+    return bs58.encode(tx.signatures[0].signature);
+  }
 };

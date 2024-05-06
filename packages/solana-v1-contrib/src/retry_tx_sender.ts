@@ -13,6 +13,10 @@ import { waitMS } from '@tensor-hq/ts-utils';
 import bs58 from 'bs58';
 import { backOff } from 'exponential-backoff';
 import { getLatestBlockHeight } from './rpc';
+import { txSignature } from './transaction';
+import axios from 'axios';
+import { RateLimiterQueue } from 'rate-limiter-flexible';
+import base58 from 'bs58';
 
 const BLOCK_TIME_MS = 400;
 
@@ -144,6 +148,69 @@ export class RetryTxSender {
     })();
 
     return this.txSig;
+  }
+
+  /** Send a JITO bundle. Requires the add jito tip tx be added. */
+  async sendBundle({
+    txs,
+    rateLimiter,
+    signal,
+  }: {
+    txs: (Transaction | VersionedTransaction)[];
+    rateLimiter?: RateLimiterQueue;
+    signal?: AbortSignal;
+  }): Promise<{
+    txSig: TransactionSignature | undefined;
+    bundleId: string | undefined;
+  }> {
+    const tx = txs.at(0);
+    this.txSig = tx ? txSignature(tx) ?? undefined : undefined;
+    try {
+      const { data } = await backOff(
+        async () => {
+          await rateLimiter?.removeTokens(1);
+          /** Returns bundle ID */
+          return axios.post<{ result?: string }>(
+            'https://mainnet.block-engine.jito.wtf:443/api/v1/bundles',
+            {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'sendBundle',
+              params: [txs.map((tx) => base58.encode(tx.serialize()))],
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              signal,
+            },
+          );
+        },
+        {
+          retry: (err: any, _attemptNumber: number) => {
+            if (signal?.aborted) return false;
+
+            if (
+              err?.response?.status === 400 &&
+              ['bundle contains an already processed transaction'].includes(
+                err?.response?.data?.error?.message,
+              )
+            ) {
+              // tx processed, don't proceed
+
+              // N.B. processed is not confirmed.
+              // Will this be a problem if a tx goes from processed -> block dropped?
+              return false;
+            }
+            return true;
+          },
+        },
+      );
+      const { result: bundleId } = data;
+      return { bundleId, txSig: this.txSig };
+    } catch (err: any) {
+      return { bundleId: undefined, txSig: this.txSig };
+    }
   }
 
   async tryConfirm(
