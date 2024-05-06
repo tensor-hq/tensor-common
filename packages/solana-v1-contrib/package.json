@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/solana-v1-contrib",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Utilities for Solana web3.js v1.X.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",

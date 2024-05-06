@@ -10,7 +10,6 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js';
 import { waitMS } from '@tensor-hq/ts-utils';
-import assert from 'assert';
 import bs58 from 'bs58';
 import { backOff } from 'exponential-backoff';
 import { getLatestBlockHeight } from './rpc';
@@ -48,7 +47,6 @@ type Logger = {
 type ConfirmOpts = {
   disableWs?: boolean;
 };
-
 export class RetryTxSender {
   private done = false;
   private resolveReference: ResolveReference = {
@@ -126,6 +124,16 @@ export class RetryTxSender {
         if (!this.done) {
           this.connection
             .sendRawTransaction(rawTransaction, this.opts)
+            .then(() => {
+              this.logger?.info(
+                `🚀 [${this.txSig?.substring(
+                  0,
+                  5,
+                )}] tx sent to MAIN connection, retrying in  ${
+                  this.retrySleep
+                }ms`,
+              );
+            })
             .catch((e) => {
               this.logger?.error(`${JSON.stringify(e)}`);
               this._stopWaiting();
@@ -187,7 +195,10 @@ export class RetryTxSender {
       throw new Error('signature must be base58 encoded: ' + txSig);
     }
 
-    assert(decodedSignature.length === 64, 'signature has invalid length');
+    if (decodedSignature.length !== 64)
+      throw new Error(
+        `signature has invalid length ${decodedSignature.length} (expected 64)`,
+      );
 
     this.start = Date.now();
     const subscriptionCommitment = this.opts.commitment;
@@ -211,14 +222,14 @@ export class RetryTxSender {
             );
             if (!value) {
               this.logger?.debug(
-                `[getSignatureStatus] sig status for ${txSig} not found, try again in ${this.retrySleep}`,
+                `[getSignatureStatus] sig status for ${txSig} not found, try again in ${this.retrySleep}ms`,
               );
               throw new Error(`sig status for ${txSig} not found`);
             }
             // This is possible, and the slot may != confirmed slot if minority node processed it.
             if (value.confirmationStatus === 'processed') {
               this.logger?.debug(
-                `[getSignatureStatus] sig status for ${txSig} still in processed state, try again in ${this.retrySleep}`,
+                `[getSignatureStatus] sig status for ${txSig} still in processed state, try again in ${this.retrySleep}ms`,
               );
               throw new Error(
                 `sig status for ${txSig} still in processed state`,
@@ -234,9 +245,16 @@ export class RetryTxSender {
             startingDelay: this.retrySleep,
             numOfAttempts: Math.ceil(this.timeout / this.retrySleep),
             retry: (e) => {
-              console.error(
-                `[getSignatureStatus] received error, ${e} retrying`,
-              );
+              if (
+                typeof e.message === 'string' &&
+                e.message.endsWith('not found')
+              ) {
+                this.logger?.info(`sig ${txSig} not found yet, retrying`);
+              } else {
+                console.error(
+                  `[getSignatureStatus] received error, ${e} retrying`,
+                );
+              }
               return !this.done;
             },
           },
@@ -401,6 +419,8 @@ export class RetryTxSender {
   }
 
   private _sendToAdditionalConnections(rawTx: Uint8Array): void {
+    if (!this.additionalConnections.length) return;
+
     this.additionalConnections.map((connection) => {
       connection.sendRawTransaction(rawTx, this.opts).catch((e) => {
         this.logger?.error(
