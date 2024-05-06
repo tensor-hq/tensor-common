@@ -1,5 +1,5 @@
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { prependComputeIxs } from './transaction';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
 
 // NB: When tipping make sure to not use Address Lookup Tables for the tip accounts.
 const JITO_TIP_ACCOUNTS = [
@@ -27,3 +27,19 @@ export const makeJitoTipIx = ({
     toPubkey: sampleJitoTipAccount(),
     lamports: jitoTip,
   });
+
+/**
+ * Make a jito rate limiter with 5 RPS (per IP per region).
+ * Rate limits reference:
+ * https://jito-labs.gitbook.io/mev/searcher-resources/json-rpc-api-reference/rate-limits
+ */
+export const makeJitoRateLimiter = (maxQueueSize?: number) =>
+  new RateLimiterQueue(
+    new RateLimiterMemory({
+      points: 5, // 5 RPS per IP per region
+      duration: 1,
+    }),
+    {
+      maxQueueSize,
+    },
+  );
