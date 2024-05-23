@@ -36,6 +36,7 @@ export type TransactionResponseJSON = Overwrite<
   TransactionResponse,
   {
     transaction: TransactionJSON;
+    blockTime: number;
   }
 >;
 
@@ -46,8 +47,12 @@ export type TransactionResponseLoadedAddresses = {
   };
 };
 
-export type TransactionResponseAugmented = TransactionResponse &
-  TransactionResponseLoadedAddresses;
+export type TransactionResponseAugmented = Overwrite<
+  TransactionResponse & TransactionResponseLoadedAddresses,
+  {
+    blockTime: number;
+  }
+>;
 
 export type TransactionResponseAugmentedJSON = Overwrite<
   TransactionResponseAugmented,
