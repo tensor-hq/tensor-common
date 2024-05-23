@@ -112,3 +112,11 @@ export const TLOCK_PDA_ADDR = PublicKey.findProgramAddressSync(
   [],
   TLOCK_PROGRAM_ID,
 )[0];
+
+// --------------------------------------- SPL currencies
+
+export const USDC_ADDR = new PublicKey(
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+);
+
+export const CURRENCY_ADDRS = [USDC_ADDR];

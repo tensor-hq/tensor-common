@@ -1,6 +1,6 @@
 {
   "name": "@tensor-hq/tensor-ecosystem",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Utilities, constants, and types related to the Tensor ecosystem.",
   "sideEffects": false,
   "module": "./dist/esm/index.js",
