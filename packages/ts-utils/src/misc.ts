@@ -150,6 +150,16 @@ export const dedupeList = <T, K>(
   return out;
 };
 
+/** Maps `fn` over `arr` while filtering out null-like values. */
+export const mapRemoveNulls = <T, U>(arr: T[], fn: (e: T) => Maybe<U>) => {
+  return arr.reduce<U[]>((acc, e) => {
+    const r = fn(e);
+    if (isNullLike(r)) return acc;
+    acc.push(r);
+    return acc;
+  }, []);
+};
+
 export const parseDate = (date: string | Date) => {
   return new Date(date);
 };
