@@ -182,6 +182,7 @@ export type TakeCompressedArgs = {
   whitelist?: PublicKey | null;
   delegateSigner?: boolean;
   cosigner?: PublicKey | null;
+  feePayer?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
@@ -224,6 +225,7 @@ export type TakeCompressedArgsSerialized = {
   whitelist?: string | null;
   delegateSigner?: boolean;
   cosigner?: string | null;
+  feePayer?: string | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
@@ -329,6 +331,7 @@ export function deserializeTakeCompressedArgs(
     whitelist: args.whitelist ? new PublicKey(args.whitelist) : null,
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? new PublicKey(args.cosigner) : null,
+    feePayer: args.feePayer ? new PublicKey(args.feePayer) : null,
     blockhash: args.blockhash,
     extMeta: args.extMeta,
   };
@@ -383,6 +386,7 @@ export type TakeNonCompressedArgsSerialized = {
   rentDest: string;
   whitelist?: string | null;
   cosigner?: string | null;
+  feePayer?: string | null;
   blockhash?: string;
   extMeta: {
     name?: Maybe<string>;
