@@ -280,6 +280,7 @@ export function serializeTakeCompressedArgs(
     whitelist: args.whitelist ? args.whitelist.toString() : null,
     delegateSigner: args.delegateSigner,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
+    feePayer: args.feePayer ? args.feePayer.toString() : null,
     blockhash: args.blockhash,
     extMeta: args.extMeta,
   };
@@ -354,6 +355,7 @@ export type TakeNonCompressedArgs = {
   rentDest: PublicKey;
   whitelist?: PublicKey | null;
   cosigner?: PublicKey | null;
+  feePayer?: PublicKey | null;
   blockhash?: string;
   /** in case fetch times out (eg IPFS no longer hosted), fallback to this */
   extMeta: {
@@ -412,6 +414,7 @@ export function serializeTakeNonCompressedArgs(
     rentDest: args.rentDest.toString(),
     whitelist: args.whitelist ? args.whitelist.toString() : null,
     cosigner: args.cosigner ? args.cosigner.toString() : null,
+    feePayer: args.feePayer ? args.feePayer.toString() : null,
     authData: args.authData, // Assuming no transformation needed for AuthorizationData type
     compute: args.compute,
     ruleSetAddnCompute: args.ruleSetAddnCompute,
@@ -439,6 +442,7 @@ export function deserializeTakeNonCompressedArgs(
     rentDest: new PublicKey(args.rentDest),
     whitelist: args.whitelist ? new PublicKey(args.whitelist) : null,
     cosigner: args.cosigner ? new PublicKey(args.cosigner) : null,
+    feePayer: args.feePayer ? new PublicKey(args.feePayer) : null,
     // PnftArgs fields:
     authData: args.authData, // Assuming no transformation needed for AuthorizationData type
     compute: args.compute,
