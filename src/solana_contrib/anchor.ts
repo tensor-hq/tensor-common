@@ -153,6 +153,16 @@ export const parseAnchorEvents = <IDL extends Idl>(
 
   let latestIxName: string | null = null;
   let ixSeq = -1;
+  let matchedIxCount = 0;
+
+  // Count the number of expected matched logs
+  for (let idx = 0; idx < logs.length; idx++) {
+    const invokeMatch = logs[idx].match(invokeRegex);
+    if (invokeMatch?.at(1) === programId.toBase58()) {
+      matchedIxCount++;
+    }
+  }
+
   const events: ParsedAnchorEvent<IDL>[] = [];
   for (let idx = 0; idx < logs.length; idx++) {
     const invokeMatch = logs[idx].match(invokeRegex);
@@ -176,6 +186,11 @@ export const parseAnchorEvents = <IDL extends Idl>(
         ixSeq,
         event: parsedEvent.value as AnchorEvent<IDL>,
       });
+
+      if (events.length === matchedIxCount) {
+        break;
+      }
+
       parsedEvent = parsedLogsIter.next();
     }
   }
