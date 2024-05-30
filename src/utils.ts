@@ -66,7 +66,7 @@ export const unflattenFields = (record: Record<string, any>) => {
   return ret;
 };
 
-//https://stackoverflow.com/questions/34309988/byte-array-to-hex-string-conversion-in-javascript
+//https://stackoverflow.com/questions/34309988/ byte-array-to-hex-string-conversion-in-javascript
 export const toHexString = (byteArray: number[]): string => {
   return Array.from(byteArray, function (byte) {
     return ('0' + (byte & 0xff).toString(16)).slice(-2);

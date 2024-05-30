@@ -181,6 +181,7 @@ export type TakeCompressedArgs = {
   whitelist?: PublicKey | null;
   delegateSigner?: boolean;
   cosigner?: PublicKey | null;
+  feePayer?: PublicKey | null;
   blockhash?: string;
 };
 
@@ -218,6 +219,7 @@ export type TakeCompressedArgsSerialized = {
   whitelist?: string | null;
   delegateSigner?: boolean;
   cosigner?: string | null;
+  feePayer?: PublicKey;
   blockhash?: string;
 };
 
@@ -328,6 +330,7 @@ export function deserializeTakeCompressedArgs(
       : null,
     delegateSigner: serialized.delegateSigner,
     cosigner: serialized.cosigner ? new PublicKey(serialized.cosigner) : null,
+    feePayer: serialized.feePayer ? new PublicKey(serialized.feePayer) : null,
     blockhash: serialized.blockhash,
   };
 }
