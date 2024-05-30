@@ -81,6 +81,31 @@ describe('Anchor Tests', () => {
     });
   };
 
+  const expectClaynoBuySellTx = (
+    buyEvent: ParsedAnchorEvent<Tensorswap>,
+    sellEvent: ParsedAnchorEvent<Tensorswap>,
+  ) => {
+    expect(buyEvent.ixName).eq('buySingleListing');
+    expect(buyEvent.ixSeq).eq(0);
+    expect(buyEvent.event!.name).eq('BuySellEvent');
+    expect(stringifyPKsAndBNs(buyEvent.event!.data)).eql({
+      currentPrice: '9100000000',
+      mmFee: '0',
+      tswapFee: '136500000',
+      creatorsFee: '455000000',
+    });
+
+    expect(sellEvent.ixName).eq('sellNftTokenPool');
+    expect(sellEvent.ixSeq).eq(1);
+    expect(sellEvent.event!.name).eq('BuySellEvent');
+    expect(stringifyPKsAndBNs(sellEvent.event!.data)).eql({
+      currentPrice: '10420000000',
+      mmFee: '0',
+      tswapFee: '156300000',
+      creatorsFee: '521000000',
+    });
+  };
+
   describe('genIxDiscHexMap', () => {
     it('works for TCOMP', () => {
       const ixDisc = genIxDiscHexMap(IDL_TComp);
@@ -211,6 +236,38 @@ describe('Anchor Tests', () => {
         },
         {
           ixName: 'sellNftTradePool',
+          ixSeq: 1,
+          event: ixs[1].events[0],
+        },
+      );
+    });
+
+    it('parses 2 ixs in 1 tx', () => {
+      const tx: TransactionResponse = convertTxToLegacy(
+        require('./test_data/clayno_sale.json'),
+      );
+      const ixs = parseAnchorIxs<Tensorswap>({
+        coder,
+        tx,
+        programId: tswap,
+        eventParser,
+      });
+      expect(ixs).length(2);
+      expect(ixs[0].ix.name).eq('buySingleListing');
+      expect(ixs[0].events).length(1);
+      expect(ixs[0].noopIxs).undefined;
+      expect(ixs[1].ix.name).eq('sellNftTokenPool');
+      expect(ixs[1].events).length(1);
+      expect(ixs[1].noopIxs).undefined;
+
+      expectClaynoBuySellTx(
+        {
+          ixName: 'buySingleListing',
+          ixSeq: 0,
+          event: ixs[0].events[0],
+        },
+        {
+          ixName: 'sellNftTokenPool',
           ixSeq: 1,
           event: ixs[1].events[0],
         },
