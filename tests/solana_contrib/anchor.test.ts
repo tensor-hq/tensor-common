@@ -242,7 +242,7 @@ describe('Anchor Tests', () => {
       );
     });
 
-    it('parses 2 ixs in 1 tx', () => {
+    it('parses clayno sale tx', () => {
       const tx: TransactionResponse = convertTxToLegacy(
         require('./test_data/clayno_sale.json'),
       );
