@@ -159,7 +159,6 @@ export const parseAnchorEvents = <IDL extends Idl>(
   for (let idx = 0; idx < logs.length; idx++) {
     const invokeMatch = logs[idx].match(invokeRegex);
     if (invokeMatch?.at(1) === programId.toBase58()) {
-      idx++;
       matchedIxCount++;
     }
   }
