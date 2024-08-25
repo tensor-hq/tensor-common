@@ -9,7 +9,7 @@ import {
   createExecuteSaleInstruction,
   createSellInstruction,
 } from '@metaplex-foundation/mpl-auction-house';
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+import { fetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
 import {
   createAssociatedTokenAccountInstruction,
   getAssociatedTokenAddress,
@@ -30,6 +30,8 @@ import {
 import { buildTx } from '../../solana_contrib';
 import { TxWithHeight } from '../../solana_contrib/types';
 import { getQuantityWithMantissa } from './shared';
+import { publicKey, unwrapOption } from '@metaplex-foundation/umi';
+import { defaultUmi } from 'src/utils';
 
 export const makeAHAcceptBidTx = async (
   connections: Array<Connection>,
@@ -164,14 +166,14 @@ export const makeAHAcceptBidTx = async (
   );
 
   //add creators for royalty payments
-  const metadataDecoded = await Metadata.fromAccountAddress(
-    connection,
-    metadata,
+  const metadataDecoded = await fetchMetadata(
+    defaultUmi,
+    publicKey(metadata),
   );
 
-  for (let i = 0; i < metadataDecoded.data.creators!.length; i++) {
+  for (let i = 0; i < unwrapOption(metadataDecoded.creators)!.length; i++) {
     execSaleIx.keys.push({
-      pubkey: new PublicKey(metadataDecoded.data.creators![i].address),
+      pubkey: new PublicKey(unwrapOption(metadataDecoded.creators)![i].address),
       isWritable: true,
       isSigner: false,
     });

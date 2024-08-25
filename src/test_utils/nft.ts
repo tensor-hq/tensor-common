@@ -1,13 +1,13 @@
 import {
-  createCreateInstruction,
-  CreateInstructionAccounts,
-  CreateInstructionArgs,
-  createMintInstruction,
-  createVerifyInstruction,
-  MintInstructionAccounts,
-  MintInstructionArgs,
+  createV1,
+  CreateV1InstructionAccounts,
+  CreateV1InstructionArgs,
+  mintV1,
+  verifyCollectionV1,
+  verifyCreatorV1,
+  MintV1InstructionAccounts,
+  MintV1InstructionArgs,
   TokenStandard,
-  VerificationArgs,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -20,16 +20,15 @@ import {
   Keypair,
   PublicKey,
   Signer,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
 } from '@solana/web3.js';
 import {
-  AUTH_PROGRAM_ID,
   findMasterEditionPda,
   findMetadataPda,
   findTokenRecordPda,
 } from '../metaplex';
-import { dedupeList, filterNullLike } from '../utils';
+import { dedupeList, defaultUmi, filterNullLike } from '../utils';
 import { buildAndSendTx, createFundedWallet } from './tx';
+import { createNoopSigner, publicKey } from '@metaplex-foundation/umi';
 
 export const createAta = async ({
   conn,
@@ -93,57 +92,54 @@ export const createNft = async ({
   const [metadata] = findMetadataPda(mint.publicKey);
   const [masterEdition] = findMasterEditionPda(mint.publicKey);
 
-  const accounts: CreateInstructionAccounts = {
-    metadata,
-    masterEdition,
-    mint: mint.publicKey,
-    authority: owner.publicKey,
-    payer: owner.publicKey,
-    splTokenProgram: TOKEN_PROGRAM_ID,
-    sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-    updateAuthority: owner.publicKey,
+  const accounts: CreateV1InstructionAccounts = {
+    metadata: publicKey(metadata),
+    masterEdition: publicKey(masterEdition),
+    mint: publicKey(mint.publicKey),
+    authority: createNoopSigner(publicKey(owner.publicKey)),
+    payer: createNoopSigner(publicKey(owner.publicKey)),
+    updateAuthority: createNoopSigner(publicKey(owner.publicKey)),
   };
 
-  const args: CreateInstructionArgs = {
-    createArgs: {
-      __kind: 'V1',
-      assetData: {
-        name: 'Whatever',
-        symbol: 'TSR',
-        uri: 'https://www.tensor.trade',
-        sellerFeeBasisPoints: royaltyBps ?? 0,
-        creators:
-          creators?.map((c) => {
-            return {
-              address: c.address,
-              share: c.share,
-              verified: false,
-            };
-          }) ?? null,
-        primarySaleHappened: true,
-        isMutable: true,
-        tokenStandard,
-        collection: collection
-          ? {
-              verified: false,
-              key: collection.publicKey,
-            }
-          : null,
-        uses: null,
-        collectionDetails: null,
-        ruleSet,
-      },
-      decimals: 0,
-      printSupply: { __kind: 'Zero' },
+  const args: CreateV1InstructionArgs = {
+    name: 'Whatever',
+    symbol: 'TSR',
+    uri: 'https://www.tensor.trade',
+    sellerFeeBasisPoints: {
+      basisPoints: royaltyBps ? BigInt(royaltyBps) : BigInt(0),
+      identifier: "%",
+      decimals: 2,
     },
+    creators:
+      creators?.map((c) => {
+        return {
+          address: publicKey(c.address),
+          share: c.share,
+          verified: false,
+        };
+      }) ?? null,
+    primarySaleHappened: true,
+    isMutable: true,
+    tokenStandard,
+    collection: collection
+      ? {
+          verified: false,
+          key: publicKey(collection.publicKey),
+        }
+      : null,
+    uses: null,
+    collectionDetails: null,
+    ruleSet: ruleSet ? publicKey(ruleSet) : null,
+  decimals: 0,
+  printSupply: { __kind: 'Zero' },
   };
 
-  const createIx = createCreateInstruction(accounts, args);
+  const createIx = createV1(defaultUmi, { ...accounts, ...args }).getInstructions()[0];
 
   // this test always initializes the mint, we we need to set the
   // account to be writable and a signer
   for (let i = 0; i < createIx.keys.length; i++) {
-    if (createIx.keys[i].pubkey.toBase58() === mint.publicKey.toBase58()) {
+    if (new PublicKey(createIx.keys[i].pubkey) == mint.publicKey) {
       createIx.keys[i].isSigner = true;
       createIx.keys[i].isWritable = true;
     }
@@ -155,55 +151,46 @@ export const createNft = async ({
   const ata = getAssociatedTokenAddressSync(mint.publicKey, owner.publicKey);
 
   const [tokenRecord] = findTokenRecordPda(mint.publicKey, ata);
-  const mintAcccounts: MintInstructionAccounts = {
-    token: ata,
-    tokenOwner: owner.publicKey,
-    metadata,
-    masterEdition,
-    tokenRecord,
-    mint: mint.publicKey,
-    payer: owner.publicKey,
-    authority: owner.publicKey,
-    sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-    splAtaProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    splTokenProgram: TOKEN_PROGRAM_ID,
-    authorizationRules: ruleSet ?? undefined,
-    authorizationRulesProgram: AUTH_PROGRAM_ID,
+  const mintAcccounts: MintV1InstructionAccounts = {
+    token: publicKey(ata),
+    tokenOwner: publicKey(owner.publicKey),
+    metadata: publicKey(metadata),
+    masterEdition: publicKey(masterEdition),
+    tokenRecord: publicKey(tokenRecord),
+    mint: publicKey(mint.publicKey),
+    payer: createNoopSigner(publicKey(owner.publicKey)),
+    authority: createNoopSigner(publicKey(owner.publicKey)),
+    authorizationRules: ruleSet ? publicKey(ruleSet): undefined,
   };
 
   const payload = {
     map: new Map(),
   };
 
-  const mintArgs: MintInstructionArgs = {
-    mintArgs: {
-      __kind: 'V1',
+  const mintArgs: MintV1InstructionArgs = {    
       amount: 1,
       authorizationData: {
         payload,
       },
-    },
+      tokenStandard,
   };
 
-  const mintIx = createMintInstruction(mintAcccounts, mintArgs);
+  const mintIx = mintV1(defaultUmi, {...mintAcccounts, ...mintArgs}).getInstructions()[0];
   // Have to do separately o/w for regular NFTs it'll complain about
   // collection verified can't be set.
   const verifyCollIxs =
     collection && collectionVerified
       ? [
-          createVerifyInstruction(
+        verifyCollectionV1(
+          defaultUmi,
             {
-              authority: owner.publicKey,
-              metadata,
-              collectionMint: collection.publicKey,
-              collectionMetadata: findMetadataPda(collection.publicKey)[0],
-              collectionMasterEdition: findMasterEditionPda(
+              authority: createNoopSigner(publicKey(owner.publicKey)),
+              metadata: publicKey(metadata),
+              collectionMint: publicKey(collection.publicKey),
+              collectionMetadata: publicKey(findMetadataPda(collection.publicKey)[0]),
+              collectionMasterEdition: publicKey(findMasterEditionPda(
                 collection.publicKey,
-              )[0],
-              sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-            },
-            {
-              verificationArgs: VerificationArgs.CollectionV1,
+              )[0])
             },
           ),
         ]
@@ -212,14 +199,11 @@ export const createNft = async ({
   const verifyCreatorIxs = filterNullLike(
     creators?.map((c) => {
       if (!c.authority) return;
-      return createVerifyInstruction(
+      return verifyCreatorV1(
+        defaultUmi,
         {
-          metadata,
-          authority: c.authority.publicKey,
-          sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        },
-        {
-          verificationArgs: VerificationArgs.CreatorV1,
+          metadata: publicKey(metadata),
+          authority: createNoopSigner(publicKey(c.authority.publicKey)),
         },
       );
     }) ?? [],
@@ -230,7 +214,18 @@ export const createNft = async ({
   await buildAndSendTx({
     conn,
     payer,
-    ixs: [createIx, mintIx, ...verifyCollIxs, ...verifyCreatorIxs],
+    ixs: [createIx, mintIx, ...verifyCollIxs.map((builder) => builder.getInstructions()).flat(), ...verifyCreatorIxs.map((builder) => builder.getInstructions()).flat()].map((instruction) => {
+      return {
+        keys: instruction.keys.map((meta) => {
+          return {
+            ...meta,
+            pubkey: new PublicKey(meta.pubkey),
+          }
+        }),
+        programId: new PublicKey(instruction.programId),
+        data: Buffer.from(instruction.data),
+      }
+    }),
     extraSigners: dedupeList(
       filterNullLike([
         owner,

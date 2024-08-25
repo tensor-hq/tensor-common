@@ -1,3 +1,4 @@
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import semaphore from 'semaphore';
 
 export class TimeoutError extends Error {}
@@ -229,3 +230,5 @@ export const removeUndefinedKeys = (obj: object) => {
   }
   return newObj;
 };
+
+export const defaultUmi = createUmi("https://api.mainnet-beta.solana.com/");

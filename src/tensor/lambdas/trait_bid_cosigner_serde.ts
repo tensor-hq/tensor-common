@@ -1,9 +1,10 @@
 import BN from 'bn.js';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { Creator, UseMethod } from '@metaplex-foundation/mpl-token-metadata';
+import { Collection, Creator, UseMethod, Uses } from '@metaplex-foundation/mpl-token-metadata';
 import type { MetadataArgs } from '@metaplex-foundation/mpl-bubblegum';
 import { Attribute, PnftArgs } from '..';
 import { Maybe } from '../..';
+import { isSome, none, publicKey, some, unwrapOption } from '@metaplex-foundation/umi';
 
 // TODO: imported from tcomp-ts, since we dont have it in tensor-common
 
@@ -91,10 +92,10 @@ function serializeMetadataArgs(args: MetadataArgs): MetadataArgsSerialized {
     editionNonce: args.editionNonce,
     tokenStandard: args.tokenStandard,
     tokenProgramVersion: args.tokenProgramVersion,
-    collection: args.collection
+    collection: isSome(args.collection)
       ? {
-          key: args.collection.key.toString(),
-          verified: args.collection.verified,
+          key: unwrapOption(args.collection)!.key.toString(),
+          verified: unwrapOption(args.collection)!.verified,
         }
       : null,
     creators: args.creators.map((creator) => ({
@@ -102,11 +103,11 @@ function serializeMetadataArgs(args: MetadataArgs): MetadataArgsSerialized {
       verified: creator.verified,
       share: creator.share,
     })),
-    uses: args.uses
+    uses: isSome(args.uses)
       ? {
-          useMethod: args.uses.useMethod,
-          remaining: args.uses.remaining.toString(),
-          total: args.uses.total.toString(),
+          useMethod: unwrapOption(args.uses)!.useMethod,
+          remaining: unwrapOption(args.uses)!.remaining.toString(),
+          total: unwrapOption(args.uses)!.total.toString(),
         }
       : null,
   };
@@ -126,23 +127,23 @@ function deserializeMetadataArgs(
     tokenStandard: serialized.tokenStandard,
     tokenProgramVersion: serialized.tokenProgramVersion,
     collection: serialized.collection
-      ? {
-          key: new PublicKey(serialized.collection.key),
+      ? some({
+          key: serialized.collection.key,
           verified: serialized.collection.verified,
-        }
-      : null,
+        } as Collection)
+      : none(),
     creators: serialized.creators.map((creator) => ({
-      address: new PublicKey(creator.address),
+      address: publicKey(creator.address),
       verified: creator.verified,
       share: creator.share,
     })),
     uses: serialized.uses
-      ? {
+      ? some({
           useMethod: serialized.uses.useMethod,
-          remaining: new BN(serialized.uses.remaining),
-          total: new BN(serialized.uses.total),
-        }
-      : null,
+          remaining: BigInt(serialized.uses.remaining),
+          total: BigInt(serialized.uses.total),
+        } as Uses)
+      : none(),
   };
 }
 
@@ -297,7 +298,7 @@ export function deserializeTakeCompressedArgs(
             data: {
               metaHash: Buffer.from(args.targetData.data.metaHash),
               creators: args.targetData.data.creators.map((creator) => ({
-                address: new PublicKey(creator.address),
+                address: publicKey(creator.address),
                 verified: creator.verified,
                 share: creator.share,
               })),

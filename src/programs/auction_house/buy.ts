@@ -11,7 +11,7 @@ import {
   createExecuteSaleInstruction,
   PROGRAM_ID,
 } from '@metaplex-foundation/mpl-auction-house';
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+import { fetchMetadata } from '@metaplex-foundation/mpl-token-metadata';
 import {
   createAssociatedTokenAccountInstruction,
   getAccount,
@@ -22,7 +22,6 @@ import {
   Keypair,
   PublicKey,
   SystemProgram,
-  Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -35,6 +34,8 @@ import {
   findAuctionHouseTradeStatePda,
   findMetadataPda,
 } from '../../metaplex';
+import { defaultUmi } from 'src/utils';
+import { publicKey, unwrapOption } from '@metaplex-foundation/umi';
 
 export const makeAHBuyTx = async (
   connections: Array<Connection>,
@@ -195,14 +196,14 @@ export const makeAHBuyTx = async (
   );
 
   //add creators for royalty payments
-  const metadataDecoded = await Metadata.fromAccountAddress(
-    connection,
-    metadata,
+  const metadataDecoded = await fetchMetadata(
+    defaultUmi,
+    publicKey(metadata),
   );
 
-  for (let i = 0; i < metadataDecoded.data.creators!.length; i++) {
+  for (let i = 0; i < unwrapOption(metadataDecoded.creators)!.length; i++) {
     execSaleIx.keys.push({
-      pubkey: new PublicKey(metadataDecoded.data.creators![i].address),
+      pubkey: new PublicKey(unwrapOption(metadataDecoded.creators)![i].address),
       isWritable: true,
       isSigner: false,
     });

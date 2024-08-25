@@ -28,6 +28,7 @@ import {
   findDataEscrowPda,
   findRoyaltiesPda,
 } from './shared';
+import { isSome, unwrapOption } from '@metaplex-foundation/umi';
 
 export const makeSolanartBuyTx = async ({
   connections,
@@ -169,15 +170,15 @@ export const makeSolanartBuyTx = async ({
   ///  + `[writable]` Creator wallets (up to 5) - all creators
   ///
 
-  metadata.data.creators?.forEach((creator) => {
+  unwrapOption(metadata.creators)?.forEach((creator) => {
     instructionAccounts.push({
-      pubkey: creator.address,
+      pubkey: new PublicKey(creator.address),
       isSigner: false,
       isWritable: true,
     });
   });
 
-  if (metadata.tokenStandard === TokenStandard.ProgrammableNonFungible) {
+  if (unwrapOption(metadata.tokenStandard) === TokenStandard.ProgrammableNonFungible) {
     const { ruleSet, nftEditionPda, ownerTokenRecordPda, destTokenRecordPda } =
       await prepPnftAccounts({
         connection,
@@ -227,9 +228,9 @@ export const makeSolanartBuyTx = async ({
       ],
     );
 
-    if (ruleSet) {
+    if (ruleSet && isSome(ruleSet)) {
       instructionAccounts.push({
-        pubkey: ruleSet,
+        pubkey: new PublicKey(unwrapOption(ruleSet)!),
         isSigner: false,
         isWritable: false,
       });
