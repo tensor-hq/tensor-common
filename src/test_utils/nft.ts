@@ -40,7 +40,11 @@ export const createAta = async ({
   payer: Keypair;
   mint: PublicKey;
   owner: Keypair;
-}) => {
+}): Promise<{
+  mint: PublicKey;
+  owner: Keypair;
+  ata: PublicKey;
+}>  => {
   const ata = getAssociatedTokenAddressSync(mint, owner.publicKey);
   const createAtaIx = createAssociatedTokenAccountInstruction(
     owner.publicKey,
@@ -87,7 +91,11 @@ export const createNft = async ({
   collection?: Keypair;
   collectionVerified?: boolean;
   ruleSet?: PublicKey | null;
-}) => {
+}): Promise<{
+  ata: PublicKey;
+  metadata: PublicKey;
+  masterEdition: PublicKey;
+}> => {
   // --------------------------------------- create
   const [metadata] = findMetadataPda(mint.publicKey);
   const [masterEdition] = findMasterEditionPda(mint.publicKey);
@@ -345,7 +353,9 @@ export const makeMintTwoAta = async ({
   createCollection?: boolean;
   programmable?: boolean;
   ruleSetAddr?: PublicKey;
-}) => {
+}): Promise<Partial<Awaited<ReturnType<typeof createAndFundAta>>> & {
+  otherAta: PublicKey;
+}>  => {
   const { mint, ata, metadata, masterEdition, collectionInfo } =
     await createAndFundAta({
       conn,

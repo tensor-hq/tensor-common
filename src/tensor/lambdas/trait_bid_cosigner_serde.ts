@@ -29,7 +29,7 @@ type SerializedInstruction = {
   data: number[];
 };
 
-function serializeInstruction(instruction: TransactionInstruction) {
+function serializeInstruction(instruction: TransactionInstruction): SerializedInstruction {
   return {
     programId: instruction.programId.toString(),
     keys: instruction.keys.map((keyObj) => ({
@@ -41,7 +41,7 @@ function serializeInstruction(instruction: TransactionInstruction) {
   };
 }
 
-function deserializeInstruction(serialized: SerializedInstruction) {
+function deserializeInstruction(serialized: SerializedInstruction): TransactionInstruction {
   return {
     programId: new PublicKey(serialized.programId),
     keys: serialized.keys.map((keyObj) => ({

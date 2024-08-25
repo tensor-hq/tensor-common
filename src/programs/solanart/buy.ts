@@ -228,9 +228,9 @@ export const makeSolanartBuyTx = async ({
       ],
     );
 
-    if (ruleSet && isSome(ruleSet)) {
+    if (ruleSet && ruleSet) {
       instructionAccounts.push({
-        pubkey: new PublicKey(unwrapOption(ruleSet)!),
+        pubkey: new PublicKey(ruleSet),
         isSigner: false,
         isWritable: false,
       });

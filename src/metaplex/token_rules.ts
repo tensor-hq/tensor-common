@@ -6,16 +6,40 @@ import {
   TransferArgs,
   TransferV1InstructionAccounts,
   TransferV1InstructionArgs,
+  Creator,
+  PayloadType,
 } from '@metaplex-foundation/mpl-token-metadata';
 import {
   Connection,
   PublicKey,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import { publicKey, createNoopSigner, unwrapOption, isSome, none } from '@metaplex-foundation/umi';
 import { findEditionPda, findTokenRecordPda } from './pdas';
 import { fetchMetadataByMint } from './token_metadata';
 import { defaultUmi } from '../utils';
+import { toWeb3JsInstruction } from '@metaplex-foundation/umi-web3js-adapters';
 export { AuthorizationData } from '@metaplex-foundation/mpl-token-metadata';
+
+export type PnftAccountsReturn = {
+  meta: {
+    address: PublicKey;
+    metadata: Metadata | null;
+  };
+  creators: Creator[];
+  ruleSet?: PublicKey;
+  ownerTokenRecordBump: number;
+  ownerTokenRecordPda: PublicKey;
+  destTokenRecordBump: number;
+  destTokenRecordPda: PublicKey;
+  nftEditionPda: PublicKey;
+  authDataSerialized?: {
+    payload: {
+      name: string;
+      payload: PayloadType;
+    }[];
+  } | null;
+}
 
 export const prepPnftAccounts = async ({
   connection,
@@ -35,7 +59,7 @@ export const prepPnftAccounts = async ({
   sourceAta: PublicKey;
   destAta: PublicKey;
   authData?: AuthorizationData | null;
-}) => {
+}): Promise<PnftAccountsReturn> => {
   if (!meta) {
     const { address, metadata } = await fetchMetadataByMint(
       connection,
@@ -74,8 +98,8 @@ export const prepPnftAccounts = async ({
 
   return {
     meta,
-    creators,
-    ruleSet,
+    creators: unwrapOption(creators) ?? [],
+    ruleSet: ruleSet && isSome(ruleSet) ? new PublicKey(unwrapOption(ruleSet)!) : undefined,
     ownerTokenRecordBump,
     ownerTokenRecordPda,
     destTokenRecordBump,
@@ -105,7 +129,7 @@ export const makePnftTransferIx = async ({
   fromAddr: PublicKey;
   toAddr: PublicKey;
   tokenProgram: PublicKey;
-}) => {
+}): Promise<TransactionInstruction> => {
   const {
     meta,
     ruleSet,
@@ -130,7 +154,7 @@ export const makePnftTransferIx = async ({
     destinationToken: publicKey(toAddr),
     payer: createNoopSigner(publicKey(tokenOwner)),
     splTokenProgram: publicKey(tokenProgram),
-    authorizationRules: isSome(ruleSet ?? none()) ? publicKey(unwrapOption(ruleSet!)!): undefined,
+    authorizationRules: ruleSet ? publicKey(ruleSet) : undefined,
     tokenRecord: publicKey(ownerTokenRecordPda),
     destinationTokenRecord: publicKey(destTokenRecordPda),
   };
@@ -150,7 +174,6 @@ export const makePnftTransferIx = async ({
     amount: 1,
     tokenStandard: TokenStandard.ProgrammableNonFungible,
   }
-  const transferIx = transferV1(defaultUmi, {...transferAcccounts, ...transferArgs});
-
-  return transferIx;
+  const transferIx = transferV1(defaultUmi, {...transferAcccounts, ...transferArgs}).getInstructions()[0];
+  return toWeb3JsInstruction(transferIx);
 };
