@@ -37,6 +37,7 @@ import {
   Maybe,
   Overwrite,
   filterNullLike,
+  isNullLike,
   makeBatches,
   settleAllWithTimeout,
 } from '../utils';
@@ -148,6 +149,9 @@ export const castMessageJSON = (msg: Message): TransactionMessageJSON => {
 export class RetryTxSender {
   private done = false;
   private resolveReference: ResolveReference = {
+    resolve: undefined,
+  };
+  private cancelReference: ResolveReference = {
     resolve: undefined,
   };
   private start?: number;
@@ -267,6 +271,12 @@ export class RetryTxSender {
     }
   }
 
+  cancelConfirm() {
+    if (this.cancelReference.resolve) {
+      this.cancelReference.resolve();
+    }
+  }
+
   private async _confirmTransaction(
     txSig: TransactionSignature,
     lastValidBlockHeight?: number,
@@ -289,6 +299,7 @@ export class RetryTxSender {
     const subscriptionCommitment = this.opts.commitment;
 
     const subscriptionIds = new Array<number | undefined>();
+    const wsResolveRefs = new Array<ResolveReference>();
     const connections = [this.connection, ...this.additionalConnections];
     let response: RpcResponseAndContext<SignatureResult> | null = null;
 
@@ -348,8 +359,9 @@ export class RetryTxSender {
 
         if (opts?.disableWs) return [pollPromise];
 
-        const wsPromise = new Promise((resolve) => {
+        const wsPromise = new Promise<null>((resolve) => {
           try {
+            wsResolveRefs.push({ resolve: () => resolve(null) });
             subscriptionId = connection.onSignature(
               txSig,
               (result: SignatureResult, context: Context) => {
@@ -384,10 +396,11 @@ export class RetryTxSender {
       );
     } finally {
       for (const [i, subscriptionId] of subscriptionIds.entries()) {
-        if (subscriptionId) {
+        if (!isNullLike(subscriptionId)) {
           connections[i].removeSignatureListener(subscriptionId);
         }
       }
+      wsResolveRefs.forEach((resolveRef) => resolveRef.resolve?.());
     }
 
     const duration = (Date.now() - this.start) / 1000;
@@ -476,14 +489,26 @@ export class RetryTxSender {
     lastValidBlockHeight?: number,
   ): Promise<T | null> {
     let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutResolve: (value: PromiseLike<null> | null) => void;
     const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutResolve = resolve;
       timeoutId = setTimeout(() => {
         this.logger?.warn(`[${txSig}] timeout waiting for sig`);
         resolve(null);
       }, timeoutMs);
     });
 
-    const promisesToRace = [...promises, timeoutPromise];
+    let cancelResolve: (value: PromiseLike<null> | null) => void;
+    const cancelPromise = new Promise<null>((resolve) => {
+      cancelResolve = resolve;
+      this.cancelReference.resolve = () => {
+        const errMsg = `[${txSig}] ⚠️ confirmation CANCELLED`;
+        this.logger?.warn(errMsg);
+        resolve(null);
+      };
+    });
+
+    const promisesToRace = [...promises, timeoutPromise, cancelPromise];
     if (lastValidBlockHeight) {
       promisesToRace.push(
         this._outdatedBlockHeightPromise(lastValidBlockHeight),
@@ -491,7 +516,9 @@ export class RetryTxSender {
     }
 
     return Promise.race(promisesToRace).then((result: T | null) => {
+      timeoutResolve(null);
       clearTimeout(timeoutId);
+      cancelResolve(null);
       return result;
     });
   }
