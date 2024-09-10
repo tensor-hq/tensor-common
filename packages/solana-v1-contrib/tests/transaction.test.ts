@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { convertTxToLegacy } from '../src/transaction';
-import { Connection } from '@solana/web3.js';
 
 describe('Transaction Tests', () => {
   describe('convertTxToLegacy', () => {
