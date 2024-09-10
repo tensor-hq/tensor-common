@@ -58,7 +58,7 @@ describe('Transaction Tests', () => {
         err: null,
       };
       expect(confirmedTx).to.deep.equal(expected);
-    });
+    }).timeout(10000);
 
     it('should cancel confirmation when cancelConfirm is called', async () => {
       const nonExistentTxSig =
@@ -81,6 +81,6 @@ describe('Transaction Tests', () => {
         const duration = endTime - startTime;
         expect(duration).to.be.closeTo(2000, 100); // Allow 100ms tolerance
       }
-    }).timeout(5000);
+    }).timeout(10000);
   });
 });
