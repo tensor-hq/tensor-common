@@ -1,7 +1,8 @@
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
+import { Key, Metadata, fetchMetadata as fetchMetadataMplx } from '@metaplex-foundation/mpl-token-metadata';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { findMetadataPda } from './pdas';
-
+import { findMetadataPda } from './pdas'; 
+import { publicKey } from '@metaplex-foundation/umi';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
 export const findMetadataFromMint = (mint: string | PublicKey) => {
   return findMetadataPda(new PublicKey(mint))[0];
 };
@@ -34,24 +35,17 @@ export const getMetadataErrType = (err: any) => {
   return MetadataErrType.Unknown;
 };
 
-/** Handles burned but non-empty metadata accounts */
-export const deserializeMeta = (data: Uint8Array | Buffer): Metadata | null => {
-  // NFT + metadata has been burned. The account may not be empty yet b/c 0.01 fee has not been collected yet.
-  if (data[0] === 0) return null;
-  return Metadata.deserialize(Buffer.from(data))[0];
-};
-
 /** Fetches Metadata account and handles zero'ed out accounts w/ Metaplex fee remaining */
 export const fetchMetadata = async (
   conn: Connection,
   address: PublicKey,
 ): Promise<Metadata | null> => {
   try {
-    const acct = await conn.getAccountInfo(address);
-    if (!acct) {
+    const acct = await fetchMetadataMplx(createUmi(conn.rpcEndpoint), publicKey(address));
+    if (!acct || acct.key === Key.Uninitialized) {
       return null;
     }
-    return deserializeMeta(acct.data);
+    return acct;
   } catch (err: any) {
     const errType = getMetadataErrType(err);
     switch (errType) {

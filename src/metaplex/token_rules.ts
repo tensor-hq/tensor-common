@@ -1,21 +1,45 @@
 import {
   AuthorizationData,
-  createTransferInstruction,
+  transferV1,
   Metadata,
+  TokenStandard,
   TransferArgs,
-  TransferInstructionAccounts,
-  TransferInstructionArgs,
+  TransferV1InstructionAccounts,
+  TransferV1InstructionArgs,
+  Creator,
+  PayloadType,
 } from '@metaplex-foundation/mpl-token-metadata';
-import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
-  SystemProgram,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
+  TransactionInstruction,
 } from '@solana/web3.js';
-import { AUTH_PROGRAM_ID, findEditionPda, findTokenRecordPda } from './pdas';
+import { publicKey, createNoopSigner, unwrapOption, isSome, none } from '@metaplex-foundation/umi';
+import { findEditionPda, findTokenRecordPda } from './pdas';
 import { fetchMetadataByMint } from './token_metadata';
+import { defaultUmi } from '../utils';
+import { toWeb3JsInstruction } from '@metaplex-foundation/umi-web3js-adapters';
 export { AuthorizationData } from '@metaplex-foundation/mpl-token-metadata';
+
+export type PnftAccountsReturn = {
+  meta: {
+    address: PublicKey;
+    metadata: Metadata | null;
+  };
+  creators: Creator[];
+  ruleSet?: PublicKey;
+  ownerTokenRecordBump: number;
+  ownerTokenRecordPda: PublicKey;
+  destTokenRecordBump: number;
+  destTokenRecordPda: PublicKey;
+  nftEditionPda: PublicKey;
+  authDataSerialized?: {
+    payload: {
+      name: string;
+      payload: PayloadType;
+    }[];
+  } | null;
+}
 
 export const prepPnftAccounts = async ({
   connection,
@@ -35,7 +59,7 @@ export const prepPnftAccounts = async ({
   sourceAta: PublicKey;
   destAta: PublicKey;
   authData?: AuthorizationData | null;
-}) => {
+}): Promise<PnftAccountsReturn> => {
   if (!meta) {
     const { address, metadata } = await fetchMetadataByMint(
       connection,
@@ -48,8 +72,8 @@ export const prepPnftAccounts = async ({
       metadata,
     };
   }
-  const creators = meta.metadata.data.creators ?? [];
-  const ruleSet = meta.metadata.programmableConfig?.ruleSet ?? undefined;
+  const creators = meta.metadata.creators ?? [];
+  const ruleSet = unwrapOption(meta.metadata.programmableConfig)?.ruleSet ?? undefined;
 
   const [ownerTokenRecordPda, ownerTokenRecordBump] = findTokenRecordPda(
     nftMint,
@@ -74,8 +98,8 @@ export const prepPnftAccounts = async ({
 
   return {
     meta,
-    creators,
-    ruleSet,
+    creators: unwrapOption(creators) ?? [],
+    ruleSet: ruleSet && isSome(ruleSet) ? new PublicKey(unwrapOption(ruleSet)!) : undefined,
     ownerTokenRecordBump,
     ownerTokenRecordPda,
     destTokenRecordBump,
@@ -105,7 +129,7 @@ export const makePnftTransferIx = async ({
   fromAddr: PublicKey;
   toAddr: PublicKey;
   tokenProgram: PublicKey;
-}) => {
+}): Promise<TransactionInstruction> => {
   const {
     meta,
     ruleSet,
@@ -119,44 +143,37 @@ export const makePnftTransferIx = async ({
     destAta: toAddr,
   });
 
-  const transferAcccounts: TransferInstructionAccounts = {
-    authority: authority ?? tokenOwner,
-    tokenOwner,
-    token: fromAddr,
-    mint,
-    metadata: meta.address,
-    edition: nftEditionPda,
-    destinationOwner,
-    destination: toAddr,
-    payer: tokenOwner,
-    splTokenProgram: tokenProgram,
-    splAtaProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    systemProgram: SystemProgram.programId,
-    sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-    authorizationRules: ruleSet,
-    authorizationRulesProgram: AUTH_PROGRAM_ID,
-    ownerTokenRecord: ownerTokenRecordPda,
-    destinationTokenRecord: destTokenRecordPda,
+  const transferAcccounts: TransferV1InstructionAccounts = {
+    authority: authority ? createNoopSigner(publicKey(authority)) : createNoopSigner(publicKey(tokenOwner)),
+    tokenOwner: publicKey(tokenOwner),
+    token: publicKey(fromAddr),
+    mint: publicKey(mint),
+    metadata: publicKey(meta.address),
+    edition: publicKey(nftEditionPda),
+    destinationOwner: publicKey(destinationOwner),
+    destinationToken: publicKey(toAddr),
+    payer: createNoopSigner(publicKey(tokenOwner)),
+    splTokenProgram: publicKey(tokenProgram),
+    authorizationRules: ruleSet ? publicKey(ruleSet) : undefined,
+    tokenRecord: publicKey(ownerTokenRecordPda),
+    destinationTokenRecord: publicKey(destTokenRecordPda),
   };
-
-  if (!args) {
-    args = {
-      __kind: 'V1',
-      amount: 1,
-      authorizationData: null,
-    };
-  }
 
   // not sure needed (keeping around in case changes, to quickly remember command)
   // const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
   //   units: 400_000,
   // });
 
-  const transferArgs: TransferInstructionArgs = {
-    transferArgs: args,
-  };
-
-  const transferIx = createTransferInstruction(transferAcccounts, transferArgs);
-
-  return transferIx;
+  // TODO: could be ProgrammableNonFungibleEdition? 
+  // unsure if that was triaged within createTransferInstruction before?
+  const transferArgs: TransferV1InstructionArgs = args ?
+  {
+    ...args,
+    tokenStandard: TokenStandard.ProgrammableNonFungible,
+  } : {
+    amount: 1,
+    tokenStandard: TokenStandard.ProgrammableNonFungible,
+  }
+  const transferIx = transferV1(defaultUmi, {...transferAcccounts, ...transferArgs}).getInstructions()[0];
+  return toWeb3JsInstruction(transferIx);
 };

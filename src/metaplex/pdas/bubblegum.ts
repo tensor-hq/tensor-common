@@ -1,6 +1,6 @@
 import {
+  getMetadataArgsSerializer,
   MetadataArgs,
-  metadataArgsBeet,
 } from '@metaplex-foundation/mpl-bubblegum';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -11,7 +11,7 @@ export const BUBBLEGUM_PROGRAM_ID = new PublicKey(
 );
 
 export function computeMetadataArgsHash(metadata: MetadataArgs): Buffer {
-  const [serializedMetadata] = metadataArgsBeet.serialize(metadata);
+  const serializedMetadata = getMetadataArgsSerializer().serialize(metadata);
   return Buffer.from(keccak_256.digest(serializedMetadata));
 }
 
