@@ -2,7 +2,6 @@
   "include": ["./src/**/*"],
   "compilerOptions": {
     "skipLibCheck": true,
-    // See https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping
     "lib": ["esnext", "dom"],
     "strict": true,
 
