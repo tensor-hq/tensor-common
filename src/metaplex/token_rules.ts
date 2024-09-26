@@ -17,6 +17,40 @@ import { AUTH_PROGRAM_ID, findEditionPda, findTokenRecordPda } from './pdas';
 import { fetchMetadataByMint } from './token_metadata';
 export { AuthorizationData } from '@metaplex-foundation/mpl-token-metadata';
 
+export const prepPnftRuleset = async ({
+  connection,
+  meta,
+  nftMint,
+}: {
+  connection: Connection;
+  /** If provided, skips RPC call for the the metadata account */
+  meta?: {
+    address: PublicKey;
+    metadata: Metadata;
+  };
+  nftMint: PublicKey;
+}) => {
+  if (!meta) {
+    const { address, metadata } = await fetchMetadataByMint(
+      connection,
+      nftMint,
+    );
+    if (!metadata)
+      throw new Error(`metadata account not found for mint ${nftMint}`);
+    meta = {
+      address,
+      metadata,
+    };
+  }
+
+  const ruleSet = meta.metadata.programmableConfig?.ruleSet ?? undefined;
+
+  return {
+    meta,
+    ruleSet,
+  };
+};
+
 export const prepPnftAccounts = async ({
   connection,
   meta,
