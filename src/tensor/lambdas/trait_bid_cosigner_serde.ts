@@ -561,6 +561,7 @@ export enum TraitBidRequestType {
   TakeT22 = 'TAKE_T22',
   TakeWns = 'TAKE_WNS',
   PlaceBid = 'PLACE_BID',
+  EditBid = 'EDIT_BID',
 }
 
 export type TraitBidsRequest =
@@ -576,6 +577,6 @@ export type TraitBidsRequest =
       args: TakeNonCompressedArgsSerialized;
     }
   | {
-      type: TraitBidRequestType.PlaceBid;
+      type: TraitBidRequestType.PlaceBid | TraitBidRequestType.EditBid;
       args: PlaceBidArgsSerialized;
     };
