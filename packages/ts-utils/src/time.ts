@@ -30,8 +30,9 @@ export const sleep = (time: Timespan): Promise<void> => {
 export const waitMS = async (ms: number): Promise<void> =>
   sleep({ Millis: ms });
 
-export const truncateTime = (date: Date): Date => {
-  const timePortion = date.getTime() % DAYS;
+/** Truncates (floors) the time portion of a date to the nearest interval */
+export const truncateTime = (date: Date, intervalMs: number): Date => {
+  const timePortion = date.getTime() % intervalMs;
   return new Date(date.getTime() - timePortion);
 };
 
