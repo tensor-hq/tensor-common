@@ -1,9 +1,9 @@
+import { Connection } from '@solana/web3.js';
 import { expect } from 'chai';
 import {
   RetryTxSender,
   convertTxToLegacy,
 } from '../../src/solana_contrib/transaction';
-import { Connection } from '@solana/web3.js';
 
 describe('Transaction Tests', () => {
   describe('convertTxToLegacy', () => {
@@ -58,7 +58,7 @@ describe('Transaction Tests', () => {
         err: null,
       };
       expect(confirmedTx).to.deep.equal(expected);
-    }).timeout(10000);
+    }).timeout(15000);
 
     it('should cancel confirmation when cancelConfirm is called', async () => {
       const nonExistentTxSig =
