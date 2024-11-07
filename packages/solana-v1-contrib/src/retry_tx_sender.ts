@@ -116,7 +116,7 @@ export class RetryTxSender {
       this.logger?.info(
         `🚀 [${this.txSig.substring(0, 5)}] tx sent to MAIN connection`,
       );
-      this._sendToAdditionalConnections(rawTransaction);
+      this._sendToAdditionalConnections(new Uint8Array(rawTransaction));
     } catch (e) {
       this.logger?.error(`${JSON.stringify(e)}`);
       throw e;
@@ -149,7 +149,7 @@ export class RetryTxSender {
               this.logger?.error(`${JSON.stringify(e)}`);
               this._stopWaiting();
             });
-          this._sendToAdditionalConnections(rawTransaction);
+          this._sendToAdditionalConnections(new Uint8Array(rawTransaction));
         }
       }
     })();
