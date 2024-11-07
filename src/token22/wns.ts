@@ -1,5 +1,5 @@
-import { PublicKey } from '@solana/web3.js';
 import { utils } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 
 export const WNS_PROGRAM_ID = new PublicKey(
   'wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM',
@@ -50,9 +50,15 @@ export const findWNSExtraMetasPda = (mint: string) => {
   return extraMetasAccount;
 };
 
-export const findWNSDistributionPda = (collection: string) => {
+export const findWNSDistributionPda = (
+  collection: string,
+  paymentMint?: PublicKey,
+) => {
   const [distributionAccount] = PublicKey.findProgramAddressSync(
-    [new PublicKey(collection).toBuffer()],
+    [
+      new PublicKey(collection).toBuffer(),
+      paymentMint ? paymentMint.toBuffer() : SystemProgram.programId.toBuffer(),
+    ],
     WNS_DIST_PROGRAM_ID,
   );
 
