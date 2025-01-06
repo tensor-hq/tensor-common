@@ -7,7 +7,7 @@ export const BADGER_PROGRAM_ID = new PublicKey(
   '7gDpaG9kUXHTz1dj4eVfykqtXnKq2efyuGigdMeCy74B',
 );
 export const SOLANART_FEE_ACCT = new PublicKey(
-  '39fEpihLATXPJCQuSiXLUSiCbGchGYjeL39eyXh3KbyT',
+  'FoN96i4kNNA4oyPRk8vsG3Py4VEZXEm6nbk4Tff96Mhy',
 );
 export const SOLANART_ESCROW_OWNER_ACCT = new PublicKey(
   '3D49QorJyNaL4rcpiynbuS3pRH4Y7EXEM6v6ZGaqfFGK',
