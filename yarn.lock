@@ -343,7 +343,7 @@ __metadata:
     "@types/chai": ^4.3.5
     "@types/mocha": ^10.0.1
     "@types/semaphore": ^1.1.1
-    axios: ^0.28.0
+    axios: ^0.29.0
     big.js: ^6.2.1
     bn.js: ^5.2.1
     borsh: ^0.7.0
@@ -653,14 +653,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.28.0":
-  version: 0.28.1
-  resolution: "axios@npm:0.28.1"
+"axios@npm:^0.29.0":
+  version: 0.29.0
+  resolution: "axios@npm:0.29.0"
   dependencies:
-    follow-redirects: ^1.15.0
+    follow-redirects: ^1.15.4
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
-  checksum: 5115a38d79064d07437c5a28f15841e3607634040e3120ec06a2c4367a7d07cf213b16496eab53b6f58ebc5fb377a440ba9ed4782529b14449a1e285734bfb54
+  checksum: b365fa0471ff62472521932c68f152e98650804c016fc6a9fe337a6cd67201141baf14d29161527cce5189b9eba8f14cb5781e02c56e69f56784e9a23385d7e7
   languageName: node
   linkType: hard
 
@@ -1250,13 +1250,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.15.0":
-  version: 1.15.6
-  resolution: "follow-redirects@npm:1.15.6"
+"follow-redirects@npm:^1.15.4":
+  version: 1.15.9
+  resolution: "follow-redirects@npm:1.15.9"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: a62c378dfc8c00f60b9c80cab158ba54e99ba0239a5dd7c81245e5a5b39d10f0c35e249c3379eae719ff0285fff88c365dd446fab19dee771f1d76252df1bbf5
+  checksum: 859e2bacc7a54506f2bf9aacb10d165df78c8c1b0ceb8023f966621b233717dab56e8d08baadc3ad3b9db58af290413d585c999694b7c146aaf2616340c3d2a6
   languageName: node
   linkType: hard
 
