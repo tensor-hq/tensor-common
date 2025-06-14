@@ -32,12 +32,22 @@ export const waitMS = async (ms: number): Promise<void> =>
 
 /** Truncates (floors) the time portion of a date to the nearest interval */
 export const truncateTime = (date: Date, intervalMs: number): Date => {
-  const timePortion = date.getTime() % intervalMs;
-  return new Date(date.getTime() - timePortion);
+  return new Date(truncateTimeMS(date.getTime(), intervalMs));
+};
+
+/** Truncates (floors) the time portion of a date to the nearest interval */
+export const truncateTimeMS = (date: number, intervalMs: number): number => {
+  return date - (date % intervalMs);
 };
 
 export const addTime = (date: Date | number, time: Timespan): Date => {
-  return new Date(new Date(date).getTime() + totalMS(time));
+  return new Date(
+    addTimeMS(typeof date === 'number' ? date : date.getTime(), time),
+  );
+};
+
+export const addTimeMS = (date: number, time: Timespan): number => {
+  return date + totalMS(time);
 };
 
 export const calcNumDays = (start: number, end: number): number => {
